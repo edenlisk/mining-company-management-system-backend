@@ -9,10 +9,15 @@ const xss = require('xss-clean');
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const hpp = require('hpp');
+const AppError = require('./utils/appError');
+const globalErrorHandler = require('./controllers/errorController');
 
 
 const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
+const usersRouter = require('./routes/usersRouter');
+const buyersRouter = require('./routes/buyersRouter');
+const contractsRouter = require('./routes/contractsRouter');
+const shipmentsRouter = require('./routes/shipmentsRouter');
 
 const app = express();
 
@@ -24,10 +29,10 @@ app.use(logger('dev'));
 app.use(express.json());
 app.use(mongoSanitize());
 app.use(xss());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(cors())
+app.use(cors());
 
 
 const limiter = rateLimit(
@@ -39,11 +44,18 @@ const limiter = rateLimit(
 )
 
 app.use(hpp());
-app.use(helmet())
+app.use(helmet());
 app.use('/api', limiter);
 
 app.use('/api/v1/', indexRouter);
 app.use('api/v1/users', usersRouter);
+app.use('/api/v1/buyers', buyersRouter);
+app.use('/api/v1/contracts', contractsRouter);
+app.use('/api/v1/shipments', shipmentsRouter);
+app.all('*', (req, res, next) => {
+    next(new AppError(`Can't find ${req.originalUrl} on this server`, 400));
+})
+app.use(globalErrorHandler);
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

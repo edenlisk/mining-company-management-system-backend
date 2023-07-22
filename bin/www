@@ -3,11 +3,15 @@
 /**
  * Module dependencies.
  */
-
+const mongoose = require('mongoose');
 require('dotenv').config();
 const app = require('../app');
 const debug = require('debug')('mining-company-management-system-backend:server');
 const http = require('http');
+
+mongoose.connect(process.env.MONGO_URL, {dbName: "mining-company-management-system"})
+    .then(() => console.log("database connection successful"))
+    .catch(err => console.log(err.message))
 
 /**
  * Get port from environment and store in Express.
