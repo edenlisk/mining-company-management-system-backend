@@ -32,7 +32,7 @@ exports.downloadDueDiligenceDocument = catchAsync(async (req, res, next) => {
     sendAttachment(filePath, fileName, res);
 })
 
-exports.createDueDiligenceDocument = catchAsync(async (req, res, next) => {
+exports.addDueDiligenceDocument = catchAsync(async (req, res, next) => {
     await DueDiligence.create(
         {
             name: req.file.filename,

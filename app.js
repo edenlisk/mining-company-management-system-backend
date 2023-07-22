@@ -18,6 +18,7 @@ const usersRouter = require('./routes/usersRouter');
 const buyersRouter = require('./routes/buyersRouter');
 const contractsRouter = require('./routes/contractsRouter');
 const shipmentsRouter = require('./routes/shipmentsRouter');
+const dueDiligenceRouter = require('./routes/dueDiligenceRouter');
 
 const app = express();
 
@@ -52,6 +53,7 @@ app.use('api/v1/users', usersRouter);
 app.use('/api/v1/buyers', buyersRouter);
 app.use('/api/v1/contracts', contractsRouter);
 app.use('/api/v1/shipments', shipmentsRouter);
+app.use('/api/v1/duediligence', dueDiligenceRouter);
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server`, 400));
 })
