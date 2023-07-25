@@ -51,7 +51,7 @@ app.use(helmet());
 app.use('/api', limiter);
 
 app.use('/api/v1/', indexRouter);
-app.use('api/v1/users', usersRouter);
+app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/buyers', buyersRouter);
 app.use('/api/v1/contracts', contractsRouter);
 app.use('/api/v1/shipments', shipmentsRouter);
