@@ -16,10 +16,17 @@ exports.getAllBuyers = catchAsync(async (req, res, next) => {
                     foreignField: 'buyerId',
                     as: 'contracts'
                 }
+            },
+            {
+                $lookup: {
+                    from: 'duediligences',
+                    localField: '_id',
+                    foreignField: 'buyerId',
+                    as: 'duediligences'
+                }
             }
         ]
     )
-    console.log(buyers);
     res
         .status(200)
         .json(
@@ -77,9 +84,6 @@ exports.updateBuyer = catchAsync(async (req, res, next) => {
     if (req.body.country) buyer.country = req.body.country;
     if (req.body.address) buyer.address = req.body.address;
     if (req.body.destination) buyer.destination = req.body.destination;
-    if (req.body.dueDiligenceDocuments) {
-        buyer.dueDiligenceDocuments = [...buyer.dueDiligenceDocuments, ...req.body.dueDiligenceDocuments];
-    }
     await buyer.save({validateModifiedOnly: true});
     res
         .status(201)

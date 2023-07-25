@@ -3,18 +3,32 @@
 //     lithium, mixed minerals), number of mine tags
 
 const mongoose = require('mongoose');
+const Supplier = require('./supplierModel');
+const Payment = require('./paymentModel');
+const AppError = require('../utils/appError');
 
 const entrySchema = new mongoose.Schema(
     {
+        supplierId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Supplier',
+            // required: true
+        },
         companyName: {
             type: String,
         },
         licenseNumber: {
             type: String
         },
+        TINNumber: {
+            type: String
+        },
         companyRepresentative: {
             type: String,
             required: [true, "Please provide company representative"]
+        },
+        beneficiary: {
+            type: String
         },
         representativeId: {
             type: String,
@@ -25,6 +39,9 @@ const entrySchema = new mongoose.Schema(
         },
         supplyDate: {
             type: Date
+        },
+        time: {
+            type: String
         },
         mineralSupplied: {
             type: String,
@@ -77,6 +94,15 @@ const entrySchema = new mongoose.Schema(
                 message: "Rwanda Mining Association fee can't be negative number"
             }
         },
+        londonMetalExchange: {
+            type: Number
+        },
+        treatmentCharges: {
+            type: Number
+        },
+        tantal: {
+            type: Number
+        },
         mineralPrice: {
             type: Number,
             validate: {
@@ -88,15 +114,69 @@ const entrySchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["in stock", "exported"],
+            enum: ["in stock", "exported", "rejected", "non-sell agreement"],
             default: () => {
                 return "in stock"
             }
-        }
+        },
+        cassiteriteQuantity: Number,
+        coltanQuantity: Number,
+        coltanGrade: Number,
+        cassiteriteGrade: Number,
+        paymentCurrency: String
     }, {
         timestamps: true
     }
 )
+
+// entrySchema.pre('save', async function (next) {
+//     if (this.isNew) {
+//         if (this.mineralSupplied.toLowerCase() === "coltan") {
+//             this.LME = undefined;
+//             this.TC = undefined;
+//             // this.mineralPrice = this.tantal * this.mineralGrade;
+//         } else if (this.mineralSupplied.toLowerCase() === "cassiterite") {
+//             this.tantal = undefined;
+//             // this.mineralPrice = ((this.LME * (this.mineralGrade)/100) - this.TC)/1000;
+//         }
+//     }
+//     next()
+// })
+
+entrySchema.pre('save', async function (next) {
+    if (this.isModified('supplierId') && !this.isNew) {
+        const supplier = await Supplier.findById(this.supplierId);
+        if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
+        this.companyName = supplier.companyName;
+        this.licenseNumber = supplier.licenseNumber;
+        this.representativeId = supplier.representativeId;
+        this.representativePhoneNumber = supplier.representativePhoneNumber;
+        this.TINNumber = supplier.TINNumber;
+        this.district = supplier.address.district;
+    }
+    next();
+})
+
+entrySchema.pre('save', async function (next) {
+    if (this.isModified('mineralPrice') && !this.isNew) {
+        await Payment.create(
+            {
+                supplierId: this.supplierId,
+                supplierName: this.companyName,
+                companyRepresentative: this.beneficiary,
+                nationalId: this.representativeId,
+                licenseNumber: this.licenseNumber,
+                phoneNumber: this.representativePhoneNumber,
+                email: this.email,
+                location: this.district,
+                amountReceived: this.mineralPrice,
+                currency: this.paymentCurrency
+            }
+        )
+    }
+    next();
+})
+
 
 module.exports = mongoose.model('Entry', entrySchema);
 

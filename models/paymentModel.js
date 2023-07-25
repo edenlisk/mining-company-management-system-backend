@@ -17,7 +17,7 @@ const paymentSchema = new mongoose.Schema(
             type: String,
             required: [true, "Please provide representative's national Id"]
         },
-        licenceNumber: {
+        licenseNumber: {
             type: String
         },
         phoneNumber: {
@@ -45,9 +45,23 @@ const paymentSchema = new mongoose.Schema(
             type: String,
             enum: ['RWF', 'USD'],
             default: () => 'RWF'
+        },
+        paymentMode: {
+            type: String
+        },
+        settled: {
+            type: Boolean,
+            default: () => {
+                return false;
+            }
         }
     },
     {timestamps: true}
 )
 
-module.exports = mongoose.model('Payment', paymentSchema);
+paymentSchema.pre('save', async function (next) {
+
+})
+
+const paymentModel =  mongoose.model('Payment', paymentSchema);
+module.exports = paymentModel;

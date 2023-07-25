@@ -29,6 +29,7 @@ exports.downloadDueDiligenceDocument = catchAsync(async (req, res, next) => {
     if (!fs.existsSync(filePath)) {
         return next(new AppError("File not found", 404));
     }
+    // res.download(filePath);
     sendAttachment(filePath, fileName, res);
 })
 
@@ -104,7 +105,6 @@ const multerStorage = multer.diskStorage(
                 fs.rename(filePath, `${__dirname}/../public/data/duediligence/ex-${file.originalname}`, (err) => {
                     if (err) {
                         console.log(err);
-                        return;
                     }
                     console.log('File renamed successfully');
                 });

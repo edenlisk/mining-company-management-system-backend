@@ -3,6 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
+// const Email = require('../utils/email');
 
 const signToken = id => {
     return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {expiresIn: process.env.EXPIRES_ID});
@@ -36,7 +37,7 @@ exports.signup = catchAsync(async (req, res, next) => {
     const user = await User.create(
         {
             name: req.body.name.trim(),
-            username: req.body.username.trim(),
+            // username: req.body.username.trim(),
             phoneNumber: req.body.phoneNumber.trim(),
             email: req.body.email.trim(),
             role: req.body.role.trim(),
@@ -44,6 +45,9 @@ exports.signup = catchAsync(async (req, res, next) => {
             passwordConfirm: req.body.passwordConfirm
         }
     );
+    // const email = new Email(user, process.env.EMAIL_FROM);
+    // const verifyLink = `${req.originalUrl}/`;
+    // email.sendVerification('')
     createSendToken(user, 201, res);
 })
 
