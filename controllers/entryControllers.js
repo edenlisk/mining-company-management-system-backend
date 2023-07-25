@@ -121,6 +121,7 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
     if (req.body.mineralPrice) entry.mineralPrice = req.body.mineralPrice;
     if (req.body.cassiteriteGrade) entry.cassiteriteGrade = req.body.cassiteriteGrade;
     if (req.body.coltanGrade) entry.coltanGrade = req.body.coltanGrade;
+    if (req.body.totalPrice) entry.totalPrice = req.body.totalPrice;
     await entry.save({validateModifiedOnly: true});
     res
         .status(202)

@@ -123,7 +123,20 @@ const entrySchema = new mongoose.Schema(
         coltanQuantity: Number,
         coltanGrade: Number,
         cassiteriteGrade: Number,
-        paymentCurrency: String
+        paymentCurrency: String,
+        totalPrice: Number,
+        paid: Number,
+        unsettled: Number,
+        settled: {
+            type: Boolean,
+            default: () => {
+                return false;
+            }
+        },
+        paymentMode: {
+            type: String,
+            enum: ["installments", "one-time"]
+        },
     }, {
         timestamps: true
     }
@@ -158,23 +171,9 @@ entrySchema.pre('save', async function (next) {
 })
 
 entrySchema.pre('save', async function (next) {
-    if (this.isModified('mineralPrice') && !this.isNew) {
-        await Payment.create(
-            {
-                supplierId: this.supplierId,
-                supplierName: this.companyName,
-                companyRepresentative: this.beneficiary,
-                nationalId: this.representativeId,
-                licenseNumber: this.licenseNumber,
-                phoneNumber: this.representativePhoneNumber,
-                email: this.email,
-                location: this.district,
-                amountReceived: this.mineralPrice,
-                currency: this.paymentCurrency
-            }
-        )
+    if (this.isModified('totalPrice') && !this.isNew) {
+
     }
-    next();
 })
 
 

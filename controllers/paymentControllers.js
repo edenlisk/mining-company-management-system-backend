@@ -38,7 +38,7 @@ exports.addPayment = catchAsync(async (req, res, next) => {
         {
             supplierId: req.body.supplierId,
             supplierName: req.body.supplierName,
-            companyRepresentative: req.body.companyRepresentative,
+            beneficiary: req.body.beneficiary,
             nationalId: req.body.nationalId,
             licenseNumber: req.body.licenseNumber,
             phoneNumber: req.body.phoneNumber,
