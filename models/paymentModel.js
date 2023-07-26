@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
-const Entry = require('./EntryModel');
+const Entry = require('./entryModel');
 const AppError = require('../utils/appError');
 
 const paymentSchema = new mongoose.Schema(
@@ -52,6 +52,9 @@ const paymentSchema = new mongoose.Schema(
             enum: ['RWF', 'USD'],
             default: () => 'RWF'
         },
+        consumed: {
+            type: Boolean
+        },
         paymentInAdvanceId: {
             type: mongoose.Schema.Types.ObjectId,
             rel: 'Payment'
@@ -61,23 +64,24 @@ const paymentSchema = new mongoose.Schema(
 )
 
 paymentSchema.pre('save', async function (next) {
-
-    // 1. find the entry
-    // 2. check if entry payments is unsettled
-    // 3. check if there are payments in advance
-            // a. if true
-                    //
+    if (this.isNew && this.advance) {
+        this.consumed = false;
+    }
     if (this.entryId && this.advance === false) {
         const entry = await Entry.findById(this.entryId);
         if (entry.settled) return next(new AppError("Payment for this entry is already settled", 400));
         if (this.paymentInAdvanceId) {
-            const payment = await paymentModel.findById(this.paymentInAdvanceId).select({amountReceived: 1});
-            entry.paid = payment.amountReceived;
-            entry.unsettled = entry.totalPrice - entry.paid;
-            if (entry.unsettled <= 0) {
-                entry.settled = true;
-                await entry.save({validateModifiedOnly: true});
-                next();
+            const payment = await paymentModel.findById(this.paymentInAdvanceId).select({consumed: 1, amountReceived: 1});
+            if (!payment.consumed) {
+                entry.paid = payment.amountReceived;
+                entry.unsettled = entry.totalPrice - entry.paid;
+                payment.consumed = true;
+                await payment.save({validateModifiedOnly: true});
+                if (entry.unsettled <= 0) {
+                    entry.settled = true;
+                    await entry.save({validateModifiedOnly: true});
+                    next();
+                }
             }
         }
         entry.paid = entry.paid + this.amountReceived;

@@ -1,4 +1,4 @@
-const Entry = require('../models/EntryModel');
+const Entry = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');

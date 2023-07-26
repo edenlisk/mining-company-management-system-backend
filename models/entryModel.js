@@ -114,7 +114,7 @@ const entrySchema = new mongoose.Schema(
         },
         status: {
             type: String,
-            enum: ["in stock", "exported", "rejected", "non-sell agreement"],
+            enum: ["in stock", "fully exported", "rejected", "non-sell agreement", "partially exported"],
             default: () => {
                 return "in stock"
             }
@@ -133,6 +133,19 @@ const entrySchema = new mongoose.Schema(
                 return false;
             }
         },
+        exportedAmount: {
+            type: Number,
+            validate: {
+                validator: (elem) => {
+                    return elem >= 0;
+                },
+                message: "Exported amount can't be negative number"
+            },
+            default: 0
+        },
+        cumulativeAmount: {
+            type: Number,
+        },
         paymentMode: {
             type: String,
             enum: ["installments", "one-time"]
@@ -141,6 +154,8 @@ const entrySchema = new mongoose.Schema(
         timestamps: true
     }
 )
+
+// TODO 1: FIND CONVENIENT WAY OF STRUCTURING TYPE OF MINERALS AND ITS QUANTITY
 
 // entrySchema.pre('save', async function (next) {
 //     if (this.isNew) {

@@ -48,6 +48,12 @@ exports.addSupplier = catchAsync(async (req, res, next) => {
 exports.updateSupplier = catchAsync(async (req, res, next) => {
     const supplier = await Supplier.findById(req.params.supplierId);
     if (!supplier) return next(new AppError("Selected supplier no longer exists!", 400));
+    if (req.body.companyName) supplier.companyName = req.body.companyName;
+    if (req.body.TINNumber) supplier.TINNumber = req.body.TINNumber;
+    if (req.body.licenseNumber) supplier.licenseNumber = req.body.licenseNumber;
+    if (req.body.email) supplier.email = req.body.email;
+    if (req.body.nationalId) supplier.nationalId = req.body.nationalId;
+    if (req.body.address) supplier.address = req.body.address;
     if (req.body.numberOfDiggers) supplier.numberOfDiggers = req.body.numberOfDiggers;
     if (req.body.numberOfWashers) supplier.numberOfWashers = req.body.numberOfWashers;
     if (req.body.numberOfTransporters) supplier.numberOfTransporters = req.body.numberOfTransporters;

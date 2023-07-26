@@ -1,13 +1,17 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
+const Entry = require('./entryModel');
 
 const shipmentSchema = new mongoose.Schema(
     {
         entries: {
             type: [
                 {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: 'Entry'
+                    entryId: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        rel: 'Entry'
+                    },
+                    quantity: Number
                 }
             ],
             default: () => {
@@ -39,10 +43,13 @@ const shipmentSchema = new mongoose.Schema(
             required: [true, "Please select the buyer"]
         },
         shipmentSamplingDate: {
-          type: Date,
+            type: Date,
         },
         shipmentContainerLoadingDate: {
-          type: String,
+            type: String,
+        },
+        totalShipmentQuantity: {
+            type: Number
         },
         analysisCertificate: {
             type: String,
@@ -70,6 +77,23 @@ shipmentSchema.pre('save', async function (next) {
         });
     }
     next();
+})
+
+shipmentSchema.pre('save', async function (next) {
+    // if (this.isModified('entries')) {
+    //     for (const item of this.entries) {
+    //         const entry = await Entry.findById(item.entryId).select({status: 1, netQuantity: 1, exportedAmount: 1, cumulativeAmount: 1});
+    //         if (entry.netQuantity > item.quantity) {
+    //             entry.status = "partially exported";
+    //             entry.exportedAmount += item.quantity;
+    //         } else if (item.quantity === entry.netQuantity) {
+    //             entry.status = "exported";
+    //             entry.exportedAmount = entry.netQuantity;
+    //         }
+    //         this.totalShipmentQuantity += entry.quantity;
+    //
+    //     }
+    // }
 })
 
 module.exports = mongoose.model('Shipment', shipmentSchema);
