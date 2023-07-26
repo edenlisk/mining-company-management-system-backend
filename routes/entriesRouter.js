@@ -8,9 +8,11 @@ const { createEntry,
 
 router.route('/')
     .get(getAllEntries)
+
+router.route('/:model')
     .post(createEntry)
 
-router.route('/:entryId')
+router.route('/:model/:entryId')
     .get(getOneEntry)
     .patch(updateEntry)
     .delete(deleteEntry)

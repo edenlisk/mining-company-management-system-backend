@@ -1,17 +1,33 @@
-const Entry = require('../models/entryModel');
+// const Entry = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
+const Coltan = require('../models/coltanEntryModel');
+const Cassiterite = require('../models/cassiteriteEntryModel');
+const Mixed = require('../models/mixedMineralsModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
+const getModel = (model) => {
+    switch (model) {
+        case "cassiterite":
+            return Cassiterite;
+        case "coltan":
+            return Coltan;
+        case "mixed":
+            return Mixed
+    }
+}
+
 exports.getAllEntries = catchAsync(async (req, res, next) => {
-    const entries = await Entry.find().sort("-createdAt");
+    const coltanEntries = await Coltan.find();
+    const cassiteriteEnties = await Cassiterite.find();
+    const mixedEntries = await Mixed.find();
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    entries
+                    entries: [...coltanEntries, ...cassiteriteEnties, ...mixedEntries]
                 }
             }
         )
@@ -19,6 +35,7 @@ exports.getAllEntries = catchAsync(async (req, res, next) => {
 })
 
 exports.getOneEntry = catchAsync(async (req, res, next) => {
+    const Entry = getModel(req.params.model);
     const entry = await Entry.findById(req.params.entryId);
     if (!entry) return next(new AppError("Entry no longer exists", 400));
     res
@@ -37,6 +54,7 @@ exports.getOneEntry = catchAsync(async (req, res, next) => {
 exports.createEntry = catchAsync(async (req, res, next) => {
     const supplier = await Supplier.findById(req.body.supplierId);
     if (!supplier) return next(new AppError("Selected supplier no longer exists!", 400));
+    const Entry = getModel(req.params.model);
     let entry;
     if (req.body.isSupplierBeneficiary) {
         entry = await Entry.create(
@@ -78,14 +96,15 @@ exports.createEntry = catchAsync(async (req, res, next) => {
             }
         )
     }
-    entry.mineralSupplied = req.body.mineralSupplied;
-    if (entry.mineralSupplied === "mixed") {
-        entry.coltanQuantity = req.body.coltanQuantity;
-        entry.cassiteriteQuantity = req.body.cassiteriteQuantity;
+    if (req.params.model === "mixed") {
+        entry.quantity.coltan = req.body.coltan;
+        entry.quantity.cassiterite = req.body.cassiterite;
+        entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
+        entry.cumulativeAmount.coltan = entry.quantity.coltan;
     }
+    entry.numberOfTags = req.body.numberOfTags;
     entry.grossQuantity = req.body.grossQuantity;
     entry.netQuantity = req.body.netQuantity;
-    entry.numberOfTags = req.body.numberOfTags;
     entry.supplyDate = new Date().toISOString().split('T')[0];
     entry.time = req.body.time;
     await entry.save({validateModifiedOnly: true});
@@ -100,6 +119,7 @@ exports.createEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.updateEntry = catchAsync(async (req, res, next) => {
+    const Entry = getModel(req.params.model);
     const entry = await Entry.findById(req.params.entryId);
     if (!entry) return next(new AppError("This entry no longer exists", 400));
     // if (req.body.mineralSupplied) entry.mineralSupplied = req.body.mineralSupplied;
@@ -112,15 +132,21 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
     if (req.body.status.toLowerCase() === "rejected") entry.status = "rejected";
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.mineTags) entry.mineTags = req.body.mineTags;
-    if (req.body.londonMetalExchange) entry.londonMetalExchange = req.body.londonMetalExchange;
-    if (req.body.treatmentCharges) entry.treatmentCharges = req.body.treatmentCharges;
-    if (req.body.tantal) entry.tantal = req.body.tantal;
-    if (req.body.rmaFee) entry.rmaFee = req.body.rmaFee;
+    if (req.params.model === "coltan") {
+        if (req.body.tantal) entry.tantal = req.body.tantal;
+    }
+    if (req.params.model === "cassiterite") {
+        if (req.body.londonMetalExchange) entry.londonMetalExchange = req.body.londonMetalExchange;
+        if (req.body.treatmentCharges) entry.treatmentCharges = req.body.treatmentCharges;
+    }
+    if (req.params.model === "mixed") {
+        if (req.body.coltan) entry.quantity.coltan = req.body.coltan;
+        if (req.body.cassiterite) entry.quantity.cassiterite = req.body.cassiterite;
+        if (req.body.cassiteriteGrade) entry.grade.cassiterite = req.body.cassiteriteGrade;
+        if (req.body.coltanGrade) entry.grade.coltan = req.body.coltanGrade;
+    }
     if (req.body.negociantTags) entry.negociantTags = req.body.negociantTags;
-    if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
-    if (req.body.mineralPrice) entry.mineralPrice = req.body.mineralPrice;
-    if (req.body.cassiteriteGrade) entry.cassiteriteGrade = req.body.cassiteriteGrade;
-    if (req.body.coltanGrade) entry.coltanGrade = req.body.coltanGrade;
+    if (req.body.grade) entry.grade = req.body.grade;
     if (req.body.totalPrice) entry.totalPrice = req.body.totalPrice;
     await entry.save({validateModifiedOnly: true});
     res

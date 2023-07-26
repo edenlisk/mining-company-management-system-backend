@@ -12,7 +12,7 @@ const hpp = require('hpp');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 
-
+const entriesRouter = require('./routes/entriesRouter');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/usersRouter');
 const buyersRouter = require('./routes/buyersRouter');
@@ -51,6 +51,7 @@ app.use(helmet());
 app.use('/api', limiter);
 
 app.use('/api/v1/', indexRouter);
+app.use('/api/v1/entries', entriesRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/buyers', buyersRouter);
 app.use('/api/v1/contracts', contractsRouter);

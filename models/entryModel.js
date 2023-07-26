@@ -7,153 +7,103 @@ const Supplier = require('./supplierModel');
 const Payment = require('./paymentModel');
 const AppError = require('../utils/appError');
 
-const entrySchema = new mongoose.Schema(
-    {
-        supplierId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: 'Supplier',
-            // required: true
-        },
-        companyName: {
-            type: String,
-        },
-        licenseNumber: {
-            type: String
-        },
-        TINNumber: {
-            type: String
-        },
-        companyRepresentative: {
-            type: String,
-            required: [true, "Please provide company representative"]
-        },
-        beneficiary: {
-            type: String
-        },
-        representativeId: {
-            type: String,
-            immutable: true,
-        },
-        representativePhoneNumber: {
-            type: String
-        },
-        supplyDate: {
-            type: Date
-        },
-        time: {
-            type: String
-        },
-        mineralSupplied: {
-            type: String,
-            enum: ["cassiterite", "coltan", "wolframite", "beryllium", "lithium", "mixed minerals"]
-        },
-        numberOfTags: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Number of tags can't be negative number"
-            }
-        },
-        grossQuantity: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Gross quantity can't be negative number"
-            }
-        },
-        netQuantity: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Net quantity can't be negative number"
-            }
-        },
-        mineTags: [String],
-        negociantTags: [String],
-        mineralGrade: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Grade can't be negative number"
-            }
-        },
-        rmaFee: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Rwanda Mining Association fee can't be negative number"
-            }
-        },
-        londonMetalExchange: {
-            type: Number
-        },
-        treatmentCharges: {
-            type: Number
-        },
-        tantal: {
-            type: Number
-        },
-        mineralPrice: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Mineral price can't be negative number"
-            }
-        },
-        status: {
-            type: String,
-            enum: ["in stock", "fully exported", "rejected", "non-sell agreement", "partially exported"],
-            default: () => {
-                return "in stock"
-            }
-        },
-        cassiteriteQuantity: Number,
-        coltanQuantity: Number,
-        coltanGrade: Number,
-        cassiteriteGrade: Number,
-        paymentCurrency: String,
-        totalPrice: Number,
-        paid: Number,
-        unsettled: Number,
-        settled: {
-            type: Boolean,
-            default: () => {
-                return false;
-            }
-        },
-        exportedAmount: {
-            type: Number,
-            validate: {
-                validator: (elem) => {
-                    return elem >= 0;
-                },
-                message: "Exported amount can't be negative number"
+exports.entry = {
+    supplierId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Supplier',
+        // required: true
+    },
+    companyName: {
+        type: String,
+    },
+    licenseNumber: {
+        type: String
+    },
+    TINNumber: {
+        type: String
+    },
+    companyRepresentative: {
+        type: String,
+        // required: [true, "Please provide company representative"]
+    },
+    beneficiary: {
+        type: String
+    },
+    representativeId: {
+        type: String,
+        immutable: true,
+    },
+    representativePhoneNumber: {
+        type: String
+    },
+    supplyDate: {
+        type: Date
+    },
+    time: {
+        type: String
+    },
+    numberOfTags: {
+        type: Number,
+        validate: {
+            validator: (elem) => {
+                return elem >= 0;
             },
-            default: 0
-        },
-        cumulativeAmount: {
-            type: Number,
-        },
-        paymentMode: {
-            type: String,
-            enum: ["installments", "one-time"]
-        },
-    }, {
-        timestamps: true
-    }
-)
+            message: "Number of tags can't be negative number"
+        }
+    },
+    grossQuantity: {
+        type: Number,
+        validate: {
+            validator: (elem) => {
+                return elem >= 0;
+            },
+            message: "Gross quantity can't be negative number"
+        }
+    },
+    status: {
+        type: String,
+        enum: ["in stock", "fully exported", "rejected", "non-sell agreement", "partially exported"],
+        default: () => {
+            return "in stock"
+        }
+    },
+    totalPrice: Number,
+    paymentCurrency: String,
+    paid: Number,
+    settled: {
+        type: Boolean,
+        default: () => {
+            return false;
+        }
+    },
+    mineTags: [String],
+    negociantTags: [String],
+    paymentMode: {
+        type: String,
+        enum: ["installments", "one-time"]
+    },
+}
+
+
+// const entrySchema = new mongoose.Schema(
+//     {
+//         mineralSupplied: {
+//             type: String,
+//             enum: ["cassiterite", "coltan", "wolframite", "beryllium", "lithium", "mixed minerals"]
+//         },
+//         mineralPrice: {
+//             type: Number,
+//             validate: {
+//                 validator: (elem) => {
+//                     return elem >= 0;
+//                 },
+//                 message: "Mineral price can't be negative number"
+//             }
+//         },
+//     }, {
+//         timestamps: true
+//     }
+// )
 
 // TODO 1: FIND CONVENIENT WAY OF STRUCTURING TYPE OF MINERALS AND ITS QUANTITY
 
@@ -171,26 +121,20 @@ const entrySchema = new mongoose.Schema(
 //     next()
 // })
 
-entrySchema.pre('save', async function (next) {
-    if (this.isModified('supplierId') && !this.isNew) {
-        const supplier = await Supplier.findById(this.supplierId);
-        if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
-        this.companyName = supplier.companyName;
-        this.licenseNumber = supplier.licenseNumber;
-        this.representativeId = supplier.representativeId;
-        this.representativePhoneNumber = supplier.representativePhoneNumber;
-        this.TINNumber = supplier.TINNumber;
-        this.district = supplier.address.district;
-    }
-    next();
-})
-
-entrySchema.pre('save', async function (next) {
-    if (this.isModified('totalPrice') && !this.isNew) {
-
-    }
-})
+// entrySchema.pre('save', async function (next) {
+//     if (this.isModified('supplierId') && !this.isNew) {
+//         const supplier = await Supplier.findById(this.supplierId);
+//         if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
+//         this.companyName = supplier.companyName;
+//         this.licenseNumber = supplier.licenseNumber;
+//         this.representativeId = supplier.representativeId;
+//         this.representativePhoneNumber = supplier.representativePhoneNumber;
+//         this.TINNumber = supplier.TINNumber;
+//         this.district = supplier.address.district;
+//     }
+//     next();
+// })
 
 
-module.exports = mongoose.model('Entry', entrySchema);
+// module.exports = mongoose.model('Entry', entrySchema);
 

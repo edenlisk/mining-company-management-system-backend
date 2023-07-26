@@ -51,6 +51,9 @@ exports.multerFilter = (req, file, cb) => {
     }
 }
 
+exports.validateNumber = (elem) => {
+    return elem >= 0
+}
 
 exports.sendAttachment = (filePath, fileName, res) => {
     const fileStream = fs.createReadStream(filePath);
