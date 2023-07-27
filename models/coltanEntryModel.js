@@ -53,6 +53,36 @@ const coltanSchema = new mongoose.Schema(
                 message: "Rwanda Mining Association fee can't be negative number"
             }
         },
+        numberOfTags: {
+            type: Number,
+            validate: {
+                validator: (elem) => {
+                    return elem >= 0;
+                },
+                message: "Number of tags can't be negative number"
+            }
+        },
+        mineTags: [
+            {
+                type: String,
+                unique: true
+            }
+        ],
+        negociantTags: [
+            {
+                type: String,
+                unique: true
+            }
+        ],
+        totalPrice: Number,
+        paymentCurrency: String,
+        paid: Number,
+        settled: {
+            type: Boolean,
+            default: () => {
+                return false;
+            }
+        },
     },
     {
         toJSON: {virtuals: true},

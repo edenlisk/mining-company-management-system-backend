@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
-const Entry = require('./entryModel');
 const AppError = require('../utils/appError');
+const getModel = require('../controllers/entryControllers');
 
 const paymentSchema = new mongoose.Schema(
     {
@@ -58,12 +58,21 @@ const paymentSchema = new mongoose.Schema(
         paymentInAdvanceId: {
             type: mongoose.Schema.Types.ObjectId,
             rel: 'Payment'
-        }
+        },
+        remainingAmount: {
+            type: Number,
+            default: function () {
+                return this.amountReceived;
+            }
+        },
+        coltanAmount: Number,
+        cassiteriteAmount: Number
     },
     {timestamps: true}
 )
 
 paymentSchema.pre('save', async function (next) {
+    const Entry = getModel(this.model);
     if (this.isNew && this.advance) {
         this.consumed = false;
     }
@@ -71,8 +80,25 @@ paymentSchema.pre('save', async function (next) {
         const entry = await Entry.findById(this.entryId);
         if (entry.settled) return next(new AppError("Payment for this entry is already settled", 400));
         if (this.paymentInAdvanceId) {
-            const payment = await paymentModel.findById(this.paymentInAdvanceId).select({consumed: 1, amountReceived: 1});
+            const payment = await paymentModel.findById(this.paymentInAdvanceId).select({consumed: 1, amountReceived: 1, remainingAmount: 1});
             if (!payment.consumed) {
+                if (this.model === "mixed") {
+                    if (payment.remainingAmount >= (entry.totalPrice.coltan - entry.rmaFee.coltan)) {
+                        entry.paid.coltan += (entry.totalPrice.coltan - entry.rmaFee.coltan);
+                        entry.unsettled.coltan = 0;
+                        entry.settled.coltan = true;
+                        if ((payment.remainingAmount - entry.paid.coltan) > (entry.totalPrice.cassiterite - entry.rmaFee.cassiterite)) {
+                            entry.paid.cassiterite += (entry.totalPrice.cassiterite - entry.rmaFee.cassiterite);
+                            entry.unsettled.cassiterite = 0;
+                            entry.settled.cassiterite = true;
+                            payment.remainingAmount = payment.remainingAmount - entry.paid.coltan - entry.rmaFee.coltan - entry.rmaFee.cassiterite - entry.paid.cassiterite;
+                        }
+                    } else {
+                        entry.paid.coltan += payment.remainingAmount;
+                        entry.unsettled.coltan += (entry.totalPrice.coltan - entry.rmaFee.coltan);
+                    }
+                }
+                //////////////////////
                 entry.paid = payment.amountReceived;
                 entry.unsettled = entry.totalPrice - entry.paid;
                 payment.consumed = true;

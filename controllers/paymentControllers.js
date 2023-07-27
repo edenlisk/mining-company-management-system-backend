@@ -46,7 +46,10 @@ exports.addPayment = catchAsync(async (req, res, next) => {
             email: req.body.email,
             location: req.body.location,
             amountReceived: req.body.amountReceived,
-            currency: req.body.currency
+            currency: req.body.currency,
+            cassiteriteAmount: req.body.cassiteriteAmount,
+            coltanAmount: req.body.coltanAmount,
+            model: req.body.model
         }
     )
     res

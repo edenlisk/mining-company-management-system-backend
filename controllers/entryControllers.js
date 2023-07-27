@@ -6,7 +6,7 @@ const Mixed = require('../models/mixedMineralsModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 
-const getModel = (model) => {
+module.exports = getModel = (model) => {
     switch (model) {
         case "cassiterite":
             return Cassiterite;
@@ -126,12 +126,16 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
     // if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
     // if (req.body.grossQuantity) entry.grossQuantity = req.body.grossQuantity;
     // if (req.body.netQuantity) entry.netQuantity = req.body.netQuantity;
-    if (req.body.status.toLowerCase() === "in stock") entry.status = "in stock";
-    if (req.body.status.toLowerCase() === "exported") entry.status = "exported";
-    if (req.body.status.toLowerCase() === "non-sell agreement") entry.status = "non-sell agreement";
-    if (req.body.status.toLowerCase() === "rejected") entry.status = "rejected";
+    if (req.body.status === "in stock") entry.status = "in stock";
+    if (req.body.status === "exported") entry.status = "exported";
+    if (req.body.status === "non-sell agreement") entry.status = "non-sell agreement";
+    if (req.body.status === "rejected") entry.status = "rejected";
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    if (req.body.mineTags) entry.mineTags = req.body.mineTags;
+    if (req.params.model === "coltan" || req.params.model === "cassiterite") {
+        if (req.body.mineTags) entry.mineTags = req.body.mineTags;
+        if (req.body.negociantTags) entry.negociantTags = req.body.negociantTags;
+        if (req.body.grade) entry.grade = req.body.grade;
+    }
     if (req.params.model === "coltan") {
         if (req.body.tantal) entry.tantal = req.body.tantal;
     }
@@ -145,9 +149,8 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
         if (req.body.cassiteriteGrade) entry.grade.cassiterite = req.body.cassiteriteGrade;
         if (req.body.coltanGrade) entry.grade.coltan = req.body.coltanGrade;
     }
-    if (req.body.negociantTags) entry.negociantTags = req.body.negociantTags;
-    if (req.body.grade) entry.grade = req.body.grade;
-    if (req.body.totalPrice) entry.totalPrice = req.body.totalPrice;
+    // TODO 2: RESTRUCTURE BOTH MINE AND NEGOCIANT TAGS
+    // if (req.body.totalPrice) entry.totalPrice = req.body.totalPrice;
     await entry.save({validateModifiedOnly: true});
     res
         .status(202)

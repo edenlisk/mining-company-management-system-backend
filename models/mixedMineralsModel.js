@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const { entry } = require('../models/entryModel');
+const {entry} = require('../models/entryModel');
 const AppError = require('../utils/appError');
 const Supplier = require('../models/supplierModel');
 
@@ -7,6 +7,11 @@ const Supplier = require('../models/supplierModel');
 const mixedSchema = new mongoose.Schema(
     {
         ...entry,
+        name: {
+            type: String,
+            default: "mixed",
+            immutable: true
+        },
         quantity: {
             cassiterite: Number,
             coltan: Number
@@ -16,8 +21,14 @@ const mixedSchema = new mongoose.Schema(
             cassiterite: Number
         },
         unsettled: {
-            coltan: Number,
-            cassiterite: Number
+            coltan: {
+                type: Number,
+                default: 0
+            },
+            cassiterite: {
+                type: Number,
+                default: 0
+            }
         },
         totalPrice: {
             coltan: Number,
@@ -28,8 +39,14 @@ const mixedSchema = new mongoose.Schema(
             cassiterite: Boolean
         },
         paid: {
-            coltan: Number,
-            cassiterite: Number
+            coltan: {
+                type: Number,
+                default: 0
+            },
+            cassiterite: {
+                type: Number,
+                default: 0
+            }
         },
         tantal: Number,
         londonMetalExchange: Number,
@@ -45,7 +62,51 @@ const mixedSchema = new mongoose.Schema(
         rmaFee: {
             cassiterite: Number,
             coltan: Number
-        }
+        },
+        numberOfTags: {
+            coltan: {
+                type: Number,
+                validate: {
+                    validator: (elem) => {
+                        return elem >= 0;
+                    },
+                    message: "Number of tags can't be negative number"
+                }
+            },
+            cassiterite: {
+                type: Number,
+                validate: {
+                    validator: (elem) => {
+                        return elem >= 0;
+                    },
+                    message: "Number of tags can't be negative number"
+                }
+            },
+        },
+        mineTags: [
+            {
+                coltan: {
+                    type: String,
+                    unique: true
+                },
+                cassiterite: {
+                    type: String,
+                    unique: true
+                }
+            }
+        ],
+        negociantTags: [
+            {
+                coltan: {
+                    type: String,
+                    unique: true
+                },
+                cassiterite: {
+                    type: String,
+                    unique: true
+                }
+            }
+        ],
     },
     {
         toJSON: {virtuals: true},
@@ -71,7 +132,7 @@ mixedSchema.pre('save', async function (next) {
     }
     if (this.isModified(["grade", "quantity"]) && !this.isNew) {
         this.totalPrice.coltan = this.tantal * this.grade.coltan * this.quantity.coltan;
-        this.totalPrice.cassiterite = (((this.londonMetalExchange * this.grade.cassiterite/100) - this.treatmentCharges)/1000) * this.quantity.cassiterite;
+        this.totalPrice.cassiterite = (((this.londonMetalExchange * this.grade.cassiterite / 100) - this.treatmentCharges) / 1000) * this.quantity.cassiterite;
     }
     next();
 })

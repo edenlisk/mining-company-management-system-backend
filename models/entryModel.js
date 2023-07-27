@@ -42,15 +42,6 @@ exports.entry = {
     time: {
         type: String
     },
-    numberOfTags: {
-        type: Number,
-        validate: {
-            validator: (elem) => {
-                return elem >= 0;
-            },
-            message: "Number of tags can't be negative number"
-        }
-    },
     grossQuantity: {
         type: Number,
         validate: {
@@ -67,17 +58,6 @@ exports.entry = {
             return "in stock"
         }
     },
-    totalPrice: Number,
-    paymentCurrency: String,
-    paid: Number,
-    settled: {
-        type: Boolean,
-        default: () => {
-            return false;
-        }
-    },
-    mineTags: [String],
-    negociantTags: [String],
     paymentMode: {
         type: String,
         enum: ["installments", "one-time"]
