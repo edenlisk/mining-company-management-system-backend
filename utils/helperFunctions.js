@@ -1,7 +1,21 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const Cassiterite = require('../models/cassiteriteEntryModel');
+const Coltan = require('../models/coltanEntryModel');
+const Mixed = require('../models/mixedMineralsModel');
 const AppError = require('./appError');
+
+exports.getModel = (model) => {
+    switch (model) {
+        case "cassiterite":
+            return Cassiterite;
+        case "coltan":
+            return Coltan;
+        case "mixed":
+            return Mixed
+    }
+}
 
 const getHeader = (fileName) => {
     const extension = path.extname(fileName);

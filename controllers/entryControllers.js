@@ -5,17 +5,18 @@ const Cassiterite = require('../models/cassiteriteEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const { getModel } = require('../utils/helperFunctions');
 
-module.exports = getModel = (model) => {
-    switch (model) {
-        case "cassiterite":
-            return Cassiterite;
-        case "coltan":
-            return Coltan;
-        case "mixed":
-            return Mixed
-    }
-}
+// const getModel = (model) => {
+//     switch (model) {
+//         case "cassiterite":
+//             return Cassiterite;
+//         case "coltan":
+//             return Coltan;
+//         case "mixed":
+//             return Mixed
+//     }
+// }
 
 exports.getAllEntries = catchAsync(async (req, res, next) => {
     const coltanEntries = await Coltan.find();
@@ -163,6 +164,7 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteEntry = catchAsync(async (req, res, next) => {
+    const Entry = getModel(req.params.model);
     const entry = await Entry.findByIdAndDelete(req.params.entryId);
     if (!entry) return next(new AppError("Entry was not found", 400));
     res

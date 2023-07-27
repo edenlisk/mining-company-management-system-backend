@@ -1,7 +1,7 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const AppError = require('../utils/appError');
-const getModel = require('../controllers/entryControllers');
+
 
 const paymentSchema = new mongoose.Schema(
     {
@@ -72,6 +72,7 @@ const paymentSchema = new mongoose.Schema(
 )
 
 paymentSchema.pre('save', async function (next) {
+    const { getModel } = require('../utils/helperFunctions');
     const Entry = getModel(this.model);
     if (this.isNew && this.advance) {
         this.consumed = false;
