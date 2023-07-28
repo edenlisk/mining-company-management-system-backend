@@ -3,7 +3,7 @@ const Coltan = require('../models/coltanEntryModel');
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
 const Wolframite = require('../models/wolframiteEntryModel');
-const GeneralEntry = require('../models/generalEntryModel');
+// const GeneralEntry = require('../models/generalEntryModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { getModel } = require('../utils/helperFunctions');
@@ -13,7 +13,7 @@ exports.getAllEntries = catchAsync(async (req, res, next) => {
     const cassiteriteEnties = await Cassiterite.find();
     const mixedEntries = await Mixed.find();
     const wolframiteEntries = await Wolframite.find();
-    const generalEntries = await GeneralEntry.find();
+    // const generalEntries = await GeneralEntry.find();
     res
         .status(200)
         .json(
