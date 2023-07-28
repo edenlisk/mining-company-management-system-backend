@@ -4,6 +4,7 @@ const multer = require('multer');
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Coltan = require('../models/coltanEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
+const Wolframite = require('../models/wolframiteEntryModel');
 const GeneralEntry = require('../models/generalEntryModel');
 const AppError = require('./appError');
 
@@ -14,9 +15,11 @@ exports.getModel = (model) => {
         case "coltan":
             return Coltan;
         case "mixed":
-            return Mixed
+            return Mixed;
+        case "wolframite":
+            return Wolframite;
         case "general":
-            return GeneralEntry
+            return GeneralEntry;
     }
 }
 

@@ -1,28 +1,18 @@
-// const Entry = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
 const Coltan = require('../models/coltanEntryModel');
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
+const Wolframite = require('../models/wolframiteEntryModel');
 const GeneralEntry = require('../models/generalEntryModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { getModel } = require('../utils/helperFunctions');
 
-// const getModel = (model) => {
-//     switch (model) {
-//         case "cassiterite":
-//             return Cassiterite;
-//         case "coltan":
-//             return Coltan;
-//         case "mixed":
-//             return Mixed
-//     }
-// }
-
 exports.getAllEntries = catchAsync(async (req, res, next) => {
     const coltanEntries = await Coltan.find();
     const cassiteriteEnties = await Cassiterite.find();
     const mixedEntries = await Mixed.find();
+    const wolframiteEntries = await Wolframite.find();
     const generalEntries = await GeneralEntry.find();
     res
         .status(200)
@@ -30,7 +20,7 @@ exports.getAllEntries = catchAsync(async (req, res, next) => {
             {
                 status: "Success",
                 data: {
-                    entries: [...coltanEntries, ...cassiteriteEnties, ...mixedEntries, ...generalEntries]
+                    entries: [...coltanEntries, ...wolframiteEntries, ...cassiteriteEnties, ...mixedEntries, ...generalEntries]
                 }
             }
         )
@@ -113,15 +103,6 @@ exports.createEntry = catchAsync(async (req, res, next) => {
         entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
         entry.cumulativeAmount.coltan = entry.quantity.coltan;
     }
-    if (req.params.model === "general") {
-        if (entry.mineralType.includes('wolfram')) {
-            entry.model = "wolframite";
-        } else if (entry.mineralType.includes('lithium')) {
-            entry.model = "lithium";
-        } else if (entry.mineralType.includes('beryllium')) {
-            entry.model = "beryllium"
-        }
-    }
     await entry.save({validateModifiedOnly: true});
     res
         .status(201)
@@ -142,10 +123,15 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
     if (req.body.status === "non-sell agreement") entry.status = "non-sell agreement";
     if (req.body.status === "rejected") entry.status = "rejected";
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "general") {
+    if (req.params.model === "general") {
+        if (req.body.grade) entry.grade = req.body.grade;
+        if (req.body.netQuantity) entry.netQuantity = req.body.netQuantity;
+    }
+    if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
         if (req.body.mineTags) entry.mineTags = req.body.mineTags;
         if (req.body.negociantTags) entry.negociantTags = req.body.negociantTags;
         if (req.body.grade) entry.grade = req.body.grade;
+        if (req.body.netQuantity) entry.netQuantity = req.body.netQuantity;
     }
     if (req.params.model === "coltan") {
         if (req.body.tantal) entry.tantal = req.body.tantal;
@@ -160,15 +146,8 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
         if (req.body.cassiteriteGrade) entry.grade.cassiterite = req.body.cassiteriteGrade;
         if (req.body.coltanGrade) entry.grade.coltan = req.body.coltanGrade;
     }
-    if (req.params.model === "general") {
-        if (entry.mineralType.includes('wolfram')) {
-            entry.model = "wolframite";
-        } else if (entry.mineralType.includes('lithium')) {
-            entry.model = "lithium";
-        } else if (entry.mineralType.includes('beryllium')) {
-            entry.model = "beryllium"
-        }
-    }
+    if (req.body.paymentCurrency) entry.paymentCurrency = req.body.paymentCurrency;
+    if (req.body.paymentMode) entry.paymentMode = req.body.paymentMode;
     // TODO 2: RESTRUCTURE BOTH MINE AND NEGOCIANT TAGS -> DONE
     await entry.save({validateModifiedOnly: true});
     res

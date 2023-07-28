@@ -3,19 +3,12 @@ const { entry } = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
 const AppError = require('../utils/appError');
 
-
 const generalEntrySchema = new mongoose.Schema(
     {
         ...entry,
-        exportedAmount: {
-            type: Number,
-            validate: {
-                validator: function (value) {
-                    return value <= this.netQuantity;
-                },
-                message: "Exported amount can't be greater than weight-out"
-            },
-            default: 0
+        name: {
+            type: String,
+            immutable: true
         },
         netQuantity: {
             type: Number,
@@ -26,6 +19,16 @@ const generalEntrySchema = new mongoose.Schema(
                 message: "Weight-out can't be negative number"
             }
         },
+        exportedAmount: {
+            type: Number,
+            validate: {
+                validator: function (value) {
+                    return value <= this.netQuantity;
+                },
+                message: "Exported amount can't be greater than weight-out"
+            },
+            default: 0
+        },
         cumulativeAmount: {
             type: Number,
             validate: {
@@ -34,6 +37,41 @@ const generalEntrySchema = new mongoose.Schema(
                 },
                 message: "Cumulative amount can't be greater than weight-out"
             },
+        },
+        grade: {
+            type: Number
+        },
+        totalPrice: Number,
+        paymentCurrency: String,
+        numberOfTags: {
+            type: Number,
+            validate: {
+                validator: (elem) => {
+                    return elem >= 0;
+                },
+                message: "Number of tags can't be negative number"
+            }
+        },
+        mineTags: [
+            {
+                type: String,
+                unique: true
+            }
+        ],
+        negociantTags: [
+            {
+                type: String,
+                unique: true
+            }
+        ],
+        rmaFee: {
+            type: Number,
+            validate: {
+                validator: (elem) => {
+                    return elem >= 0;
+                },
+                message: "Rwanda Mining Association fee can't be negative number"
+            }
         },
         paid: {
             type: Number,
@@ -44,27 +82,13 @@ const generalEntrySchema = new mongoose.Schema(
             message: ""
         },
         unsettled: {
-            type: Number
-        },
-        grade: {
-            type: Number
+            type: Number,
         },
         settled: {
             type: Boolean,
             default: () => {
                 return false;
             }
-        },
-        rmaFee: {
-            type: Number,
-            default: 0,
-            immutable: true
-        },
-        totalPrice: {
-            type: Number
-        },
-        paymentCurrency: {
-            type: Number
         },
         status: {
             type: String,
@@ -85,7 +109,7 @@ generalEntrySchema.virtual('finalPrice').get(function () {
     return this.totalPrice - this.rmaFee;
 })
 
-generalEntrySchema.pre('save', async function (next) {
+generalEntrySchema.pre('save', async function(next) {
     if (this.isModified('supplierId') && !this.isNew) {
         const supplier = await Supplier.findById(this.supplierId);
         if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
@@ -96,11 +120,14 @@ generalEntrySchema.pre('save', async function (next) {
         this.TINNumber = supplier.TINNumber;
         this.district = supplier.address.district;
     }
-    if (this.isModified(['grade', 'netQuantity']) && !this.isNew) {
-        // calculate the ///////
+    if (this.isModified('netQuantity')) {
+        this.rmaFee = 50 * this.netQuantity;
+    }
+    if (this.isModified(["grade", "netQuantity"]) && !this.isNew) {
+        // TODO 7: CALCULATE THE TOTAL PRICE OF WOLFRAMITE
     }
     next();
 })
 
-
 module.exports = mongoose.model('GeneralEntry', generalEntrySchema);
+
