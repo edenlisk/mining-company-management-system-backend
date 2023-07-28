@@ -3,15 +3,15 @@
 //     lithium, mixed minerals), number of mine tags
 
 const mongoose = require('mongoose');
-const Supplier = require('./supplierModel');
-const Payment = require('./paymentModel');
-const AppError = require('../utils/appError');
 
 exports.entry = {
     supplierId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Supplier',
         // required: true
+    },
+    mineralType: {
+        type: String
     },
     companyName: {
         type: String,
@@ -48,7 +48,7 @@ exports.entry = {
             validator: (elem) => {
                 return elem >= 0;
             },
-            message: "Gross quantity can't be negative number"
+            message: "Weight-in can't be negative number"
         }
     },
     status: {

@@ -26,28 +26,40 @@ const cassiteriteSchema = new mongoose.Schema(
             },
             message: "Treatment charges (LME) can't be negative number"
         },
-        unsettled: Number,
+        unsettled: {
+            type: Number,
+            validate: (value) => {
+                return value >= 0;
+            },
+            message: "Unsettled amount can't be negative number"
+        },
         netQuantity: {
             type: Number,
             validate: {
                 validator: (elem) => {
                     return elem >= 0;
                 },
-                message: "Net quantity can't be negative number"
+                message: "Weight-out can't be negative number"
             }
         },
         exportedAmount: {
             type: Number,
             validate: {
-                validator: (elem) => {
-                    return elem >= 0;
+                validator: function (value) {
+                    return value <= this.netQuantity;
                 },
-                message: "Exported amount can't be negative number"
+                message: "Exported amount can't be greater than weight-out"
             },
             default: 0
         },
         cumulativeAmount: {
             type: Number,
+            validate: {
+                validator: function (value) {
+                    return value <= this.netQuantity;
+                },
+                message: "Cumulative amount can't be greater than weight-out"
+            }
         },
         grade: {
             type: Number
@@ -84,19 +96,38 @@ const cassiteriteSchema = new mongoose.Schema(
         ],
         totalPrice: Number,
         paymentCurrency: String,
-        paid: Number,
+        paid: {
+            type: Number,
+            validate: function (value) {
+                return value <= (this.totalPrice - this.rmaFee);
+            },
+            // TODO 4: FIND APPROPRIATE ERROR MESSAGE
+            message: ""
+        },
         settled: {
             type: Boolean,
             default: () => {
                 return false;
             }
         },
+        status: {
+            type: String,
+            enum: ["in stock", "fully exported", "rejected", "non-sell agreement", "partially exported"],
+            default: () => {
+                return "in stock"
+            }
+        },
     },
     {
+        timestamps: true,
         toJSON: {virtuals: true},
         toObject: {virtuals: true}
     }
 )
+
+cassiteriteSchema.virtual('finalPrice').get(function () {
+    return this.totalPrice - this.rmaFee;
+})
 
 cassiteriteSchema.pre('save', async function (next) {
     if (this.isModified('supplierId') && !this.isNew) {
@@ -115,13 +146,16 @@ cassiteriteSchema.pre('save', async function (next) {
     if (this.isModified(["londonMetalExchange", "treatmentCharges", "grade", "netQuantity"]) && !this.isNew) {
         this.totalPrice = (((this.londonMetalExchange * this.grade/100) - this.treatmentCharges)/1000) * this.netQuantity;
     }
+    if (this.isModified('paid')) {
+        if (this.paid >= (this.totalPrice - this.rmaFee)) {
+            this.settled = true;
+            // this.unsettled = 0;
+        }
+    }
     next()
     // formula = ((LME * Grade/100) - TC)/1000
 })
 
-cassiteriteSchema.virtual('finalPrice').get(function () {
-    return this.totalPrice - this.rmaFee;
-})
 
 
 module.exports = mongoose.model('Cassiterite', cassiteriteSchema);

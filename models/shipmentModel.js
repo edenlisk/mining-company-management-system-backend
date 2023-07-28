@@ -1,17 +1,16 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
-const Entry = require('./entryModel');
+const { getModel } = require('../utils/helperFunctions');
 
 const shipmentSchema = new mongoose.Schema(
     {
         entries: {
             type: [
                 {
-                    entryId: {
-                        type: mongoose.Schema.Types.ObjectId,
-                        rel: 'Entry'
-                    },
-                    quantity: Number
+                    entryId: mongoose.Schema.Types.ObjectId,
+                    quantity: Number,
+                    model: String,
+                    mineral: String
                 }
             ],
             default: () => {
@@ -37,10 +36,14 @@ const shipmentSchema = new mongoose.Schema(
                 message: "Shipment price can't be negative number"
             }
         },
+        shipmentMinerals: {
+            type: String
+        },
         buyerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Buyer',
-            required: [true, "Please select the buyer"]
+            required: [true, "Please select the buyer"],
+            immutable: true
         },
         shipmentSamplingDate: {
             type: Date,
@@ -50,6 +53,11 @@ const shipmentSchema = new mongoose.Schema(
         },
         totalShipmentQuantity: {
             type: Number
+        },
+        shipmentNumber: {
+            type: String,
+            unique: true,
+            required: [true, "Please provide shipment number"]
         },
         analysisCertificate: {
             type: String,
@@ -69,8 +77,8 @@ const shipmentSchema = new mongoose.Schema(
 
 shipmentSchema.pre('save', async function (next) {
     if (this.isNew) {
-        const filePath = `${__dirname}/../public/data/shipment/${this.buyerId}`;
-        fs.mkdir(`${filePath}/${this._id}`, {recursive: true}, err => {
+        const filePath = `${__dirname}/../public/data/shipment/${this._id}`;
+        fs.mkdir(filePath, {recursive: true}, err => {
             if (err) {
                 console.log(err);
             }
@@ -80,20 +88,39 @@ shipmentSchema.pre('save', async function (next) {
 })
 
 shipmentSchema.pre('save', async function (next) {
-    // if (this.isModified('entries')) {
-    //     for (const item of this.entries) {
-    //         const entry = await Entry.findById(item.entryId).select({status: 1, netQuantity: 1, exportedAmount: 1, cumulativeAmount: 1});
-    //         if (entry.netQuantity > item.quantity) {
-    //             entry.status = "partially exported";
-    //             entry.exportedAmount += item.quantity;
-    //         } else if (item.quantity === entry.netQuantity) {
-    //             entry.status = "exported";
-    //             entry.exportedAmount = entry.netQuantity;
-    //         }
-    //         this.totalShipmentQuantity += entry.quantity;
-    //
-    //     }
-    // }
+    if (this.isModified('entries')) {
+        for (const item of this.entries) {
+            const Entry = getModel(item.model);
+            const entry = await Entry.findById(item.entryId).select({status: 1, netQuantity: 1, exportedAmount: 1, cumulativeAmount: 1});
+            if (item.model === "mixed") {
+                if (entry.cumulativeAmount[item.mineral] > item.quantity) {
+                    this.totalShipmentQuantity += item.quantity;
+                    entry.exportedAmount[item.mineral] += item.quantity;
+                    entry.cumulativeAmount[item.mineral] -= item.quantity;
+                    entry.status[item.mineral] = "partially exported";
+                } else {
+                    this.totalShipmentQuantity += entry.cumulativeAmount[item.mineral];
+                    entry.exportedAmount[item.mineral] += entry.cumulativeAmount[item.mineral];
+                    entry.cumulativeAmount[item.mineral] = 0;
+                    entry.status[item.mineral] = "fully exported";
+                }
+            } else {
+                if (entry.cumulativeAmount > item.quantity) {
+                    this.totalShipmentQuantity += item.quantity;
+                    entry.exportedAmount += item.quantity;
+                    entry.cumulativeAmount -= item.quantity;
+                    entry.status = "partially exported";
+                } else {
+                    this.totalShipmentQuantity += entry.cumulativeAmount;
+                    entry.exportedAmount += entry.cumulativeAmount;
+                    entry.cumulativeAmount = 0;
+                    entry.status = "fully exported"
+                }
+            }
+            await entry.save({validateModifiedOnly: true});
+        }
+    }
+    next();
 })
 
 module.exports = mongoose.model('Shipment', shipmentSchema);

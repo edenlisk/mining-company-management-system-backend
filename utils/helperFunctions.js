@@ -4,6 +4,7 @@ const multer = require('multer');
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Coltan = require('../models/coltanEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
+const GeneralEntry = require('../models/generalEntryModel');
 const AppError = require('./appError');
 
 exports.getModel = (model) => {
@@ -14,6 +15,8 @@ exports.getModel = (model) => {
             return Coltan;
         case "mixed":
             return Mixed
+        case "general":
+            return GeneralEntry
     }
 }
 

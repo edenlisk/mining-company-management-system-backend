@@ -25,8 +25,9 @@ exports.createShipment = catchAsync(async (req, res, next) => {
     await Shipment.create(
         {
             entries: req.body.entry,
-            shipmentGrade: req.body.shipmentGrade,
             shipmentPrice: req.body.shipmentPrice,
+            shipmentGrade: req.body.shipmentGrade,
+            totalShipmentQuantity: req.body.totalShipmentQuantity,
             buyerId: req.body.buyerId,
             shipmentSamplingDate: req.body.shipmentSamplingDate,
             shipmentContainerLoadingDate: req.body.shipmentContainerLoadingDate
@@ -51,10 +52,13 @@ exports.addCertificate = catchAsync(async (req, res, next) => {
 exports.updateShipment = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("Selected shipment no longer exists!", 400));
+    if (req.body.entry) shipment.entries = req.body.entry;
     if (req.body.shipmentGrade) shipment.shipmentGrade = req.body.shipmentGrade;
     if (req.body.shipmentPrice) shipment.shipmentPrice = req.body.shipmentPrice;
+    if (req.body.shipmentNumber) shipment.shipmentNumber = req.body.shipmentNumber;
     if (req.body.shipmentSamplingDate) shipment.shipmentSamplingDate = req.body.shipmentSamplingDate;
     if (req.body.shipmentContainerLoadingDate) shipment.shipmentContainerLoadingDate = req.body.shipmentContainerLoadingDate;
+    if (req.body.totalShipmentQuantity) shipment.totalShipmentQuantity = req.body.totalShipmentQuantity;
     await shipment.save({validateModifiedOnly: true});
     res
         .status(202)

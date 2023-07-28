@@ -76,11 +76,28 @@ const coltanSchema = new mongoose.Schema(
         ],
         totalPrice: Number,
         paymentCurrency: String,
-        paid: Number,
+        paid: {
+            type: Number,
+            default: 0,
+            validate: {
+                validator: function (value) {
+                    return value <= (this.totalPrice - this.rmaFee);
+                },
+                // TODO 4: FIND APPROPRIATE ERROR MESSAGE
+                message: ""
+            }
+        },
         settled: {
             type: Boolean,
             default: () => {
                 return false;
+            }
+        },
+        status: {
+            type: String,
+            enum: ["in stock", "fully exported", "rejected", "non-sell agreement", "partially exported"],
+            default: () => {
+                return "in stock"
             }
         },
     },
@@ -89,6 +106,10 @@ const coltanSchema = new mongoose.Schema(
         toObject: {virtuals: true}
     }
 )
+
+coltanSchema.virtual('finalPrice').get(function () {
+    return this.totalPrice - this.rmaFee;
+})
 
 
 coltanSchema.pre('save', async function (next) {
@@ -108,13 +129,16 @@ coltanSchema.pre('save', async function (next) {
     if (this.isModified(["tantal", "netQuantity", "grade"]) && !this.isNew) {
         this.totalPrice = this.tantal * this.grade * this.netQuantity;
     }
+    if (this.isModified('paid')) {
+        if (this.paid >= (this.totalPrice - this.rmaFee)) {
+            this.settled = true;
+            // this.unsettled = 0;
+        }
+    }
     next();
     // formula = tantal * grade
 })
 
-coltanSchema.virtual('finalPrice').get(function () {
-    return this.totalPrice - this.rmaFee;
-})
 
 
 module.exports = mongoose.model('Coltan', coltanSchema);

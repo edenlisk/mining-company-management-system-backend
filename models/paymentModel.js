@@ -65,8 +65,14 @@ const paymentSchema = new mongoose.Schema(
                 return this.amountReceived;
             }
         },
-        coltanAmount: Number,
-        cassiteriteAmount: Number
+        coltanAmount: {
+            type: Number,
+            default: 0
+        },
+        cassiteriteAmount: {
+            type: Number,
+            default: 0
+        }
     },
     {timestamps: true}
 )
@@ -84,39 +90,68 @@ paymentSchema.pre('save', async function (next) {
             const payment = await paymentModel.findById(this.paymentInAdvanceId).select({consumed: 1, amountReceived: 1, remainingAmount: 1});
             if (!payment.consumed) {
                 if (this.model === "mixed") {
+                    if (payment.remainingAmount >= entry.rmaFee.coltan) {
+                        payment.remainingAmount -= entry.rmaFee.coltan;
+                    }
+                    if (payment.remainingAmount >= entry.rmaFee.cassiterite) {
+                        payment.remainingAmount -= entry.rmaFee.cassiterite;
+                    }
                     if (payment.remainingAmount >= (entry.totalPrice.coltan - entry.rmaFee.coltan)) {
                         entry.paid.coltan += (entry.totalPrice.coltan - entry.rmaFee.coltan);
-                        entry.unsettled.coltan = 0;
+                        entry.unsettled.coltan -= entry.paid.coltan;
                         entry.settled.coltan = true;
-                        if ((payment.remainingAmount - entry.paid.coltan) > (entry.totalPrice.cassiterite - entry.rmaFee.cassiterite)) {
+                        payment.remainingAmount -= entry.paid.coltan;
+                        if (payment.remainingAmount >= (entry.totalPrice.cassiterite - entry.rmaFee.cassiterite)) {
                             entry.paid.cassiterite += (entry.totalPrice.cassiterite - entry.rmaFee.cassiterite);
-                            entry.unsettled.cassiterite = 0;
+                            entry.unsettled.cassiterite -= entry.paid.cassiterite;
                             entry.settled.cassiterite = true;
-                            payment.remainingAmount = payment.remainingAmount - entry.paid.coltan - entry.rmaFee.coltan - entry.rmaFee.cassiterite - entry.paid.cassiterite;
+                            payment.remainingAmount -= entry.paid.cassiterite;
+                        } else {
+                            entry.paid.cassiterite += payment.remainingAmount;
+                            entry.unsettled.cassiterite -= entry.paid.cassiterite;
+                            payment.consumed = true;
                         }
                     } else {
                         entry.paid.coltan += payment.remainingAmount;
-                        entry.unsettled.coltan += (entry.totalPrice.coltan - entry.rmaFee.coltan);
+                        entry.unsettled.coltan -= entry.paid.coltan;
+                        payment.consumed = true;
+                    }
+                } else {
+                    payment.remainingAmount -= entry.rmaFee;
+                    if (payment.remainingAmount >= (entry.totalPrice - entry.rmaFee)) {
+                        entry.paid += (entry.totalPrice - entry.rmaFee);
+                        entry.unsettled -= entry.paid;
+                        entry.settled = true;
+                        payment.remainingAmount -= entry.paid;
+                    } else {
+                        entry.paid += payment.remainingAmount;
+                        entry.unsettled -= entry.paid;
+                        payment.consumed = true;
                     }
                 }
-                //////////////////////
-                entry.paid = payment.amountReceived;
-                entry.unsettled = entry.totalPrice - entry.paid;
-                payment.consumed = true;
                 await payment.save({validateModifiedOnly: true});
-                if (entry.unsettled <= 0) {
-                    entry.settled = true;
-                    await entry.save({validateModifiedOnly: true});
-                    next();
-                }
+            }
+        } else {
+            if (this.model === "mixed") {
+                entry.paid.coltan += this.coltanAmount;
+                entry.unsettled.coltan -= this.coltanAmount;
+                entry.paid.cassiterite += this.cassiteriteAmount;
+                entry.unsettled.cassiterite -= this.cassiteriteAmount;
+            } else {
+                entry.paid += this.amountReceived;
+                entry.unsettled -= this.amountReceived;
             }
         }
-        entry.paid = entry.paid + this.amountReceived;
-        entry.unsettled = entry.unsettled - this.amountReceived;
-        if (entry.unsettled <= 0) {
-            entry.settled = true;
-        }
         await entry.save({validateModifiedOnly: true});
+    }
+    next();
+})
+
+paymentSchema.pre('save', async function (next) {
+    if (this.isModified('remainingAmount')) {
+        if (this.remainingAmount <= 0) {
+            this.consumed = true;
+        }
     }
     next();
 })

@@ -3,6 +3,7 @@ const Supplier = require('../models/supplierModel');
 const Coltan = require('../models/coltanEntryModel');
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
+const GeneralEntry = require('../models/generalEntryModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { getModel } = require('../utils/helperFunctions');
@@ -22,13 +23,14 @@ exports.getAllEntries = catchAsync(async (req, res, next) => {
     const coltanEntries = await Coltan.find();
     const cassiteriteEnties = await Cassiterite.find();
     const mixedEntries = await Mixed.find();
+    const generalEntries = await GeneralEntry.find();
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    entries: [...coltanEntries, ...cassiteriteEnties, ...mixedEntries]
+                    entries: [...coltanEntries, ...cassiteriteEnties, ...mixedEntries, ...generalEntries]
                 }
             }
         )
@@ -68,6 +70,7 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 email: supplier.email,
                 representativeId: supplier.representativeId,
                 representativePhoneNumber: supplier.representativePhoneNumber,
+                mineralType: req.body.mineralType,
             }
         )
     } else if (supplier.companyName.toLowerCase() === "kanzamin") {
@@ -80,7 +83,8 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 TINNumber: "Kanzamin TIN",
                 email: "kanzamin@gmail.com",
                 representativeId: "Kanzamin representative",
-                representativePhoneNumber: "+250780000000"
+                representativePhoneNumber: "+250780000000",
+                mineralType: req.body.mineralType,
             }
         )
     } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
@@ -93,21 +97,31 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 TINNumber: supplier.TINNumber,
                 email: supplier.email,
                 representativeId: req.body.representativeId,
-                representativePhoneNumber: req.body.representativePhoneNumber
+                representativePhoneNumber: req.body.representativePhoneNumber,
+                mineralType: req.body.mineralType
             }
         )
-    }
-    if (req.params.model === "mixed") {
-        entry.quantity.coltan = req.body.coltan;
-        entry.quantity.cassiterite = req.body.cassiterite;
-        entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
-        entry.cumulativeAmount.coltan = entry.quantity.coltan;
     }
     entry.numberOfTags = req.body.numberOfTags;
     entry.grossQuantity = req.body.grossQuantity;
     entry.netQuantity = req.body.netQuantity;
     entry.supplyDate = new Date().toISOString().split('T')[0];
     entry.time = req.body.time;
+    if (req.params.model === "mixed") {
+        entry.quantity.coltan = req.body.coltan;
+        entry.quantity.cassiterite = req.body.cassiterite;
+        entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
+        entry.cumulativeAmount.coltan = entry.quantity.coltan;
+    }
+    if (req.params.model === "general") {
+        if (entry.mineralType.includes('wolfram')) {
+            entry.model = "wolframite";
+        } else if (entry.mineralType.includes('lithium')) {
+            entry.model = "lithium";
+        } else if (entry.mineralType.includes('beryllium')) {
+            entry.model = "beryllium"
+        }
+    }
     await entry.save({validateModifiedOnly: true});
     res
         .status(201)
@@ -123,16 +137,12 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     const entry = await Entry.findById(req.params.entryId);
     if (!entry) return next(new AppError("This entry no longer exists", 400));
-    // if (req.body.mineralSupplied) entry.mineralSupplied = req.body.mineralSupplied;
-    // if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
-    // if (req.body.grossQuantity) entry.grossQuantity = req.body.grossQuantity;
-    // if (req.body.netQuantity) entry.netQuantity = req.body.netQuantity;
     if (req.body.status === "in stock") entry.status = "in stock";
     if (req.body.status === "exported") entry.status = "exported";
     if (req.body.status === "non-sell agreement") entry.status = "non-sell agreement";
     if (req.body.status === "rejected") entry.status = "rejected";
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    if (req.params.model === "coltan" || req.params.model === "cassiterite") {
+    if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "general") {
         if (req.body.mineTags) entry.mineTags = req.body.mineTags;
         if (req.body.negociantTags) entry.negociantTags = req.body.negociantTags;
         if (req.body.grade) entry.grade = req.body.grade;
@@ -150,8 +160,16 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
         if (req.body.cassiteriteGrade) entry.grade.cassiterite = req.body.cassiteriteGrade;
         if (req.body.coltanGrade) entry.grade.coltan = req.body.coltanGrade;
     }
-    // TODO 2: RESTRUCTURE BOTH MINE AND NEGOCIANT TAGS
-    // if (req.body.totalPrice) entry.totalPrice = req.body.totalPrice;
+    if (req.params.model === "general") {
+        if (entry.mineralType.includes('wolfram')) {
+            entry.model = "wolframite";
+        } else if (entry.mineralType.includes('lithium')) {
+            entry.model = "lithium";
+        } else if (entry.mineralType.includes('beryllium')) {
+            entry.model = "beryllium"
+        }
+    }
+    // TODO 2: RESTRUCTURE BOTH MINE AND NEGOCIANT TAGS -> DONE
     await entry.save({validateModifiedOnly: true});
     res
         .status(202)
