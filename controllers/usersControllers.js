@@ -60,7 +60,9 @@ exports.updateUser = catchAsync(async (req, res, next) => {
 
 exports.deleteUser = catchAsync(async (req, res, next) => {
     const user = await User.findByIdAndDelete(req.params.userId);
-    logger.warn(`${user.name}'s account deleted successfully`);
+    if (user) {
+        logger.warn(`${user.name}'s account deleted successfully`);
+    }
     res
         .status(204)
         .json(

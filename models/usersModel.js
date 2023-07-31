@@ -33,7 +33,10 @@ const userSchema = new mongoose.Schema(
         role: {
             type: String,
             required: [true, "Please provide user role"],
-            enum: ["managingDirector", "operationsManager", "accountant", "traceabilityOfficer", "storekeeper", "CEO"]
+            enum: ["managingDirector", "operationsManager", "accountant", "traceabilityOfficer", "storekeeper", "ceo"],
+            default: () => {
+                return "storekeeper"
+            }
         },
         // permissions: {
         //     type: String,
