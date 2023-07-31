@@ -129,5 +129,5 @@ generalEntrySchema.pre('save', async function(next) {
     next();
 })
 
-module.exports = mongoose.model('GeneralEntry', generalEntrySchema);
+module.exports = mongoose.model('Wolframite', generalEntrySchema);
 

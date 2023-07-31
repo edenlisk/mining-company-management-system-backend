@@ -5,10 +5,11 @@ const Cassiterite = require('../models/cassiteriteEntryModel');
 const Coltan = require('../models/coltanEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
 const Wolframite = require('../models/wolframiteEntryModel');
+const GeneralEntry = require('../models/generalEntryModel');
+
 const AppError = require('./appError');
 
 exports.getModel = (model) => {
-    const GeneralEntry = require('../models/generalEntryModel');
     switch (model) {
         case "cassiterite":
             return Cassiterite;
