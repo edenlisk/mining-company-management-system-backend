@@ -5,10 +5,10 @@ const Cassiterite = require('../models/cassiteriteEntryModel');
 const Coltan = require('../models/coltanEntryModel');
 const Mixed = require('../models/mixedMineralsModel');
 const Wolframite = require('../models/wolframiteEntryModel');
-// const GeneralEntry = require('../models/generalEntryModel');
 const AppError = require('./appError');
 
 exports.getModel = (model) => {
+    const GeneralEntry = require('../models/generalEntryModel');
     switch (model) {
         case "cassiterite":
             return Cassiterite;
@@ -80,4 +80,254 @@ exports.sendAttachment = (filePath, fileName, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
     res.setHeader('Content-Type', getHeader(fileName));
     fileStream.pipe(res);
+}
+        // 1                // 2        ....n
+// ((quantity * grade) + (quantity * grade))/ total quantity
+
+const storekeeper = {
+    entry: {
+        view: true,
+        create: true,
+        edit: false,
+        delete: false
+    },
+    suppliers: {
+        view: true,
+        edit: true,
+        create: true,
+        delete: false
+    },
+    buyers: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    payments: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    shipments: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    }
+}
+
+const traceabilityOfficer = {
+    entry: {
+        view: true,
+        create: false,
+        edit: true,
+        delete: false
+    },
+    suppliers: {
+        view: true,
+        edit: true,
+        create: true,
+        delete: false
+    },
+    buyers: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    payments: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    shipments: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    contracts: {
+        view: true,
+        create: false,
+        delete: false
+    },
+}
+
+const managingDirector = {
+    entry: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    suppliers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    payments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    shipments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: false,
+        delete: false
+    },
+    settings: {
+        view: false,
+        edit: false
+    }
+}
+
+const ceo = {
+    entry: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    suppliers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    payments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    shipments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: false,
+        delete: false
+    },
+    settings: {
+        view: true,
+        edit: true
+    }
+}
+
+const operationsManager = {
+    entry: {
+        view: true,
+        create: false,
+        edit: true,
+        delete: false
+    },
+    suppliers: {
+        view: true,
+        create: false,
+        edit: true,
+        delete: false
+    },
+    buyers: {
+        view: true,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    payments: {
+        view: true,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    shipments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: false
+    },
+    contracts: {
+        view: false,
+        create: false,
+        delete: false
+    },
+    settings: {
+        view: false,
+        edit: false
+    }
+}
+
+const accountant = {
+    entry: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    suppliers: {
+        view: true,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: false
+    },
+    payments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    shipments: {
+        view: true,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    contracts: {
+        view: true,
+        create: false,
+        delete: false
+    },
+    settings: {
+        view: false,
+        edit: false
+    }
+}
+
+exports.permissions = {
+    storekeeper,
+    traceabilityOfficer,
+    managingDirector,
+    operationsManager,
+    ceo,
+    accountant
 }

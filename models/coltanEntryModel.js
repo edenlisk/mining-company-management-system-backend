@@ -64,14 +64,20 @@ const coltanSchema = new mongoose.Schema(
         },
         mineTags: [
             {
-                type: String,
-                unique: true
+                weightInPermineTag: Number,
+                tagNumber: {
+                    type: String,
+                    unique: true
+                }
             }
         ],
         negociantTags: [
             {
-                type: String,
-                unique: true
+                weightOutPerNegociantTag: Number,
+                tagNumber: {
+                    type: String,
+                    unique: true
+                }
             }
         ],
         totalPrice: Number,

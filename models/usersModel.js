@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const bcrypt = require('bcryptjs');
 
-
 const userSchema = new mongoose.Schema(
     {
         name: {
@@ -36,9 +35,12 @@ const userSchema = new mongoose.Schema(
             required: [true, "Please provide user role"],
             enum: ["managingDirector", "operationsManager", "accountant", "traceabilityOfficer", "storekeeper", "CEO"]
         },
+        // permissions: {
+        //     type: String,
+        //     enum: ["storekeeper", "ceo", "managing-director", "operations-manager", "accountant", "traceability-officer"],
+        // },
         permissions: {
-            type: String,
-            enum: ["storekeeper", "ceo", "managing-director", "operations-manager", "accountant", "traceability-officer"],
+            type: Object,
         },
         password: {
             type: String,

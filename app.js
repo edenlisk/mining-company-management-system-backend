@@ -11,6 +11,9 @@ const rateLimit = require("express-rate-limit");
 const hpp = require('hpp');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
+const expressWinston = require('express-winston');
+const { requestLogger, logger: appLogger } = require('./utils/loggers');
+
 
 const entriesRouter = require('./routes/entriesRouter');
 const indexRouter = require('./routes/index');
@@ -49,6 +52,10 @@ const limiter = rateLimit(
 app.use(hpp());
 app.use(helmet());
 app.use('/api', limiter);
+app.use(expressWinston.logger({
+    winstonInstance: requestLogger,
+    statusLevels: true,
+}))
 
 app.use('/api/v1/', indexRouter);
 app.use('/api/v1/entries', entriesRouter);
@@ -59,6 +66,10 @@ app.use('/api/v1/shipments', shipmentsRouter);
 app.use('/api/v1/payments', paymentsRouter)
 app.use('/api/v1/suppliers', suppliersRouter);
 app.use('/api/v1/duediligence', dueDiligenceRouter);
+app.use(expressWinston.logger({
+    winstonInstance: appLogger,
+    statusLevels: true,
+}))
 app.all('*', (req, res, next) => {
     next(new AppError(`Can't find ${req.originalUrl} on this server`, 400));
 })

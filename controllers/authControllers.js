@@ -3,6 +3,8 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
+const { permissions } = require('../utils/helperFunctions');
+const { logger } = require('../utils/loggers');
 // const Email = require('../utils/email');
 
 const signToken = id => {
@@ -41,10 +43,12 @@ exports.signup = catchAsync(async (req, res, next) => {
             phoneNumber: req.body.phoneNumber.trim(),
             email: req.body.email.trim(),
             role: req.body.role.trim(),
+            permissions: permissions[req.body.role.trim()],
             password: req.body.password,
             passwordConfirm: req.body.passwordConfirm
         }
     );
+    logger.info(`create a user named: ${user.name}`);
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')
@@ -58,8 +62,12 @@ exports.login = catchAsync(async (req, res, next) => {
     if (!user || !(await user.verifyPassword(password))) {
         return next(new AppError("Invalid Email or Password", 401));
     }
-    if (user.active !== true) return next(new AppError("Your account was suspended, please contact admin to re-activate", 401));
+    if (user.active !== true) {
+        logger.warn(`${user.name} attempted login while his/her account is suspended.`);
+        return next(new AppError("Your account was suspended, please contact admin to re-activate", 401));
+    }
     user.password = undefined;
+    logger.info(`${user.name} logged in successfully.`)
     createSendToken(user, 200, res);
 })
 

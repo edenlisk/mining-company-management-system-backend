@@ -131,24 +131,36 @@ const mixedSchema = new mongoose.Schema(
         mineTags: [
             {
                 coltan: {
-                    type: String,
-                    unique: true
+                    weightInPermineTag: Number,
+                    tagNumber: {
+                        type: String,
+                        unique: true
+                    }
                 },
                 cassiterite: {
-                    type: String,
-                    unique: true
+                    weightInPermineTag: Number,
+                    tagNumber: {
+                        type: String,
+                        unique: true
+                    }
                 }
             }
         ],
         negociantTags: [
             {
                 coltan: {
-                    type: String,
-                    unique: true
+                    weightOutPerNegociantTag: Number,
+                    tagNumber: {
+                        type: String,
+                        unique: true
+                    }
                 },
                 cassiterite: {
-                    type: String,
-                    unique: true
+                    weightOutPerNegociantTag: Number,
+                    tagNumber: {
+                        type: String,
+                        unique: true
+                    }
                 }
             }
         ],
