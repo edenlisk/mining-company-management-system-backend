@@ -50,7 +50,7 @@ exports.createEntry = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     let entry;
     if (req.body.isSupplierBeneficiary) {
-        entry = await Entry.create(
+        entry = new Entry(
             {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
@@ -69,7 +69,7 @@ exports.createEntry = catchAsync(async (req, res, next) => {
             }
         )
     } else if (supplier.companyName.toLowerCase() === "kanzamin") {
-        entry = await Entry.create(
+        entry = new Entry(
             {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
@@ -88,7 +88,7 @@ exports.createEntry = catchAsync(async (req, res, next) => {
             }
         )
     } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
-        entry = await Entry.create(
+        entry = new Entry(
             {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
@@ -107,7 +107,8 @@ exports.createEntry = catchAsync(async (req, res, next) => {
             }
         )
     }
-    entry = await Entry.findById(entry._id);
+    console.log(entry);
+    // entry = await Entry.findById(entry._id);
     // console.log('----------------')
     // console.log(entry)
     // entry.numberOfTags = req.body.numberOfTags;
