@@ -87,7 +87,7 @@ const cassiteriteSchema = new mongoose.Schema(
                 weightInPermineTag: Number,
                 tagNumber: {
                     type: String,
-                    unique: true
+                    // unique: true
                 }
             }
         ],
@@ -96,7 +96,7 @@ const cassiteriteSchema = new mongoose.Schema(
                 weightOutPerNegociantTag: Number,
                 tagNumber: {
                     type: String,
-                    unique: true
+                    // unique: true
                 }
             }
         ],

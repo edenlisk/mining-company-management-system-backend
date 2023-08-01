@@ -140,14 +140,14 @@ const mixedSchema = new mongoose.Schema(
                     weightInPermineTag: Number,
                     tagNumber: {
                         type: String,
-                        unique: true
+                        // unique: true
                     }
                 },
                 cassiterite: {
                     weightInPermineTag: Number,
                     tagNumber: {
                         type: String,
-                        unique: true
+                        // unique: true
                     }
                 }
             }
@@ -158,14 +158,14 @@ const mixedSchema = new mongoose.Schema(
                     weightOutPerNegociantTag: Number,
                     tagNumber: {
                         type: String,
-                        unique: true
+                        // unique: true
                     }
                 },
                 cassiterite: {
                     weightOutPerNegociantTag: Number,
                     tagNumber: {
                         type: String,
-                        unique: true
+                        // unique: true
                     }
                 }
             }

@@ -55,13 +55,13 @@ const wolframiteSchema = new mongoose.Schema(
         mineTags: [
             {
                 type: String,
-                unique: true
+                // unique: true
             }
         ],
         negociantTags: [
             {
                 type: String,
-                unique: true
+                // unique: true
             }
         ],
         rmaFee: {
