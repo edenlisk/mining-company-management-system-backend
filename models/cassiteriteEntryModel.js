@@ -44,22 +44,22 @@ const cassiteriteSchema = new mongoose.Schema(
         },
         exportedAmount: {
             type: Number,
-            validate: {
-                validator: function (value) {
-                    return value <= this.netQuantity;
-                },
-                message: "Exported amount can't be greater than weight-out"
-            },
+            // validate: {
+            //     validator: function (value) {
+            //         return value <= this.netQuantity;
+            //     },
+            //     message: "Exported amount can't be greater than weight-out"
+            // },
             default: 0
         },
         cumulativeAmount: {
             type: Number,
-            validate: {
-                validator: function (value) {
-                    return value <= this.netQuantity;
-                },
-                message: "Cumulative amount can't be greater than weight-out"
-            }
+            // validate: {
+            //     validator: function (value) {
+            //         return value <= this.netQuantity;
+            //     },
+            //     message: "Cumulative amount can't be greater than weight-out"
+            // }
         },
         grade: {
             type: Number
@@ -104,11 +104,11 @@ const cassiteriteSchema = new mongoose.Schema(
         paymentCurrency: String,
         paid: {
             type: Number,
-            validate: function (value) {
-                return value <= (this.totalPrice - this.rmaFee);
-            },
-            // TODO 4: FIND APPROPRIATE ERROR MESSAGE
-            message: ""
+            // validate: function (value) {
+            //     return value <= (this.totalPrice - this.rmaFee);
+            // },
+            // // TODO 4: FIND APPROPRIATE ERROR MESSAGE
+            // message: ""
         },
         settled: {
             type: Boolean,

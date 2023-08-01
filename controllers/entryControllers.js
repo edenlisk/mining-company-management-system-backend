@@ -61,6 +61,11 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 representativeId: supplier.representativeId,
                 representativePhoneNumber: supplier.representativePhoneNumber,
                 mineralType: req.body.mineralType,
+                numberOfTags: req.body.numberOfTags,
+                grossQuantity: req.body.grossQuantity,
+                netQuantity: req.body.netQuantity,
+                supplyDate: req.body.supplyDate,
+                time: req.body.time,
             }
         )
     } else if (supplier.companyName.toLowerCase() === "kanzamin") {
@@ -75,6 +80,11 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 representativeId: "Kanzamin representative",
                 representativePhoneNumber: "+250780000000",
                 mineralType: req.body.mineralType,
+                numberOfTags: req.body.numberOfTags,
+                grossQuantity: req.body.grossQuantity,
+                netQuantity: req.body.netQuantity,
+                supplyDate: req.body.supplyDate,
+                time: req.body.time,
             }
         )
     } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
@@ -88,16 +98,23 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 email: supplier.email,
                 representativeId: req.body.representativeId,
                 representativePhoneNumber: req.body.representativePhoneNumber,
-                mineralType: req.body.mineralType
+                mineralType: req.body.mineralType,
+                numberOfTags: req.body.numberOfTags,
+                grossQuantity: req.body.grossQuantity,
+                netQuantity: req.body.netQuantity,
+                supplyDate: req.body.supplyDate,
+                time: req.body.time,
             }
         )
     }
     entry = await Entry.findById(entry._id);
-    entry.numberOfTags = req.body.numberOfTags;
-    entry.grossQuantity = req.body.grossQuantity;
-    entry.netQuantity = req.body.netQuantity;
-    entry.supplyDate = new Date().toISOString().split('T')[0];
-    entry.time = req.body.time;
+    // console.log('----------------')
+    // console.log(entry)
+    // entry.numberOfTags = req.body.numberOfTags;
+    // entry.grossQuantity = req.body.grossQuantity;
+    // entry.netQuantity = req.body.netQuantity;
+    // entry.supplyDate = req.body.supplyDate;
+    // entry.time = req.body.time;
     if (req.params.model === "mixed") {
         entry.quantity.coltan = req.body.coltan;
         entry.quantity.cassiterite = req.body.cassiterite;

@@ -67,7 +67,7 @@ const coltanSchema = new mongoose.Schema(
                 weightInPermineTag: Number,
                 tagNumber: {
                     type: String,
-                    unique: true
+                    // unique: true
                 }
             }
         ],
@@ -76,7 +76,7 @@ const coltanSchema = new mongoose.Schema(
                 weightOutPerNegociantTag: Number,
                 tagNumber: {
                     type: String,
-                    unique: true
+                    // unique: true
                 }
             }
         ],
@@ -85,13 +85,13 @@ const coltanSchema = new mongoose.Schema(
         paid: {
             type: Number,
             default: 0,
-            validate: {
-                validator: function (value) {
-                    return value <= (this.totalPrice - this.rmaFee);
-                },
-                // TODO 4: FIND APPROPRIATE ERROR MESSAGE
-                message: ""
-            }
+            // validate: {
+            //     validator: function (value) {
+            //         return value <= (this.totalPrice - this.rmaFee);
+            //     },
+            //     // TODO 4: FIND APPROPRIATE ERROR MESSAGE
+            //     message: ""
+            // }
         },
         settled: {
             type: Boolean,

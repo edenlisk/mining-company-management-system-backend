@@ -9,12 +9,12 @@ const generalEntrySchema = new mongoose.Schema(
         ...entry,
         exportedAmount: {
             type: Number,
-            validate: {
-                validator: function (value) {
-                    return value <= this.netQuantity;
-                },
-                message: "Exported amount can't be greater than weight-out"
-            },
+            // validate: {
+            //     validator: function (value) {
+            //         return value <= this.netQuantity;
+            //     },
+            //     message: "Exported amount can't be greater than weight-out"
+            // },
             default: 0
         },
         netQuantity: {
@@ -28,20 +28,20 @@ const generalEntrySchema = new mongoose.Schema(
         },
         cumulativeAmount: {
             type: Number,
-            validate: {
-                validator: function (value) {
-                    return value <= this.netQuantity;
-                },
-                message: "Cumulative amount can't be greater than weight-out"
-            },
+            // validate: {
+            //     validator: function (value) {
+            //         return value <= this.netQuantity;
+            //     },
+            //     message: "Cumulative amount can't be greater than weight-out"
+            // },
         },
         paid: {
             type: Number,
-            validate: function (value) {
-                return value <= (this.totalPrice - this.rmaFee);
-            },
-            // TODO 6: FIND APPROPRIATE ERROR MESSAGE
-            message: ""
+            // validate: function (value) {
+            //     return value <= (this.totalPrice - this.rmaFee);
+            // },
+            // // TODO 6: FIND APPROPRIATE ERROR MESSAGE
+            // message: ""
         },
         unsettled: {
             type: Number

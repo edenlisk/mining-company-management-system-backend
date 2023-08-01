@@ -13,8 +13,14 @@ const mixedSchema = new mongoose.Schema(
             immutable: true
         },
         quantity: {
-            cassiterite: Number,
-            coltan: Number
+            cassiterite: {
+                type: Number,
+                default: 0
+            },
+            coltan: {
+                type: Number,
+                default: 0
+            }
         },
         grade: {
             coltan: Number,
@@ -41,24 +47,24 @@ const mixedSchema = new mongoose.Schema(
         paid: {
             coltan: {
                 type: Number,
-                validate: {
-                    validator: function (value) {
-                        return value <= (this.totalPrice.coltan - this.rmaFee.coltan);
-                    },
-                    message: "Coltan paid amount can't be greater than ..........................."
-                },
+                // validate: {
+                //     validator: function (value) {
+                //         return value <= (this.totalPrice.coltan - this.rmaFee.coltan);
+                //     },
+                //     message: "Coltan paid amount can't be greater than ..........................."
+                // },
                 default: 0
             },
             cassiterite: {
                 type: Number,
                 default: 0,
-                validate: {
-                    validator: function (value) {
-                        return value <= (this.totalPrice.cassiterite - this.rmaFee.cassiterite);
-                    },
-                    // TODO 3: FIND APPROPRIATE ERROR MESSAGE
-                    message: "Cassiterite paid amount can't be greater than ..........................."
-                },
+                // validate: {
+                //     validator: function (value) {
+                //         return value <= (this.totalPrice.cassiterite - this.rmaFee.cassiterite);
+                //     },
+                //     // TODO 3: FIND APPROPRIATE ERROR MESSAGE
+                //     message: "Cassiterite paid amount can't be greater than ..........................."
+                // },
             }
         },
         tantal: Number,
@@ -81,24 +87,24 @@ const mixedSchema = new mongoose.Schema(
         cumulativeAmount: {
             cassiterite: {
                 type: Number,
-                validate: {
-                    validator: function (value) {
-                        return value <= this.quantity.cassiterite;
-                    },
-                    message: "Cassiterite cumulative amount can't be greater than it's weight-out"
-                },
+                // validate: {
+                //     validator: function (value) {
+                //         return value <= this.quantity.cassiterite;
+                //     },
+                //     message: "Cassiterite cumulative amount can't be greater than it's weight-out"
+                // },
                 default: function () {
                     return this.quantity.cassiterite;
                 }
             },
             coltan: {
                 type: Number,
-                validate: {
-                    validator: function (value) {
-                        return value <= this.quantity.coltan;
-                    },
-                    message: "Coltan cumulative amount can't be greater than it's weight-out"
-                },
+                // validate: {
+                //     validator: function (value) {
+                //         return value <= this.quantity.coltan;
+                //     },
+                //     message: "Coltan cumulative amount can't be greater than it's weight-out"
+                // },
                 default: function () {
                     return this.quantity.coltan;
                 }
