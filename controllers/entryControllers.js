@@ -48,9 +48,8 @@ exports.createEntry = catchAsync(async (req, res, next) => {
     const supplier = await Supplier.findById(req.body.supplierId);
     if (!supplier) return next(new AppError("Selected supplier no longer exists!", 400));
     const Entry = getModel(req.params.model);
-    let entry;
     if (req.body.isSupplierBeneficiary) {
-        entry = new Entry(
+        const entry = Entry.create(
             {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
@@ -68,8 +67,14 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 time: req.body.time,
             }
         )
+        if (req.params.model === "mixed") {
+            entry.quantity.coltan = req.body.coltan;
+            entry.quantity.cassiterite = req.body.cassiterite;
+            entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
+            entry.cumulativeAmount.coltan = entry.quantity.coltan;
+        }
     } else if (supplier.companyName.toLowerCase() === "kanzamin") {
-        entry = new Entry(
+        const entry = Entry.create(
             {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
@@ -87,8 +92,14 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 time: req.body.time,
             }
         )
+        if (req.params.model === "mixed") {
+            entry.quantity.coltan = req.body.coltan;
+            entry.quantity.cassiterite = req.body.cassiterite;
+            entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
+            entry.cumulativeAmount.coltan = entry.quantity.coltan;
+        }
     } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
-        entry = new Entry(
+        const entry = Entry.create(
             {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
@@ -106,8 +117,14 @@ exports.createEntry = catchAsync(async (req, res, next) => {
                 time: req.body.time,
             }
         )
+        if (req.params.model === "mixed") {
+            entry.quantity.coltan = req.body.coltan;
+            entry.quantity.cassiterite = req.body.cassiterite;
+            entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
+            entry.cumulativeAmount.coltan = entry.quantity.coltan;
+        }
     }
-    console.log(entry);
+
     // entry = await Entry.findById(entry._id);
     // console.log('----------------')
     // console.log(entry)
@@ -116,13 +133,13 @@ exports.createEntry = catchAsync(async (req, res, next) => {
     // entry.netQuantity = req.body.netQuantity;
     // entry.supplyDate = req.body.supplyDate;
     // entry.time = req.body.time;
-    if (req.params.model === "mixed") {
-        entry.quantity.coltan = req.body.coltan;
-        entry.quantity.cassiterite = req.body.cassiterite;
-        entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
-        entry.cumulativeAmount.coltan = entry.quantity.coltan;
-    }
-    await entry.save({validateModifiedOnly: true});
+    // if (req.params.model === "mixed") {
+    //     entry.quantity.coltan = req.body.coltan;
+    //     entry.quantity.cassiterite = req.body.cassiterite;
+    //     entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
+    //     entry.cumulativeAmount.coltan = entry.quantity.coltan;
+    // }
+    // await entry.save({validateModifiedOnly: true});
     res
         .status(201)
         .json(
