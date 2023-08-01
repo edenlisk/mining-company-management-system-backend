@@ -7,6 +7,11 @@ const AppError = require('../utils/appError');
 const generalEntrySchema = new mongoose.Schema(
     {
         ...entry,
+        name: {
+            type: String,
+            default: "general",
+            immutable: true,
+        },
         exportedAmount: {
             type: Number,
             // validate: {

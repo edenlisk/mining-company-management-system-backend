@@ -8,6 +8,7 @@ const wolframiteSchema = new mongoose.Schema(
         ...entry,
         name: {
             type: String,
+            default: "wolframite",
             immutable: true
         },
         netQuantity: {
