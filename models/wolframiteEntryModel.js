@@ -3,7 +3,7 @@ const { entry } = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
 const AppError = require('../utils/appError');
 
-const generalEntrySchema = new mongoose.Schema(
+const wolframiteSchema = new mongoose.Schema(
     {
         ...entry,
         name: {
@@ -105,11 +105,11 @@ const generalEntrySchema = new mongoose.Schema(
     }
 )
 
-generalEntrySchema.virtual('finalPrice').get(function () {
+wolframiteSchema.virtual('finalPrice').get(function () {
     return this.totalPrice - this.rmaFee;
 })
 
-generalEntrySchema.pre('save', async function(next) {
+wolframiteSchema.pre('save', async function(next) {
     if (this.isModified('supplierId') && !this.isNew) {
         const supplier = await Supplier.findById(this.supplierId);
         if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
@@ -129,5 +129,5 @@ generalEntrySchema.pre('save', async function(next) {
     next();
 })
 
-module.exports = mongoose.model('Wolframite', generalEntrySchema);
+module.exports = mongoose.model('Wolframite', wolframiteSchema);
 

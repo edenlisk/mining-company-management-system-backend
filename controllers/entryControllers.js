@@ -92,6 +92,7 @@ exports.createEntry = catchAsync(async (req, res, next) => {
             }
         )
     }
+    entry = await Entry.findById(entry._id);
     entry.numberOfTags = req.body.numberOfTags;
     entry.grossQuantity = req.body.grossQuantity;
     entry.netQuantity = req.body.netQuantity;
