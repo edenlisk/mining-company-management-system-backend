@@ -29,6 +29,7 @@ const coltanRouter = require('./routes/coltanRouter');
 const wolframiteRouter = require('./routes/wolframiteRouter');
 const lithiumRouter = require('./routes/lithiumRouter');
 const berylliumRouter = require('./routes/berylliumRouter');
+const mixedRouter = require('./routes/mixedRouter');
 
 const app = express();
 
@@ -76,6 +77,7 @@ app.use('/api/v1/cassiterite', cassiteriteRouter);
 app.use('/api/v1/wolframite', wolframiteRouter);
 app.use('/api/v1/lithium', lithiumRouter);
 app.use('/api/v1/beryllium', berylliumRouter);
+app.use('/api/v1/mixed', mixedRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,
     statusLevels: true,

@@ -4,3 +4,5 @@ const router = Router();
 
 router.route('/')
     .post(createMixedEntry)
+
+module.exports = router;
