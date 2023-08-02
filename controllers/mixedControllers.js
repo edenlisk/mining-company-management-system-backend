@@ -107,4 +107,12 @@ exports.createMixedEntry = catchAsync(async (req, res, next) => {
             await entry.save({validateModifiedOnly: true});
         }
     }
+    res
+        .status(201)
+        .json(
+            {
+                status: "Success",
+            }
+        )
+    ;
 })
