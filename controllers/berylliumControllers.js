@@ -1,5 +1,4 @@
 const Beryllium = require('../models/berylliumEntryModel');
-const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -27,55 +26,22 @@ exports.getAllBerylliumEntries = catchAsync(async (req, res, next) => {
 })
 
 exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
-    const supplier = await Supplier.findById(req.body.supplierId);
-    if (!supplier) return next(new AppError("This supplier no longer exists!", 400));
-    let entry;
-    if (req.body.isSupplierBeneficiary) {
-        entry = await Beryllium.create(
-            {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: supplier.licenseNumber,
-                beneficiary: supplier.companyRepresentative,
-                TINNumber: supplier.TINNumber,
-                email: supplier.email,
-                representativeId: supplier.representativeId,
-                representativePhoneNumber: supplier.representativePhoneNumber,
-            }
-        )
-    } else if (supplier.companyName.toLowerCase() === "kanzamin") {
-        entry = await Beryllium.create(
-            {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: "kanzamin license",
-                beneficiary: req.body.beneficiary,
-                TINNumber: "Kanzamin TIN",
-                email: "kanzamin@gmail.com",
-                representativeId: "Kanzamin representative",
-                representativePhoneNumber: "+250780000000",
-            }
-        )
-    } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
-        entry = await Beryllium.create(
-            {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: supplier.licenseNumber,
-                beneficiary: req.body.beneficiary,
-                TINNumber: supplier.TINNumber,
-                email: supplier.email,
-                representativeId: req.body.representativeId,
-                representativePhoneNumber: req.body.representativePhoneNumber,
-            }
-        )
-    }
-    entry.mineralType = "Beryllium";
-    entry.weightIn = req.body.weightIn;
-    entry.weightOut = req.body.weightOut;
-    entry.supplyDate = req.body.supplyDate;
-    entry.time = req.body.time;
-    await entry.save({validateModifiedOnly: true});
+    await Beryllium.create(
+        {
+            supplier: req.body.supplier,
+            phoneNumber: req.body.phoneNumber,
+            mineralType: req.body.mineralType,
+            weightIn: req.body.weightIn,
+            weightOut: req.body.weightOut,
+            supplyDate: req.body.supplyDate,
+            time: req.body.time,
+            cumulativeAmount: req.body.weightOut,
+            exportedAmount: 0,
+            paid: 0,
+            settled: false,
+            status: "in stock"
+        }
+    );
     res
         .status(204)
         .json(

@@ -1,10 +1,16 @@
 const mongoose = require('mongoose');
-const {entry} = require('../models/entryModel');
 
 
 const berylliumSchema = new mongoose.Schema(
     {
-        ...entry,
+        supplier: String,
+        phoneNumber: String,
+        supplyDate: {
+            type: Date
+        },
+        time: {
+            type: String
+        },
         weightIn: Number,
         weightOut: Number,
         price: {

@@ -1,9 +1,15 @@
 const mongoose = require('mongoose');
-const { entry } = require('../models/entryModel');
 
 const lithiumSchema = new mongoose.Schema(
     {
-        ...entry,
+        supplier: String,
+        phoneNumber: String,
+        supplyDate: {
+            type: Date
+        },
+        time: {
+            type: String
+        },
         weightIn: Number,
         weightOut: Number,
         price: {
