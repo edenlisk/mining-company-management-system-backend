@@ -15,7 +15,7 @@ const expressWinston = require('express-winston');
 const { requestLogger, logger: appLogger } = require('./utils/loggers');
 
 
-const entriesRouter = require('./routes/entriesRouter');
+// const entriesRouter = require('./routes/entriesRouter');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/usersRouter');
 const buyersRouter = require('./routes/buyersRouter');
@@ -24,6 +24,11 @@ const shipmentsRouter = require('./routes/shipmentsRouter');
 const dueDiligenceRouter = require('./routes/dueDiligenceRouter');
 const paymentsRouter = require('./routes/paymentsRouter');
 const suppliersRouter = require('./routes/suppliersRouter');
+const cassiteriteRouter = require('./routes/cassiteriteRouter');
+const coltanRouter = require('./routes/coltanRouter');
+const wolframiteRouter = require('./routes/wolframiteRouter');
+const lithiumRouter = require('./routes/lithiumRouter');
+const berylliumRouter = require('./routes/berylliumRouter');
 
 const app = express();
 
@@ -58,7 +63,7 @@ app.use(expressWinston.logger({
 }))
 
 app.use('/api/v1/', indexRouter);
-app.use('/api/v1/entries', entriesRouter);
+// app.use('/api/v1/entries', entriesRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/buyers', buyersRouter);
 app.use('/api/v1/contracts', contractsRouter);
@@ -66,6 +71,11 @@ app.use('/api/v1/shipments', shipmentsRouter);
 app.use('/api/v1/payments', paymentsRouter)
 app.use('/api/v1/suppliers', suppliersRouter);
 app.use('/api/v1/duediligence', dueDiligenceRouter);
+app.use('/api/v1/coltan', coltanRouter);
+app.use('/api/v1/cassiterite', cassiteriteRouter);
+app.use('/api/v1/wolframite', wolframiteRouter);
+app.use('/api/v1/lithium', lithiumRouter);
+app.use('/api/v1/beryllium', berylliumRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,
     statusLevels: true,

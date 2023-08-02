@@ -14,6 +14,7 @@ const supplierSchema = new mongoose.Schema(
             type: String,
             unique: true
         },
+        mineralTypes: [String],
         email: {
             type: String
         },

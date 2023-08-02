@@ -42,26 +42,6 @@ exports.entry = {
     time: {
         type: String
     },
-    grossQuantity: {
-        type: Number,
-        validate: {
-            validator: (elem) => {
-                return elem >= 0;
-            },
-            message: "Weight-in can't be negative number"
-        }
-    },
-    status: {
-        type: String,
-        enum: ["in stock", "fully exported", "rejected", "non-sell agreement", "partially exported"],
-        default: () => {
-            return "in stock"
-        }
-    },
-    paymentMode: {
-        type: String,
-        enum: ["installments", "one-time"]
-    },
 }
 
 

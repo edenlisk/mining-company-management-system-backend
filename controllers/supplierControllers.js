@@ -60,6 +60,12 @@ exports.updateSupplier = catchAsync(async (req, res, next) => {
     if (req.body.status) supplier.status = req.body.status;
     if (req.body.comment) supplier.observations.push(req.body.comment);
     if (req.body.phoneNumber) supplier.phoneNumber = req.body.phoneNumber;
+    if (req.body.mineSites) {
+        supplier.mineSites = [];
+        for (const mineSite of req.body.mineSites) {
+            supplier.mineSites.push(mineSite);
+        }
+    }
     await supplier.save({validateModifiedOnly: true});
     res
         .status(202)
