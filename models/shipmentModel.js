@@ -75,6 +75,8 @@ const shipmentSchema = new mongoose.Schema(
     {timestamps: true}
 )
 
+// TODO 8: PRE `SAVE` FOR SHIPMENT
+
 shipmentSchema.pre('save', async function (next) {
     if (this.isNew) {
         const filePath = `${__dirname}/../public/data/shipment/${this._id}`;

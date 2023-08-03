@@ -43,6 +43,7 @@ lithiumSchema.pre('save', async function (next) {
         this.paid = 0;
         this.settled = false;
     }
+    next();
 })
 
 
