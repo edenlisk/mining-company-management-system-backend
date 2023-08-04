@@ -3,6 +3,8 @@ const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
+const Settings = require('../models/settingsModel');
+const { handleConvertToUSD } = require('../utils/helperFunctions');
 
 
 exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
@@ -83,10 +85,18 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
                     weightOut: lot.weightOut,
                     exportedAmount: 0,
                     cumulativeAmount: lot.weightOut,
-                    rmaFee: lot.weightOut * 125,
+                    rmaFee: null,
+                    USDRate: null,
+                    rmaFeeUSD: null,
+                    rmaFeeDecision: "pending",
                     paid: 0,
+                    mineralGrade: null,
+                    mineralPrice: null,
+                    pricePerUnit: null,
+                    unpaid: null,
                     settled: false,
-                    status: "in progress"
+                    tantalum: null,
+                    status: "in stock"
                 }
             )
         }
@@ -122,7 +132,6 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    if (req.body.tantalum) entry.tantalum = req.body.tantalum;
     if (req.body.mineTags) {
         entry.mineTags = [];
         for (const tag of req.body.mineTags) {
@@ -130,7 +139,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 {
                     weightInPerMineTag: tag.weightInPerMineTag,
                     tagNumber: tag.tagNumber,
-                    status: "in stock"
+                    status: tag.status
                 }
             )
         }
@@ -142,26 +151,34 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 {
                     weightOutPerNegociantTag: tag.weightOutPerNegociantTag,
                     tagNumber: tag.tagNumber,
-                    status: "in stock"
+                    status: tag.status
                 }
             )
         }
     }
+    const { rmaFeeColtan } = await Settings.findOne();
     if (req.body.output) {
         entry.output = [];
         for (const lot of req.body.output) {
-            entry.output.push(
-                {
-                    lotNumber: lot.lotNumber,
-                    weightOut: lot.weightOut,
-                    exportedAmount: 0,
-                    cumulativeAmount: lot.weightOut,
-                    rmaFee: lot.weightOut * 125,
-                    paid: 0,
-                    settled: false,
-                    status: "in progress"
-                }
-            )
+            const singleLot = {
+                lotNumber: lot.lotNumber,
+                weightOut: lot.weightOut,
+                cumulativeAmount: lot.cumulativeAmount,
+            }
+            if (singleLot.weightOut) singleLot.rmaFee = rmaFeeColtan * singleLot.weightOut;
+            if (lot.mineralGrade) singleLot.mineralGrade = lot.mineralGrade;
+            if (lot.tantalum) singleLot.tantalum = lot.tantalum;
+            if (singleLot.tantalum && singleLot.mineralGrade) {
+                singleLot.pricePerUnit = singleLot.tantalum * singleLot.mineralGrade;
+            }
+            if (lot.USDRate) singleLot.USDRate = lot.USDRate;
+            if (singleLot.USDRate && singleLot.rmaFee) singleLot.rmaFeeUSD = handleConvertToUSD(singleLot.rmaFee, singleLot.USDRate);
+            if (lot.status) singleLot.status = lot.status;
+            if (lot.rmaFeeDecision) singleLot.rmaFeeDecision = lot.rmaFeeDecision;
+            if (singleLot.mineralGrade && singleLot.pricePerUnit && singleLot.weightOut) {
+                singleLot.mineralPrice = singleLot.pricePerUnit * singleLot.weightOut;
+            }
+            entry.output.push(singleLot);
         }
     }
     await entry.save({validateModifiedOnly: true});

@@ -16,6 +16,7 @@ const { requestLogger, logger: appLogger } = require('./utils/loggers');
 
 
 // const entriesRouter = require('./routes/entriesRouter');
+const riskAssessmentRouter = require('./routes/riskAssessmentRouter');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/usersRouter');
 const buyersRouter = require('./routes/buyersRouter');
@@ -78,6 +79,7 @@ app.use('/api/v1/wolframite', wolframiteRouter);
 app.use('/api/v1/lithium', lithiumRouter);
 app.use('/api/v1/beryllium', berylliumRouter);
 app.use('/api/v1/mixed', mixedRouter);
+app.use('/api/v1/risk-assessment', riskAssessmentRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,
     statusLevels: true,

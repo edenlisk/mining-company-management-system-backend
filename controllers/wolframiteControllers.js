@@ -3,6 +3,8 @@ const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
+const Settings = require('../models/settingsModel');
+const {handleConvertToUSD} = require("../utils/helperFunctions");
 
 
 exports.getAllWolframiteEntries = catchAsync(async (req, res, next) => {
@@ -83,10 +85,18 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
                     weightOut: lot.weightOut,
                     exportedAmount: 0,
                     cumulativeAmount: lot.weightOut,
-                    rmaFee: lot.weightOut * 50,
+                    rmaFee: null,
+                    USDRate: null,
+                    rmaFeeUSD: null,
+                    rmaFeeDecision: "pending",
                     paid: 0,
+                    mineralGrade: null,
+                    mineralPrice: null,
+                    pricePerUnit: null,
+                    unpaid: null,
                     settled: false,
-                    status: "in progress"
+                    // TODO 10: REQUIREMENTS TO CALCULATE WOLFRAMITE PRICES
+                    status: "in stock"
                 }
             )
         }
@@ -146,22 +156,28 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
             )
         }
     }
-    // TODO FOR UPDATING TAGS
+    const { rmaFeeWolframite } = await Settings.findOne();
     if (req.body.output) {
         entry.output = [];
         for (const lot of req.body.output) {
-            entry.output.push(
-                {
-                    lotNumber: lot.lotNumber,
-                    weightOut: lot.weightOut,
-                    exportedAmount: 0,
-                    cumulativeAmount: lot.weightOut,
-                    rmaFee: lot.weightOut * 50,
-                    paid: 0,
-                    settled: false,
-                    status: "in progress"
-                }
-            )
+            const singleLot = {
+                lotNumber: lot.lotNumber,
+                weightOut: lot.weightOut,
+                cumulativeAmount: lot.cumulativeAmount,
+            }
+            if (singleLot.weightOut) singleLot.rmaFee = rmaFeeWolframite * singleLot.weightOut;
+            if (lot.mineralGrade) singleLot.mineralGrade = lot.mineralGrade;
+            if (lot.rmaFeeDecision) singleLot.rmaFeeDecision = lot.rmaFeeDecision;
+            if (lot.USDRate) singleLot.USDRate = lot.USDRate;
+            if (lot.status) singleLot.status = lot.status;
+            // if (singleLot.londonMetalExchange && singleLot.mineralGrade && singleLot.treatmentCharges) {
+            //     singleLot.pricePerUnit = ((singleLot.londonMetalExchange * (singleLot.mineralGrade/100)) - singleLot.treatmentCharges) / 1000;
+            // }
+            if (singleLot.USDRate && singleLot.rmaFee) singleLot.rmaFeeUSD = handleConvertToUSD(singleLot.rmaFee, singleLot.USDRate);
+            // if (singleLot.mineralGrade && singleLot.pricePerUnit && singleLot.weightOut) {
+            //     singleLot.mineralPrice = singleLot.pricePerUnit * singleLot.weightOut;
+            // }
+            entry.output.push(singleLot);
         }
     }
     await entry.save({validateModifiedOnly: true});

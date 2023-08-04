@@ -4,6 +4,7 @@ const settingsSchema = new mongoose.Schema(
     {
         rmaFeeWolframite: {
             type: Number,
+            default: 50,
             validate: {
                 validator: (value) => {
                     return value >= 0;
@@ -13,6 +14,7 @@ const settingsSchema = new mongoose.Schema(
         },
         rmaFeeCassiterite: {
             type: Number,
+            default: 50,
             validate: {
                 validator: (value) => {
                     return value >= 0;
@@ -22,6 +24,7 @@ const settingsSchema = new mongoose.Schema(
         },
         rmaFeeColtan: {
             type: Number,
+            default: 125,
             validate: {
                 validator: (value) => {
                     return value >= 0;
@@ -29,7 +32,6 @@ const settingsSchema = new mongoose.Schema(
                 message: "Rwanda Mining Association fee per kg for coltan can't be negative number"
             },
         },
-
     }
 )
 

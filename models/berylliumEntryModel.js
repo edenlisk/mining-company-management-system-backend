@@ -1,6 +1,5 @@
 const mongoose = require('mongoose');
 
-
 const berylliumSchema = new mongoose.Schema(
     {
         supplier: String,
@@ -45,6 +44,7 @@ berylliumSchema.pre('save', async function (next) {
         this.status = "in stock";
         this.settled = false;
     }
+    next()
 })
 
 

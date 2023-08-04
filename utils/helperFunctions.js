@@ -1,28 +1,10 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const Cassiterite = require('../models/cassiteriteEntryModel');
-const Coltan = require('../models/coltanEntryModel');
-const Mixed = require('../models/mixedMineralsModel');
-const Wolframite = require('../models/wolframiteEntryModel');
-const GeneralEntry = require('../models/generalEntryModel');
+const Supplier = require('../models/supplierModel');
 
 const AppError = require('./appError');
 
-exports.getModel = (model) => {
-    switch (model) {
-        case "cassiterite":
-            return Cassiterite;
-        case "coltan":
-            return Coltan;
-        case "mixed":
-            return Mixed;
-        case "wolframite":
-            return Wolframite;
-        case "general":
-            return GeneralEntry;
-    }
-}
 
 const getHeader = (fileName) => {
     const extension = path.extname(fileName);
@@ -61,6 +43,23 @@ exports.multerStorage = (destination, fileName, renameExisting) => multer.diskSt
         }
     }
 )
+
+exports.handleChangeSupplier = async (docObject, next) => {
+    if (docObject.isModified('supplierId') && !docObject.isNew) {
+        const supplier = await Supplier.findById(this.supplierId);
+        if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
+        this.companyName = supplier.companyName;
+        this.licenseNumber = supplier.licenseNumber;
+        this.representativeId = supplier.representativeId;
+        this.representativePhoneNumber = supplier.representativePhoneNumber;
+        this.TINNumber = supplier.TINNumber;
+        this.district = supplier.address.district;
+    }
+}
+
+exports.handleConvertToUSD = (amount, USDRate) => {
+    return amount / USDRate;
+}
 
 exports.multerFilter = (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);

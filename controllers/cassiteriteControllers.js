@@ -1,8 +1,10 @@
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Supplier = require('../models/supplierModel');
+const Settings = require('../models/settingsModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
+const {handleConvertToUSD} = require("../utils/helperFunctions");
 
 
 exports.getAllCassiteriteEntries = catchAsync(async (req, res, next) => {
@@ -83,10 +85,19 @@ exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
                     weightOut: lot.weightOut,
                     exportedAmount: 0,
                     cumulativeAmount: lot.weightOut,
-                    rmaFee: lot.weightOut * 50,
+                    rmaFee: null,
+                    USDRate: null,
+                    rmaFeeUSD: null,
+                    rmaFeeDecision: "pending",
                     paid: 0,
+                    mineralGrade: null,
+                    mineralPrice: null,
+                    pricePerUnit: null,
+                    unpaid: null,
                     settled: false,
-                    status: "in progress"
+                    londonMetalExchange: null,
+                    treatmentCharges: null,
+                    status: "in stock"
                 }
             )
         }
@@ -122,8 +133,6 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     const entry = await Cassiterite.findById(req.params.entryId);
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    if (req.body.treatmentCharges) entry.treatmentCharges = req.body.treatmentCharges;
-    if (req.body.londonMetalExchange) entry.londonMetalExchange = req.body.londonMetalExchange;
     if (req.body.mineTags) {
         entry.mineTags = [];
         for (const tag of req.body.mineTags) {
@@ -131,7 +140,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 {
                     weightInPerMineTag: tag.weightInPerMineTag,
                     tagNumber: tag.tagNumber,
-                    status: "in stock"
+                    status: tag.status
                 }
             )
         }
@@ -143,27 +152,35 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 {
                     weightOutPerNegociantTag: tag.weightOutPerNegociantTag,
                     tagNumber: tag.tagNumber,
-                    status: "in stock"
+                    status: tag.status
                 }
             )
         }
     }
-    // TODO FOR UPDATING TAGS
+    const { rmaFeeCassiterite } = await Settings.findOne();
     if (req.body.output) {
         entry.output = [];
         for (const lot of req.body.output) {
-            entry.output.push(
-                {
-                    lotNumber: lot.lotNumber,
-                    weightOut: lot.weightOut,
-                    exportedAmount: 0,
-                    cumulativeAmount: lot.weightOut,
-                    rmaFee: lot.weightOut * 50,
-                    paid: 0,
-                    settled: false,
-                    status: "in progress"
-                }
-            )
+            const singleLot = {
+                lotNumber: lot.lotNumber,
+                weightOut: lot.weightOut,
+                cumulativeAmount: lot.cumulativeAmount,
+            }
+            if (singleLot.weightOut) singleLot.rmaFee = rmaFeeCassiterite * singleLot.weightOut;
+            if (lot.mineralGrade) singleLot.mineralGrade = lot.mineralGrade;
+            if (lot.londonMetalExchange) singleLot.londonMetalExchange = lot.londonMetalExchange;
+            if (lot.treatmentCharges) singleLot.treatmentCharges = lot.treatmentCharges;
+            if (lot.rmaFeeDecision) singleLot.rmaFeeDecision = lot.rmaFeeDecision;
+            if (lot.USDRate) singleLot.USDRate = lot.USDRate;
+            if (lot.status) singleLot.status = lot.status;
+            if (singleLot.londonMetalExchange && singleLot.mineralGrade && singleLot.treatmentCharges) {
+                singleLot.pricePerUnit = ((singleLot.londonMetalExchange * (singleLot.mineralGrade/100)) - singleLot.treatmentCharges) / 1000;
+            }
+            if (singleLot.USDRate && singleLot.rmaFee) singleLot.rmaFeeUSD = handleConvertToUSD(singleLot.rmaFee, singleLot.USDRate);
+            if (singleLot.mineralGrade && singleLot.pricePerUnit && singleLot.weightOut) {
+                singleLot.mineralPrice = singleLot.pricePerUnit * singleLot.weightOut;
+            }
+            entry.output.push(singleLot);
         }
     }
     await entry.save({validateModifiedOnly: true});
