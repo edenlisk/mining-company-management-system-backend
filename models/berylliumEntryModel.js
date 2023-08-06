@@ -12,8 +12,13 @@ const berylliumSchema = new mongoose.Schema(
         },
         weightIn: Number,
         weightOut: Number,
-        price: {
+        mineralPrice: {
             type: Number
+        },
+        name: {
+            type: String,
+            default: "beryllium",
+            immutable: true
         },
         mineralGrade: Number,
         exportedAmount: Number,

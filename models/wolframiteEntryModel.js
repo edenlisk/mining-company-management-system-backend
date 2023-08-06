@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const { entry } = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
 const AppError = require('../utils/appError');
-const { handleChangeSupplier } = require('../utils/helperFunctions');
 
 const wolframiteSchema = new mongoose.Schema(
     {
@@ -68,20 +67,8 @@ const wolframiteSchema = new mongoose.Schema(
 // })
 
 wolframiteSchema.pre('save', async function(next) {
+    const { handleChangeSupplier } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
-    // if (this.isModified('supplierId') && !this.isNew) {
-    //     const supplier = await Supplier.findById(this.supplierId);
-    //     if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
-    //     this.companyName = supplier.companyName;
-    //     this.licenseNumber = supplier.licenseNumber;
-    //     this.representativeId = supplier.representativeId;
-    //     this.representativePhoneNumber = supplier.representativePhoneNumber;
-    //     this.TINNumber = supplier.TINNumber;
-    //     this.district = supplier.address.district;
-    // }
-    // if (this.isModified('netQuantity')) {
-    //     this.rmaFee = 50 * this.netQuantity;
-    // }
     // if (this.isModified(["grade", "netQuantity"]) && !this.isNew) {
     //     // TODO 7: CALCULATE THE TOTAL PRICE OF WOLFRAMITE
     // }

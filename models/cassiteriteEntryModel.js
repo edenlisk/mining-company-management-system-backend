@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const { entry } = require('../models/entryModel');
 const Supplier = require('../models/supplierModel');
 const AppError = require('../utils/appError');
-const { handleChangeSupplier } = require('../utils/helperFunctions');
 
 
 const cassiteriteSchema = new mongoose.Schema(
@@ -57,7 +56,16 @@ const cassiteriteSchema = new mongoose.Schema(
                     pricePerUnit: Number,
                     status: String,
                     londonMetalExchange: Number,
-                    treatmentCharges: Number
+                    treatmentCharges: Number,
+                    payments: {
+                        type: [
+                            {
+                                type: mongoose.Schema.Types.ObjectId,
+                                ref: "Payment"
+                            }
+                        ],
+                        default: []
+                    }
                 },
             ],
             default: []
@@ -75,21 +83,12 @@ const cassiteriteSchema = new mongoose.Schema(
 // })
 
 cassiteriteSchema.pre('save', async function (next) {
+    const { handleChangeSupplier } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
     if (this.isNew) {
         this.londonMetalExchange = null;
         this.treatmentCharges = null;
     }
-    // if (this.isModified('supplierId') && !this.isNew) {
-    //     const supplier = await Supplier.findById(this.supplierId);
-    //     if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
-    //     this.companyName = supplier.companyName;
-    //     this.licenseNumber = supplier.licenseNumber;
-    //     this.representativeId = supplier.representativeId;
-    //     this.representativePhoneNumber = supplier.representativePhoneNumber;
-    //     this.TINNumber = supplier.TINNumber;
-    //     this.district = supplier.address.district;
-    // }
     // if (this.isModified('netQuantity')) {
     //     this.rmaFee = 50 * this.netQuantity;
     // }
