@@ -161,7 +161,9 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     if (req.body.output) {
         entry.output = [];
         for (const lot of req.body.output) {
+            // TODO 13: PAY ATTENTION -> SOME PROPERTIES MAY BE UNDEFINED
             const singleLot = {
+                ...lot,
                 lotNumber: lot.lotNumber,
                 weightOut: lot.weightOut,
                 cumulativeAmount: lot.cumulativeAmount,
@@ -179,6 +181,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
             if (singleLot.USDRate && singleLot.rmaFee) singleLot.rmaFeeUSD = handleConvertToUSD(singleLot.rmaFee, singleLot.USDRate);
             if (singleLot.mineralGrade && singleLot.pricePerUnit && singleLot.weightOut) {
                 singleLot.mineralPrice = singleLot.pricePerUnit * singleLot.weightOut;
+                singleLot.unpaid = (singleLot.mineralPrice - singleLot.rmaFeeUSD);
             }
             entry.output.push(singleLot);
         }

@@ -58,12 +58,7 @@ const cassiteriteSchema = new mongoose.Schema(
                     londonMetalExchange: Number,
                     treatmentCharges: Number,
                     payments: {
-                        type: [
-                            {
-                                type: mongoose.Schema.Types.ObjectId,
-                                ref: "Payment"
-                            }
-                        ],
+                        type: [Object],
                         default: []
                     }
                 },

@@ -139,7 +139,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                 {
                     weightInPerMineTag: tag.weightInPerMineTag,
                     tagNumber: tag.tagNumber,
-                    status: "in stock"
+                    status: tag.status
                 }
             )
         }
@@ -151,7 +151,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                 {
                     weightOutPerNegociantTag: tag.weightOutPerNegociantTag,
                     tagNumber: tag.tagNumber,
-                    status: "in stock"
+                    status: tag.status
                 }
             )
         }
@@ -161,6 +161,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
         entry.output = [];
         for (const lot of req.body.output) {
             const singleLot = {
+                ...lot,
                 lotNumber: lot.lotNumber,
                 weightOut: lot.weightOut,
                 cumulativeAmount: lot.cumulativeAmount,

@@ -38,6 +38,8 @@ exports.addPayment = catchAsync(async (req, res, next) => {
         {
             supplierId: req.body.supplierId,
             supplierName: req.body.supplierName,
+            entryId: req.body.entryId,
+            lotId: req.body.lotId,
             beneficiary: req.body.beneficiary,
             nationalId: req.body.nationalId,
             licenseNumber: req.body.licenseNumber,
@@ -45,10 +47,8 @@ exports.addPayment = catchAsync(async (req, res, next) => {
             TINNumber: req.body.TINNumber,
             email: req.body.email,
             location: req.body.location,
-            amountReceived: req.body.amountReceived,
+            paymentAmount: req.body.paymentAmount,
             currency: req.body.currency,
-            cassiteriteAmount: req.body.cassiteriteAmount,
-            coltanAmount: req.body.coltanAmount,
             model: req.body.model
         }
     )
