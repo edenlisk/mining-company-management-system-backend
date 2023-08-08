@@ -101,7 +101,18 @@ paymentSchema.pre('save', async function (next) {
 
         }
     } else if (this.model === "lithium" || this.model === "beryllium") {
-        console.log('general model');
+        const entry = await Entry.findOne({_id: this.entryId});
+        if (this.paymentInAdvanceId) {
+            const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
+            if (!payment.consumed) {
+                if (payment.remainingAmount >= entry.mineralPrice) {
+                    entry.paid += entry.mineralPrice;
+                    entry.unpaid -= entry.mineralPrice;
+                    entry.settled = true;
+                    // entry.paymentHistory.push()
+                }
+            }
+        }
     }
     this.model = undefined;
     next();

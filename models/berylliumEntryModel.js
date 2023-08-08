@@ -32,6 +32,14 @@ const berylliumSchema = new mongoose.Schema(
             type: Number,
             default: 0,
             immutable: true
+        },
+        rmaFeeDecision: {
+            type: String,
+            default: "RMA Fee exempted"
+        },
+        paymentHistory: {
+            type: [Object],
+            default: []
         }
     },
     {
