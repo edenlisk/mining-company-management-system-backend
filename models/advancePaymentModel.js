@@ -4,11 +4,11 @@ const AppError = require('../utils/appError');
 
 const advancePaymentSchema = new mongoose.Schema(
     {
-        beneficiaryName: {
+        beneficiary: {
             type: String,
             required: [true, "Please provide beneficiary's name"]
         },
-        beneficiaryNationalId: {
+        nationalId: {
             type: String,
         },
         phoneNumber: {

@@ -57,7 +57,7 @@ const cassiteriteSchema = new mongoose.Schema(
                     status: String,
                     londonMetalExchange: Number,
                     treatmentCharges: Number,
-                    payments: {
+                    paymentHistory: {
                         type: [Object],
                         default: []
                     }
@@ -78,12 +78,13 @@ const cassiteriteSchema = new mongoose.Schema(
 // })
 
 cassiteriteSchema.pre('save', async function (next) {
-    const { handleChangeSupplier } = require('../utils/helperFunctions');
+    const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
     if (this.isNew) {
         this.londonMetalExchange = null;
         this.treatmentCharges = null;
     }
+
     // if (this.isModified('netQuantity')) {
     //     this.rmaFee = 50 * this.netQuantity;
     // }
@@ -96,6 +97,9 @@ cassiteriteSchema.pre('save', async function (next) {
     //         // this.unsettled = 0;
     //     }
     // }
+    if (this.output) {
+        handlePaidSpecific(this.output);
+    }
     next()
     // formula = ((LME * Grade/100) - TC)/1000
 })

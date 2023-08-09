@@ -1,6 +1,7 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
 const { getModel } = require('../utils/helperFunctions');
+const AppError = require('../utils/appError');
 
 const shipmentSchema = new mongoose.Schema(
     {
@@ -10,7 +11,7 @@ const shipmentSchema = new mongoose.Schema(
                     entryId: mongoose.Schema.Types.ObjectId,
                     quantity: Number,
                     model: String,
-                    mineral: String
+                    lotNumber: Number
                 }
             ],
             default: () => {
@@ -93,32 +94,8 @@ shipmentSchema.pre('save', async function (next) {
     if (this.isModified('entries')) {
         for (const item of this.entries) {
             const Entry = getModel(item.model);
-            const entry = await Entry.findById(item.entryId).select({status: 1, netQuantity: 1, exportedAmount: 1, cumulativeAmount: 1});
-            if (item.model === "mixed") {
-                if (entry.cumulativeAmount[item.mineral] > item.quantity) {
-                    this.totalShipmentQuantity += item.quantity;
-                    entry.exportedAmount[item.mineral] += item.quantity;
-                    entry.cumulativeAmount[item.mineral] -= item.quantity;
-                    entry.status[item.mineral] = "partially exported";
-                } else {
-                    this.totalShipmentQuantity += entry.cumulativeAmount[item.mineral];
-                    entry.exportedAmount[item.mineral] += entry.cumulativeAmount[item.mineral];
-                    entry.cumulativeAmount[item.mineral] = 0;
-                    entry.status[item.mineral] = "fully exported";
-                }
-            } else {
-                if (entry.cumulativeAmount > item.quantity) {
-                    this.totalShipmentQuantity += item.quantity;
-                    entry.exportedAmount += item.quantity;
-                    entry.cumulativeAmount -= item.quantity;
-                    entry.status = "partially exported";
-                } else {
-                    this.totalShipmentQuantity += entry.cumulativeAmount;
-                    entry.exportedAmount += entry.cumulativeAmount;
-                    entry.cumulativeAmount = 0;
-                    entry.status = "fully exported"
-                }
-            }
+            const entry = await Entry.findById(item.entryId);
+            const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
             await entry.save({validateModifiedOnly: true});
         }
     }

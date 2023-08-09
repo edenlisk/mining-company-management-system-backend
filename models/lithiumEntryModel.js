@@ -56,6 +56,11 @@ lithiumSchema.pre('save', async function (next) {
         this.paid = 0;
         this.settled = false;
     }
+    if (this.isModified(['paid', 'unpaid']) && !this.isNew) {
+        if (this.unpaid <= 0) {
+            this.settled = true;
+        }
+    }
     next();
 })
 

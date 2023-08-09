@@ -57,6 +57,11 @@ berylliumSchema.pre('save', async function (next) {
         this.status = "in stock";
         this.settled = false;
     }
+    if (this.isModified(['paid', 'unpaid']) && !this.isNew) {
+        if (this.unpaid <= 0) {
+            this.settled = true;
+        }
+    }
     next()
 })
 

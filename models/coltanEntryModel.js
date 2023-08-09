@@ -59,7 +59,11 @@ const coltanSchema = new mongoose.Schema(
                     settled: Boolean,
                     pricePerUnit: Number,
                     status: String,
-                    tantalum: Number
+                    tantalum: Number,
+                    paymentHistory: {
+                        type: [Object],
+                        default: []
+                    }
                 },
             ]
         },
@@ -77,7 +81,7 @@ const coltanSchema = new mongoose.Schema(
 
 
 coltanSchema.pre('save', async function (next) {
-    const { handleChangeSupplier } = require('../utils/helperFunctions');
+    const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
     if (this.isNew) {
         this.tantalum = null;
@@ -94,6 +98,9 @@ coltanSchema.pre('save', async function (next) {
     //         // this.unsettled = 0;
     //     }
     // }
+    if (this.output) {
+        handlePaidSpecific(this.output);
+    }
     next();
     // formula = tantal * grade
 })

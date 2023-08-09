@@ -15,7 +15,7 @@ const paymentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Entry'
         },
-        lotId: Number,
+        lotNumber: Number,
         supplierName: {
             type: String,
         },
@@ -41,7 +41,9 @@ const paymentSchema = new mongoose.Schema(
             validate: [isEmail, 'Please provide valid email address']
         },
         location: {
-            type: String
+            province: String,
+            district: String,
+            sector: String
         },
         paymentAmount: {
             type: Number,
@@ -50,6 +52,9 @@ const paymentSchema = new mongoose.Schema(
             type: String,
             enum: ['RWF', 'USD'],
             default: () => 'RWF'
+        },
+        paymentDate: {
+            type: Date
         },
         paymentInAdvanceId: {
             type: mongoose.Schema.Types.ObjectId,
@@ -65,7 +70,8 @@ paymentSchema.pre('save', async function (next) {
     const Entry = getModel(this.model);
     if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
         const entry = await Entry.findOne({_id: this.entryId});
-        const lot = entry.output.find(lot => lot.lotNumber === this.lotId);
+        const lot = entry.output.find(lot => lot.lotNumber === this.lotNumber);
+        if (lot.settled || lot.unpaid <= 0) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
             if (!payment.consumed) {
@@ -81,37 +87,83 @@ paymentSchema.pre('save', async function (next) {
                     //         comment: `Deducted ${lot.mineralPrice - lot.rmaFeeUSD} for paying`
                     //     }
                     // )
-                    // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH.
-                    const self = this;
-                    lot.payments.push({...self, paymentAmount: lot.mineralPrice})
+                    // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
+                    lot.paymentHistory.push(
+                        {
+                            ...payment,
+                            lotNumber: undefined,
+                            contractName: undefined,
+                            supplierId: this.supplierId,
+                            licenseNumber: this.licenseNumber,
+                            TINNumber: this.TINNumber,
+                            paymentDate: this.paymentDate,
+                            supplierName: this.supplierName,
+                            advance: true,
+                            remainingAmount: undefined
+                        }
+                    );
                     payment.remainingAmount -= lot.mineralPrice;
                 } else {
                     if (paymentSchema.remainingAmount >= lot.rmaFeeUSD) {
                         lot.rmaFeeDecision = "RMA Fee pending";
                         lot.paid += (payment.remainingAmount - lot.rmaFeeUSD);
                         lot.unpaid -= (payment.remainingAmount - lot.rmaFeeUSD);
-                        // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH.
-                        const self = this;
-                        lot.payments.push({...self, paymentAmount: lot.mineralPrice})
+                        // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
+                        lot.paymentHistory.push(
+                            {
+                                ...payment,
+                                lotNumber: undefined,
+                                contractName: undefined,
+                                supplierId: this.supplierId,
+                                licenseNumber: this.licenseNumber,
+                                TINNumber: this.TINNumber,
+                                paymentDate: this.paymentDate,
+                                supplierName: this.supplierName,
+                                advance: true,
+                                remainingAmount: undefined
+                            }
+                        );
                         payment.remainingAmount -= (payment.remainingAmount - lot.rmaFeeUSD);
                     }
                 }
             }
         } else {
-
+            lot.paid += this.paymentAmount;
+            lot.unpaid -= this.paymentAmount;
+            const self = this;
+            lot.paymentHistory.push({...self, model: undefined});
         }
     } else if (this.model === "lithium" || this.model === "beryllium") {
         const entry = await Entry.findOne({_id: this.entryId});
+        if (entry.settled || entry.unpaid <= 0) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
-            if (!payment.consumed) {
-                if (payment.remainingAmount >= entry.mineralPrice) {
-                    entry.paid += entry.mineralPrice;
-                    entry.unpaid -= entry.mineralPrice;
-                    entry.settled = true;
-                    // entry.paymentHistory.push()
-                }
+            if (payment.consumed) return next(new AppError("This payment is already consumed", 400));
+            if (payment.remainingAmount >= entry.mineralPrice) {
+                entry.paid += entry.mineralPrice;
+                entry.unpaid -= entry.mineralPrice;
+                entry.settled = true;
+                entry.paymentHistory.push(
+                    {
+                        ...payment,
+                        lotNumber: undefined,
+                        contractName: undefined,
+                        supplierId: this.supplierId,
+                        licenseNumber: this.licenseNumber,
+                        TINNumber: this.TINNumber,
+                        paymentDate: this.paymentDate,
+                        supplierName: this.supplierName,
+                        advance: true,
+                        remainingAmount: undefined
+                    }
+                )
+                payment.remainingAmount -= entry.mineralPrice;
             }
+        } else {
+            entry.paid += this.paymentAmount;
+            entry.unpaid -= this.paymentAmount;
+            const self = this;
+            entry.paymentHistory.push({...self, model: undefined});
         }
     }
     this.model = undefined;

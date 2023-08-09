@@ -63,6 +63,14 @@ exports.multerStorage = (destination, fileName, renameExisting) => multer.diskSt
     }
 )
 
+exports.handlePaidSpecific = output => {
+    for (const item of output) {
+        if (item.unpaid <= 0) {
+            item.settled = true;
+        }
+    }
+}
+
 exports.handleChangeSupplier = async (docObject, next) => {
     if (docObject.isModified('supplierId') && !docObject.isNew) {
         const supplier = await Supplier.findById(this.supplierId);
