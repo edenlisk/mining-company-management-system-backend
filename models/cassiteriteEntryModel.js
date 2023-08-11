@@ -57,6 +57,7 @@ const cassiteriteSchema = new mongoose.Schema(
                     status: String,
                     londonMetalExchange: Number,
                     treatmentCharges: Number,
+                    shipmentNumber: String,
                     paymentHistory: {
                         type: [Object],
                         default: []

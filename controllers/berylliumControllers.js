@@ -28,7 +28,7 @@ exports.getAllBerylliumEntries = catchAsync(async (req, res, next) => {
 exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
     await Beryllium.create(
         {
-            supplier: req.body.supplier,
+            supplierName: req.body.supplierName,
             phoneNumber: req.body.phoneNumber,
             mineralType: req.body.mineralType,
             weightIn: req.body.weightIn,
@@ -71,7 +71,7 @@ exports.getOneBerylliumEntry = catchAsync(async (req, res, next) => {
 exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
     const entry = await Beryllium.findById(req.params.entryId);
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
-    if (req.body.supplierId) entry.supplierId = req.body.supplierId;
+    // if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.weightOut) entry.weightOut = req.body.weightOut;
     if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
     if (req.body.price) entry.price = req.body.price;

@@ -30,7 +30,10 @@ exports.createShipment = catchAsync(async (req, res, next) => {
             totalShipmentQuantity: req.body.totalShipmentQuantity,
             buyerId: req.body.buyerId,
             shipmentSamplingDate: req.body.shipmentSamplingDate,
-            shipmentContainerLoadingDate: req.body.shipmentContainerLoadingDate
+            shipmentContainerLoadingDate: req.body.shipmentContainerLoadingDate,
+            averageGrade: req.body.averageGrade,
+            averagePrice: req.body.averagePrice,
+            model: req.body.model
         }
     )
     res
@@ -59,6 +62,8 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
     if (req.body.shipmentSamplingDate) shipment.shipmentSamplingDate = req.body.shipmentSamplingDate;
     if (req.body.shipmentContainerLoadingDate) shipment.shipmentContainerLoadingDate = req.body.shipmentContainerLoadingDate;
     if (req.body.totalShipmentQuantity) shipment.totalShipmentQuantity = req.body.totalShipmentQuantity;
+    if (req.body.averageGrade) shipment.averageGrade = req.body.averageGrade;
+    if (req.body.averagePrice) shipment.averagePrice = req.body.averagePrice;
     await shipment.save({validateModifiedOnly: true});
     res
         .status(202)

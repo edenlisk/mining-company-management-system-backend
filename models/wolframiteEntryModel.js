@@ -50,6 +50,7 @@ const wolframiteSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
+                    shipmentNumber: String,
                     status: String,
                     paymentHistory: {
                         type: [Object],

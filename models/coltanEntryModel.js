@@ -11,13 +11,6 @@ const coltanSchema = new mongoose.Schema(
             default: "coltan",
             immutable: true
         },
-        // tantalum: {
-        //     type: Number,
-        //     validate: (elem) => {
-        //         return elem >= 0;
-        //     },
-        //     message: "Tantal value can't be negative number"
-        // },
         weightIn: Number,
         numberOfTags: Number,
         mineTags: {
@@ -58,7 +51,11 @@ const coltanSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
-                    status: String,
+                    shipmentNumber: String,
+                    status: {
+                        type: String,
+                        default: "in stock"
+                    },
                     tantalum: Number,
                     paymentHistory: {
                         type: [Object],

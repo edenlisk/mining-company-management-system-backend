@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const lithiumSchema = new mongoose.Schema(
     {
-        supplier: String,
+        supplierName: String,
         phoneNumber: String,
         supplyDate: {
             type: Date
@@ -33,6 +33,7 @@ const lithiumSchema = new mongoose.Schema(
             default: 0,
             immutable: true
         },
+        shipmentNumber: String,
         rmaFeeDecision: {
             type: String,
             default: "RMA Fee exempted"

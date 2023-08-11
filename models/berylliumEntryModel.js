@@ -2,7 +2,7 @@ const mongoose = require('mongoose');
 
 const berylliumSchema = new mongoose.Schema(
     {
-        supplier: String,
+        supplierName: String,
         phoneNumber: String,
         supplyDate: {
             type: Date
@@ -21,13 +21,22 @@ const berylliumSchema = new mongoose.Schema(
             immutable: true
         },
         mineralGrade: Number,
-        exportedAmount: Number,
-        cumulativeAmount: Number,
+        exportedAmount: {
+            type: Number,
+            default: 0
+        },
+        cumulativeAmount: {
+            type: Number,
+            default: function () {
+                return this.weightOut;
+            }
+        },
         paid: Number,
         unpaid: Number,
         status: String,
         settled: Boolean,
         pricePerUnit: Number,
+        shipmentNumber: String,
         rmaFee: {
             type: Number,
             default: 0,
