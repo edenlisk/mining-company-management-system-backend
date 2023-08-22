@@ -22,6 +22,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                         exportedAmount: lot.exportedAmount,
                         cumulativeAmount: lot.cumulativeAmount,
                         pricePerUnit: lot.pricePerUnit,
+                        index: entries.indexOf(entry),
                     }
                 );
             }
@@ -39,7 +40,8 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                     mineralPrice: entry.mineralPrice,
                     exportedAmount: entry.exportedAmount,
                     cumulativeAmount: entry.cumulativeAmount,
-                    pricePerUnit: entry.pricePerUnit
+                    pricePerUnit: entry.pricePerUnit,
+                    index: entries.indexOf(entry),
                 }
             )
         }
