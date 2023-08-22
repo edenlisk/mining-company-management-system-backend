@@ -4,13 +4,17 @@ const {
     createShipment,
     getAllshipments,
     uploadCertificates,
-    updateShipment
+    updateShipment,
+    shipmentReport
 } = require('../controllers/shipmentControllers');
 
 
 router.route('/')
     .get(getAllshipments)
     .post(createShipment)
+
+router.route('/report/:shipmentId')
+    .post(shipmentReport)
 
 router.route('/:shipmentId')
     .patch(
