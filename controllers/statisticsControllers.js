@@ -31,7 +31,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
         for (const entry of entries) {
             detailedStock.push(
                 {
-                    entryId: entry._id,
+                    _id: entry._id,
                     supplierName: entry.supplierName,
                     supplyDate: entry.supplyDate,
                     weightOut: entry.weightOut,
