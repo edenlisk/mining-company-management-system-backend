@@ -6,7 +6,8 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     const detailedStock = [];
     if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
-        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}});
+        // TODO 16: CHANGE STATUS
+        const entries = await Entry.find({output: {$elemMatch: {status: "in progress", cumulativeAmount: {$gt: 0}}}});
         for (const entry of entries) {
             for (const lot of entry.output) {
                 detailedStock.push(
