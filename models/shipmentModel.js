@@ -100,8 +100,8 @@ shipmentSchema.pre('save', async function (next) {
 })
 
 shipmentSchema.pre('save', async function (next) {
+    const Entry = getModel(this.model);
     if (this.isNew) {
-        const Entry = getModel(this.model);
         if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
@@ -112,10 +112,27 @@ shipmentSchema.pre('save', async function (next) {
             }
         } else if (this.model === "lithium" || this.model === "beryllium") {
             for (const item of this.entries) {
-                const Entry = getModel(item.model);
                 const entry = await Entry.findById(item.entryId);
                 entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
                 await item.save({validateModifiedOnly: true});
+            }
+        }
+    } else if (this.isModified("entries") && !this.isNew) {
+        if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
+            for (const item of this.entries) {
+                const entry = await Entry.findById(item.entryId);
+                const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
+                if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
+                const shipment = lot.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
+                shipment.weight = item.quantity;
+                await entry.save({validateModifiedOnly: true});
+            }
+        } else if (this.model === "lithium" || this.model === "beryllium") {
+            for (const item of this.entries) {
+                const entry = await Entry.findById(item.entryId);
+                const shipment = entry.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
+                shipment.weight = item.quantity;
+                await entry.save({validateModifiedOnly: true});
             }
         }
     }
