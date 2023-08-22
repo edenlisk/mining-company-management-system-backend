@@ -1,11 +1,26 @@
 const express = require('express');
 const router = express.Router();
-const { createShipment, getAllshipments, uploadCertificates, updateShipment } = require('../controllers/shipmentControllers');
+const {
+    createShipment,
+    getAllshipments,
+    uploadCertificates,
+    updateShipment
+} = require('../controllers/shipmentControllers');
 
 
 router.route('/')
     .get(getAllshipments)
     .post(createShipment)
+
+router.route('/:shipmentId')
+    .patch(
+        uploadCertificates.single('analysisCertificate'),
+        uploadCertificates.single('containerForwardNote'),
+        uploadCertificates.single('rmbIcglrCertificate'),
+        uploadCertificates.single('certificateOfOrigin'),
+        updateShipment
+    );
+
 
 // router.route('/upload/analysis-certificate')
 //     .post(uploadCertificates.single('analysisCertificate'), updateShipment)

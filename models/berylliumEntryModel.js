@@ -36,7 +36,20 @@ const berylliumSchema = new mongoose.Schema(
         status: String,
         settled: Boolean,
         pricePerUnit: Number,
-        shipmentNumber: String,
+        shipments: {
+            type: [
+                {
+                    shipmentNumber: String,
+                    weight: Number,
+                    date: {
+                        type: Date,
+                        default: () => {
+                            return (new Date()).toDateString();
+                        }
+                    }
+                }
+            ]
+        },
         rmaFee: {
             type: Number,
             default: 0,

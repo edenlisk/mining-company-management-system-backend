@@ -33,7 +33,20 @@ const lithiumSchema = new mongoose.Schema(
             default: 0,
             immutable: true
         },
-        shipmentNumber: String,
+        shipments: {
+            type: [
+                {
+                    shipmentNumber: String,
+                    weight: Number,
+                    date: {
+                        type: Date,
+                        default: () => {
+                            return (new Date()).toDateString();
+                        }
+                    }
+                }
+            ]
+        },
         rmaFeeDecision: {
             type: String,
             default: "RMA Fee exempted"

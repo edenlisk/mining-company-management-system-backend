@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { getAllSuppliers,
+const { generate } = require('../utils/docTemplater');
+const {
+    getAllSuppliers,
     addSupplier,
     updateSupplier,
     deleteSupplier,
@@ -9,6 +11,9 @@ const { getAllSuppliers,
 router.route('/')
     .get(getAllSuppliers)
     .post(addSupplier)
+
+router.route("/generate/:supplierId")
+    .post(generate)
 
 router.route('/:supplierId')
     .get(getOneSupplier)

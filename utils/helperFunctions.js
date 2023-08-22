@@ -63,6 +63,17 @@ exports.multerStorage = (destination, fileName, renameExisting) => multer.diskSt
     }
 )
 
+exports.getSixMonthsAgo = endMonth => {
+    const currentDate = new Date();
+    const specifiedMonth = new Date(
+        currentDate.getFullYear(),
+        endMonth ? endMonth - 1 : currentDate.getMonth()
+    );
+    const sixMonthsAgo = new Date(specifiedMonth);
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+    return {specifiedMonth, sixMonthsAgo};
+}
+
 exports.handlePaidSpecific = output => {
     for (const item of output) {
         if (item.unpaid <= 0) {
@@ -81,6 +92,37 @@ exports.handleChangeSupplier = async (docObject, next) => {
         this.representativePhoneNumber = supplier.representativePhoneNumber;
         this.TINNumber = supplier.TINNumber;
         this.district = supplier.address.district;
+    }
+}
+
+exports.getMonthWords = monthNumber => {
+    switch (monthNumber + 1) {
+        case 1:
+            return "January"
+        case 2:
+            return "February"
+        case 3:
+            return "March"
+        case 4:
+            return "April"
+        case 5:
+            return "May"
+        case 6:
+            return "June"
+        case 7:
+            return "July"
+        case 8:
+            return "August"
+        case 9:
+            return "September"
+        case 10:
+            return "October"
+        case 11:
+            return "November"
+        case 12:
+            return "December"
+        default:
+            return "Unclassified"
     }
 }
 

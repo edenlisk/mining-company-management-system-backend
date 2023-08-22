@@ -100,26 +100,21 @@ shipmentSchema.pre('save', async function (next) {
 })
 
 shipmentSchema.pre('save', async function (next) {
-    if (this.isModified('entries')) {
+    if (this.isNew) {
+        const Entry = getModel(this.model);
         if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
             for (const item of this.entries) {
-                const Entry = getModel(item.model);
                 const entry = await Entry.findById(item.entryId);
                 const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
-                if (lot.cumulativeAmount > 0) {
-                    lot.exportedAmount += item.quantity;
-                    lot.cumulativeAmount -= item.quantity;
-                }
+                if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
+                lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
                 await entry.save({validateModifiedOnly: true});
             }
         } else if (this.model === "lithium" || this.model === "beryllium") {
             for (const item of this.entries) {
                 const Entry = getModel(item.model);
                 const entry = await Entry.findById(item.entryId);
-                if (entry.cumulativeAmount > 0) {
-                    entry.cumulativeAmount -= item.quantity;
-                    entry.exportedAmount += item.quantity;
-                }
+                entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
                 await item.save({validateModifiedOnly: true});
             }
         }
