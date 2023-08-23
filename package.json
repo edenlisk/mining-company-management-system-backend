@@ -30,6 +30,7 @@
     "officegen": "^0.6.5",
     "pdfmake": "^0.2.7",
     "pizzip": "^3.1.4",
+    "uuid": "^9.0.0",
     "validator": "^13.9.0",
     "winston": "^3.10.0",
     "xss-clean": "^0.1.4"

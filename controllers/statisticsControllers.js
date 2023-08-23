@@ -1,5 +1,6 @@
 const { getModel } = require('../utils/helperFunctions');
 const catchAsync = require('../utils/catchAsync');
+const { v4: uuidv4 } = require('uuid');
 const AppError = require('../utils/appError');
 
 exports.detailedStock = catchAsync(async (req, res, next) => {
@@ -7,7 +8,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
     const detailedStock = [];
     if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
         // TODO 16: CHANGE STATUS
-        const entries = await Entry.find({output: {$elemMatch: {status: "in progress", cumulativeAmount: {$gt: 0}}}});
+        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}});
         for (const entry of entries) {
             for (const lot of entry.output) {
                 detailedStock.push(
@@ -22,7 +23,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                         exportedAmount: lot.exportedAmount,
                         cumulativeAmount: lot.cumulativeAmount,
                         pricePerUnit: lot.pricePerUnit,
-                        index: entries.indexOf(entry),
+                        index: uuidv4(),
                     }
                 );
             }
@@ -41,7 +42,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                     exportedAmount: entry.exportedAmount,
                     cumulativeAmount: entry.cumulativeAmount,
                     pricePerUnit: entry.pricePerUnit,
-                    index: entries.indexOf(entry),
+                    index: uuidv4(),
                 }
             )
         }
@@ -53,6 +54,90 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                 status: "Success",
                 data: {
                     detailedStock
+                }
+            }
+        )
+    ;
+})
+
+exports.currentStock = catchAsync(async (req, res, next) => {
+    const Cassiterite = getModel('cassiterite');
+    const Coltan = getModel('coltan');
+    const Wolframite = getModel('wolframite');
+    const Lithium = getModel('lithium');
+    const Beryllium = getModel('beryllium');
+    const cassiteriteStock = await Cassiterite.aggregate(
+        [
+            {
+                $unwind: "$output"
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCumulativeAmount: { $sum: "$output.cumulativeAmount" }
+                }
+            }
+        ]
+    );
+    const coltanStock = await Coltan.aggregate(
+        [
+            {
+                $unwind: "$output"
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCumulativeAmount: { $sum: "$output.cumulativeAmount" }
+                }
+            }
+        ]
+    )
+    const wolframiteStock = await Wolframite.aggregate(
+        [
+            {
+                $unwind: "$output"
+            },
+            {
+                $group: {
+                    _id: null,
+                    totalCumulativeAmount: { $sum: "$output.cumulativeAmount" }
+                }
+            }
+        ]
+    )
+    const berylliumStock = await Beryllium.aggregate(
+        [
+            {
+                $group: {
+                    _id: null,
+                    totalCumulativeAmount: { $sum: "$cumulativeAmount" }
+                }
+            }
+        ]
+    )
+    const lithumStock = await Lithium.aggregate(
+        [
+            {
+                $group: {
+                    _id: null,
+                    totalCumulativeAmount: { $sum: "$cumulativeAmount" }
+                }
+            }
+        ]
+    )
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    stock: {
+                        coltanStock,
+                        cassiteriteStock,
+                        wolframiteStock,
+                        lithumStock,
+                        berylliumStock
+                    }
                 }
             }
         )
