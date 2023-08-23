@@ -20,7 +20,7 @@ const shipmentSchema = new mongoose.Schema(
         },
         shipmentGrade: {
             type: Number,
-            required: [true, "Please provide average grade of shipment"],
+            // required: [true, "Please provide average grade of shipment"],
             validate: {
                 validator: (elem) => {
                     return elem >= 0.0;
@@ -43,8 +43,8 @@ const shipmentSchema = new mongoose.Schema(
         buyerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Buyer',
-            required: [true, "Please select the buyer"],
-            immutable: true
+            // required: [true, "Please select the buyer"],
+            // immutable: true
         },
         shipmentSamplingDate: {
             type: Date,
@@ -64,7 +64,7 @@ const shipmentSchema = new mongoose.Schema(
         shipmentNumber: {
             type: String,
             unique: true,
-            required: [true, "Please provide shipment number"]
+            // required: [true, "Please provide shipment number"]
         },
         analysisCertificate: {
             type: String,
