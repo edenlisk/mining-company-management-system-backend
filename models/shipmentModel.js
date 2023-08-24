@@ -10,7 +10,6 @@ const shipmentSchema = new mongoose.Schema(
                 {
                     entryId: mongoose.Schema.Types.ObjectId,
                     quantity: Number,
-                    model: String,
                     lotNumber: Number
                 }
             ],

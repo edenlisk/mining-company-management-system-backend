@@ -56,7 +56,7 @@ exports.downloadCertificate = catchAsync(async (req, res, next) => {
 exports.updateShipment = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("Selected shipment no longer exists!", 400));
-    if (req.body.entry) shipment.entries = req.body.entry;
+    if (req.body.entries) shipment.entries = req.body.entries;
     if (req.body.shipmentGrade) shipment.shipmentGrade = req.body.shipmentGrade;
     if (req.body.shipmentPrice) shipment.shipmentPrice = req.body.shipmentPrice;
     if (req.body.shipmentNumber) shipment.shipmentNumber = req.body.shipmentNumber;
