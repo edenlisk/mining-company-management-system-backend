@@ -27,7 +27,7 @@ exports.getAllshipments = catchAsync(async (req, res, next) => {
 exports.createShipment = catchAsync(async (req, res, next) => {
     await Shipment.create(
         {
-            entries: req.body.entry,
+            entries: req.body.entries,
             shipmentPrice: req.body.shipmentPrice,
             shipmentGrade: req.body.shipmentGrade,
             totalShipmentQuantity: req.body.totalShipmentQuantity,

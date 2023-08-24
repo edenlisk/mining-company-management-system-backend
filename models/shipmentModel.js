@@ -139,4 +139,18 @@ shipmentSchema.pre('save', async function (next) {
     next();
 })
 
+// {
+//     "entries": [
+//         {
+//         "entryId": "64e5cda5c29e9dc4835b4fed",
+//         "lotNumber": 1,
+//         "quantity": 68,
+//         "model": "cassiterite"
+//         }
+//     ],
+//     "averageGrade": "0.000",
+//     "averagePrice": "22",
+//     "totalShipmentQuantity": 68
+// }
+
 module.exports = mongoose.model('Shipment', shipmentSchema);
