@@ -1,6 +1,7 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
 const { getModel } = require('../utils/helperFunctions');
+const Buyer = require('./buyerModel');
 const AppError = require('../utils/appError');
 
 const shipmentSchema = new mongoose.Schema(
@@ -51,6 +52,9 @@ const shipmentSchema = new mongoose.Schema(
         shipmentContainerLoadingDate: {
             type: String,
         },
+        buyerName: {
+            type: String
+        },
         totalShipmentQuantity: {
             type: Number
         },
@@ -62,7 +66,7 @@ const shipmentSchema = new mongoose.Schema(
         },
         shipmentNumber: {
             type: String,
-            unique: true,
+            // unique: true,
             // required: [true, "Please provide shipment number"]
         },
         analysisCertificate: {
@@ -95,6 +99,10 @@ shipmentSchema.pre('save', async function (next) {
             }
         });
     }
+    if (this.buyerId) {
+        const buyer = await Buyer.findById(this.buyerId).select({name: 1});
+        this.buyerName = buyer.name;
+    }
     next();
 })
 
@@ -123,7 +131,11 @@ shipmentSchema.pre('save', async function (next) {
                 const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
                 if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
                 const shipment = lot.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
-                shipment.weight = item.quantity;
+                if (shipment) {
+                    shipment.weight = item.quantity;
+                } else {
+                    lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                }
                 await entry.save({validateModifiedOnly: true});
             }
         } else if (this.model === "lithium" || this.model === "beryllium") {

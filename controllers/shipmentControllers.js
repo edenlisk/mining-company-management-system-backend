@@ -1,10 +1,10 @@
 const multer = require('multer');
 const PdfPrinter = require('pdfmake');
 const path = require('path');
-const Shipment = require('../models/shipmentModel');
+const Shipment = require("../models/shipmentModel");
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const { getModel } = require('../utils/helperFunctions');
+const {getModel} = require('../utils/helperFunctions');
 const fs = require('fs');
 // const { multerFilter, multerStorage } = require('../utils/helperFunctions');
 
@@ -56,7 +56,13 @@ exports.downloadCertificate = catchAsync(async (req, res, next) => {
 exports.updateShipment = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("Selected shipment no longer exists!", 400));
+    if (req.files) {
+        for (const file of req.files) {
+            shipment[file.fieldname] = file.fieldname;
+        }
+    }
     if (req.body.entries) shipment.entries = req.body.entries;
+    if (req.body.buyerId) shipment.buyerId = req.body.buyerId;
     if (req.body.shipmentGrade) shipment.shipmentGrade = req.body.shipmentGrade;
     if (req.body.shipmentPrice) shipment.shipmentPrice = req.body.shipmentPrice;
     if (req.body.shipmentNumber) shipment.shipmentNumber = req.body.shipmentNumber;
@@ -116,11 +122,12 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
             normal: 'ZapfDingbats'
         }
     };
-    const shipment = await Shipment.findById(req.params.shipmentId);
+    const shipment = await Shipment.findOne({_id: req.params.shipmentId});
     const tableData = [
         [
             {text: "Supply date", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
             {text: 'Supplier name', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            {text: "Lot No", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
             {text: 'Weight out', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
             {text: "Exported amount", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
             {text: "Balance", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
@@ -130,16 +137,17 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
 
     const populateDoc = async (tableData) => {
         for (const item of shipment.entries) {
-            const Entry = getModel(item.model);
+            const Entry = getModel(shipment.model);
             const entry = await Entry.findById(item.entryId);
             const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
             tableData.push([
-                    {text: entry.supplyDate},
-                    {text: entry.supplierName},
-                    {text: lot.weightOut},
-                    {text: lot.exportedAmount},
-                    {text: lot.cumulativeAmount},
-                    {text: lot.mineralGrade}
+                {text: entry.supplyDate.toISOString().split('T')[0]},
+                {text: entry.companyName},
+                {text: item.lotNumber},
+                {text: lot.weightOut},
+                {text: item.quantity},
+                {text: lot.cumulativeAmount},
+                {text: lot.mineralGrade}
             ])
         }
         return tableData;
@@ -149,7 +157,12 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
         pageOrientation: 'landscape',
         pageMargins: [40, 50, 40, 50],
         content: [
-            {text: `Shipment details with shipment number: ${shipment.shipmentNumber}`, alignment: 'left', margin: [30, 20, 30, 20], fontSize: 25},
+            {
+                text: `Shipment details with shipment number: ${shipment.shipmentNumber}`,
+                alignment: 'left',
+                margin: [30, 20, 30, 20],
+                fontSize: 25
+            },
             {
                 table: {
                     width: ['*', '*', '*', 'auto'],
@@ -182,9 +195,10 @@ const multerStorage = multer.diskStorage(
             cb(null, `${__dirname}/../public/data/shipment/${req.params.shipmentId}`);
         },
         filename: function (req, file, cb) {
-            const fileExtension = path.extname(file.originalname);
-            const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}.${fileExtension}`;
-            cb(null, filePath);
+            // const fileExtension = path.extname(file.originalname);
+            console.log(file);
+            // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
+            cb(null, file.originalname);
         }
     }
 )

@@ -18,10 +18,11 @@ router.route('/report/:shipmentId')
 
 router.route('/:shipmentId')
     .patch(
-        uploadCertificates.single('analysisCertificate'),
-        uploadCertificates.single('containerForwardNote'),
-        uploadCertificates.single('rmbIcglrCertificate'),
-        uploadCertificates.single('certificateOfOrigin'),
+        uploadCertificates.any(),
+        // uploadCertificates.single('analysisCertificate'),
+        // uploadCertificates.single('containerForwardNote'),
+        // uploadCertificates.single('rmbIcglrCertificate'),
+        // uploadCertificates.single('certificateOfOrigin'),
         updateShipment
     );
 
