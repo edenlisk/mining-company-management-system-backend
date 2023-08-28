@@ -80,6 +80,7 @@ paymentSchema.pre('save', async function (next) {
                     lot.unpaid = 0;
                     lot.settled = true;
                     lot.rmaFeeDecision = "RMA Fee pending";
+                    payment.remainingAmount -= lot.mineralPrice;
                     // TODO 12: FIND APPROPRIATE COMMENT.
                     // payment.consumptionDetails.push(
                     //     {
@@ -88,42 +89,41 @@ paymentSchema.pre('save', async function (next) {
                     //     }
                     // )
                     // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
+                    const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
                     lot.paymentHistory.push(
                         {
-                            ...payment,
-                            lotNumber: undefined,
-                            contractName: undefined,
-                            supplierId: this.supplierId,
-                            licenseNumber: this.licenseNumber,
-                            TINNumber: this.TINNumber,
+                            _id: this._id,
+                            beneficiary,
+                            nationalId,
+                            phoneNumber,
+                            location,
+                            paymentAmount: payment.paymentAmount - payment.remainingAmount,
+                            email,
                             paymentDate: this.paymentDate,
-                            supplierName: this.supplierName,
-                            advance: true,
-                            remainingAmount: undefined
+                            currency
                         }
                     );
-                    payment.remainingAmount -= lot.mineralPrice;
                 } else {
                     if (paymentSchema.remainingAmount >= lot.rmaFeeUSD) {
                         lot.rmaFeeDecision = "RMA Fee pending";
                         lot.paid += (payment.remainingAmount - lot.rmaFeeUSD);
                         lot.unpaid -= (payment.remainingAmount - lot.rmaFeeUSD);
                         // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
+                        payment.remainingAmount -= (payment.remainingAmount - lot.rmaFeeUSD);
+                        const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
                         lot.paymentHistory.push(
                             {
-                                ...payment,
-                                lotNumber: undefined,
-                                contractName: undefined,
-                                supplierId: this.supplierId,
-                                licenseNumber: this.licenseNumber,
-                                TINNumber: this.TINNumber,
+                                _id: this._id,
+                                beneficiary,
+                                nationalId,
+                                phoneNumber,
+                                location,
+                                paymentAmount: payment.remainingAmount,
+                                email,
                                 paymentDate: this.paymentDate,
-                                supplierName: this.supplierName,
-                                advance: true,
-                                remainingAmount: undefined
+                                currency
                             }
                         );
-                        payment.remainingAmount -= (payment.remainingAmount - lot.rmaFeeUSD);
                     }
                 }
             }
@@ -131,52 +131,74 @@ paymentSchema.pre('save', async function (next) {
             lot.paid += this.paymentAmount;
             lot.unpaid -= this.paymentAmount;
             const self = this;
-            lot.paymentHistory.push({...self, model: undefined});
+            const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
+            lot.paymentHistory.push(
+                {
+                    _id: this._id,
+                    beneficiary,
+                    nationalId,
+                    phoneNumber,
+                    location,
+                    email,
+                    currency,
+                    paymentDate: this.paymentDate,
+                    paymentAmount: this.paymentAmount
+                }
+            );
         }
+        await entry.save({validateModifiedOnly: true});
     } else if (this.model === "lithium" || this.model === "beryllium") {
         const entry = await Entry.findOne({_id: this.entryId});
         if (entry.settled || entry.unpaid <= 0) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
-            if (payment.consumed) return next(new AppError("This payment is already consumed", 400));
-            if (payment.remainingAmount >= entry.mineralPrice) {
-                entry.paid += entry.mineralPrice;
-                entry.unpaid -= entry.mineralPrice;
-                entry.settled = true;
-                entry.paymentHistory.push(
-                    {
-                        ...payment,
-                        lotNumber: undefined,
-                        contractName: undefined,
-                        supplierId: this.supplierId,
-                        licenseNumber: this.licenseNumber,
-                        TINNumber: this.TINNumber,
-                        paymentDate: this.paymentDate,
-                        supplierName: this.supplierName,
-                        advance: true,
-                        remainingAmount: undefined
-                    }
-                )
-                payment.remainingAmount -= entry.mineralPrice;
+            if (!payment.consumed) {
+                if (payment.remainingAmount >= entry.mineralPrice) {
+                    entry.paid += entry.mineralPrice;
+                    entry.unpaid -= entry.mineralPrice;
+                    entry.settled = true;
+                    payment.remainingAmount -= entry.mineralPrice;
+                    const { beneficiary, nationalId, phoneNumber, location, email, currency } = payment;
+                    entry.paymentHistory.push(
+                        {
+                            _id: this._id,
+                            beneficiary,
+                            nationalId,
+                            phoneNumber,
+                            location,
+                            email,
+                            currency,
+                            paymentDate: this.paymentDate,
+                            paymentAmount: payment.paymentAmount - payment.remainingAmount
+                        }
+                    )
+                }
+                await payment.save({validateModifiedOnly: true});
             }
         } else {
             entry.paid += this.paymentAmount;
             entry.unpaid -= this.paymentAmount;
             const self = this;
-            entry.paymentHistory.push({...self, model: undefined});
+            const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
+            entry.paymentHistory.push(
+                {
+                    _id: this._id,
+                    beneficiary,
+                    nationalId,
+                    phoneNumber,
+                    location,
+                    email,
+                    currency,
+                    paymentDate: this.paymentDate,
+                    paymentAmount: this.paymentAmount
+                }
+            );
         }
+        await entry.save({validateModifiedOnly: true});
     }
     this.model = undefined;
     next();
 })
 
-// paymentSchema.pre('save', async function (next) {
-//     if (this.isModified('remainingAmount')) {
-//         if (this.remainingAmount <= 0) {
-//             this.consumed = true;
-//         }
-//     }
-//     next();
-// })
 
 module.exports = mongoose.model('Payment', paymentSchema);

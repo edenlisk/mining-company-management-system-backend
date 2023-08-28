@@ -121,7 +121,7 @@ shipmentSchema.pre('save', async function (next) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
                 entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
-                await item.save({validateModifiedOnly: true});
+                await entry.save({validateModifiedOnly: true});
             }
         }
     } else if (this.isModified("entries") && !this.isNew) {
