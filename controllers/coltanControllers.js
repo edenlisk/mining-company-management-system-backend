@@ -38,11 +38,11 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
                 licenseNumber: supplier.licenseNumber,
-                beneficiary: supplier.companyRepresentative,
+                beneficiary: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
                 TINNumber: supplier.TINNumber,
-                email: supplier.email,
-                representativeId: supplier.representativeId,
-                representativePhoneNumber: supplier.representativePhoneNumber,
+                email: supplier.email ? supplier.email : req.body.email,
+                representativeId: supplier.representativeId ? supplier.representativeId : req.body.representativeId,
+                representativePhoneNumber: supplier.representativePhoneNumber ? supplier.representativePhoneNumber : req.body.representativePhoneNumber,
             }
         )
     } else if (supplier.companyName.toLowerCase() === "kanzamin") {
