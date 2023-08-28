@@ -58,7 +58,7 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
     if (!shipment) return next(new AppError("Selected shipment no longer exists!", 400));
     if (req.files) {
         for (const file of req.files) {
-            shipment[file.fieldname] = file.fieldname;
+            shipment[file.fieldname] = file.originalname;
         }
     }
     if (req.body.entries) shipment.entries = req.body.entries;
@@ -196,7 +196,6 @@ const multerStorage = multer.diskStorage(
         },
         filename: function (req, file, cb) {
             // const fileExtension = path.extname(file.originalname);
-            console.log(file);
             // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
             cb(null, file.originalname);
         }
