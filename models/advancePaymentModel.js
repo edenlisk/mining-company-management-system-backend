@@ -4,6 +4,9 @@ const AppError = require('../utils/appError');
 
 const advancePaymentSchema = new mongoose.Schema(
     {
+        supplierId: {
+            type: mongoose.Schema.Types.ObjectId,
+        },
         beneficiary: {
             type: String,
             required: [true, "Please provide beneficiary's name"]
