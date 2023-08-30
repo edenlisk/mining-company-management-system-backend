@@ -38,6 +38,7 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
                 supplierId: supplier._id,
                 companyName: supplier.companyName,
                 licenseNumber: supplier.licenseNumber,
+                companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
                 beneficiary: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
                 TINNumber: supplier.TINNumber,
                 email: supplier.email ? supplier.email : req.body.email,
@@ -56,6 +57,7 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
                 email: "kanzamin@gmail.com",
                 representativeId: "Kanzamin representative",
                 representativePhoneNumber: "+250780000000",
+                companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.representativeId
             }
         )
     } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
@@ -69,6 +71,7 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
                 email: supplier.email,
                 representativeId: req.body.representativeId,
                 representativePhoneNumber: req.body.representativePhoneNumber,
+                companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.representativeId
             }
         )
     }

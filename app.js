@@ -33,6 +33,7 @@ const berylliumRouter = require('./routes/berylliumRouter');
 const mixedRouter = require('./routes/mixedRouter');
 const advancePaymentRouter = require('./routes/advancePaymentsRouter');
 const statisticsRouter = require('./routes/statisticsRouter');
+const settingsRouter = require('./routes/settingsRouter');
 
 const app = express();
 
@@ -83,6 +84,7 @@ app.use('/api/v1/beryllium', berylliumRouter);
 app.use('/api/v1/mixed', mixedRouter);
 app.use('/api/v1/stock', statisticsRouter);
 app.use('/api/v1/advance-payment', advancePaymentRouter);
+app.use('/api/v1/settings', settingsRouter);
 // app.use('/api/v1/risk-assessment', riskAssessmentRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,

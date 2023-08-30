@@ -96,6 +96,22 @@ exports.generate = catchAsync(async (req, res, next) => {
         linebreaks: true,
     });
     const supplier = await Supplier.findById("64d1ffff7231b0d777b7ade2");
+    const models = ["cassiterite", "coltan", "wolframite"];
+    const mineralTypes = {
+        "mineral_type1": "cassiterite",
+        "mineral_type2": "coltan",
+        "mineral_type3": "wolframite",
+        "mineral_type4": "mixed"
+    }
+    const sampleObject = {};
+    for (const model of models) {
+        const mineralProduction = await getProduction(model, req.body.supplierId);
+        for (const production of mineralProduction) {
+            sampleObject[`month_${mineralProduction.indexOf(production) + 1}`] = getMonthWords(production._id.month);
+            sampleObject[`mineral_type${models.indexOf(model) + 1}`] = mineralTypes[`mineral_type${models.indexOf(model) + 1}`];
+            sampleObject[`month${mineralProduction.indexOf(production) + 1}_type${models.indexOf(model) + 1}`] = production.totalWeightIn;
+        }
+    }
 
 
     // Render the document (Replace {first_name} by John, {last_name} by Doe, ...)
@@ -108,7 +124,8 @@ exports.generate = catchAsync(async (req, res, next) => {
         sites_district: supplier.address.district,
         sites_sector: supplier.address.sector,
         // TODO 15: USE SECTOR INSTEAD OF SECTOR
-        sites_cell: supplier.address.sector
+        sites_cell: supplier.address.sector,
+        ...sampleObject
         // name_of_processor: this.docInfo.name_of_processor,
         // name_of_consultant: this.docInfo.name_of_consultant,
         // email_of_consultant: this.docInfo.email_of_consultant,
@@ -152,22 +169,25 @@ exports.generate = catchAsync(async (req, res, next) => {
     // buf is a nodejs Buffer, you can either write it to a
     // file or res.send it with express for example.
 
-    const cassiteriteProduction = await getProduction(["cassiterite"], req.params.supplierId);
-    for (const item of cassiteriteProduction) {
+    // const cassiteriteProduction = await getProduction("cassiterite", req.params.supplierId);
+    // for (const item of cassiteriteProduction) {
+    //     console.log(item);
+    // }
 
-    }
+
+
 
     const year = (new Date()).getFullYear();
     const month = getMonthWords((new Date()).getMonth());
     const filePath = `${__dirname}/../public/data/DD Reports/${year}/${month}`;
-    // if (!fs.existsSync(filePath)) {
-    //     fs.mkdir(filePath, {recursive: true}, err => {
-    //         if (err) {
-    //             console.log(err);
-    //         }
-    //     });
-    // }
-    // fs.writeFileSync(path.resolve(filePath, `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`), buffer);
+    if (!fs.existsSync(filePath)) {
+        fs.mkdir(filePath, {recursive: true}, err => {
+            if (err) {
+                console.log(err);
+            }
+        });
+    }
+    fs.writeFileSync(path.resolve(filePath, `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`), buffer);
     res
         .status(200)
         .json(

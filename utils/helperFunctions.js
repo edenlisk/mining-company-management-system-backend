@@ -90,6 +90,7 @@ exports.handleChangeSupplier = async (docObject, next) => {
         this.licenseNumber = supplier.licenseNumber;
         this.representativeId = supplier.representativeId;
         this.representativePhoneNumber = supplier.representativePhoneNumber;
+        this.companyRepresentative = supplier.companyRepresentative;
         this.TINNumber = supplier.TINNumber;
         this.district = supplier.address.district;
     }
