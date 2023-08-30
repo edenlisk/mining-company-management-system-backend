@@ -92,6 +92,7 @@ const shipmentSchema = new mongoose.Schema(
 
 shipmentSchema.pre('save', async function (next) {
     if (this.isNew) {
+        // TODO 18: REPLACE this._id with this.shipmentNumber
         const filePath = `${__dirname}/../public/data/shipment/${this._id}`;
         fs.mkdir(filePath, {recursive: true}, err => {
             if (err) {
