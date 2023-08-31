@@ -143,3 +143,29 @@ exports.currentStock = catchAsync(async (req, res, next) => {
         )
     ;
 })
+
+exports.paymentHistory = catchAsync(async (req, res, next) => {
+    let lotPaymentHistory = [];
+    const Entry = getModel(req.params.model);
+    const specificModel = ["cassiterite", "coltan", "wolframite"];
+    const generalModel = ["lithium", "beryllium"];
+    const entry = await Entry.findById(req.params.entryId);
+    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
+    if (specificModel.includes(req.params.model)) {
+        const lot = entry.output.find(value => value.lotNumber === parseInt(req.params.lotNumber));
+        if (lot) lotPaymentHistory = lot.paymentHistory;
+    } else if (generalModel.includes(req.params.model)) {
+        if (entry) lotPaymentHistory = entry.paymentHistory;
+    }
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    lotPaymentHistory
+                }
+            }
+        )
+    ;
+})
