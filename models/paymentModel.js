@@ -63,31 +63,31 @@ const paymentSchema = new mongoose.Schema(
     {timestamps: true}
 )
 
-paymentSchema.pre('save', async function (next) {
-    const { getModel } = require('../utils/helperFunctions');
-    const Entry = getModel(this.model);
-    const entry = await Entry.findById(this.entryId);
-    if (this.paymentInAdvanceId) {
-        const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
-        if (payment) {
-            this.supplierId = payment.supplierId;
-            this.companyName = payment.companyName;
-            this.licenseNumber = payment.licenseNumber;
-            this.TINNumber = payment.TINNumber;
-            this.nationalId = payment.nationalId;
-            this.email = payment.email;
-        }
-    } else {
-        this.supplierId = entry.supplierId;
-        this.companyName = entry.companyName;
-        this.licenseNumber = entry.licenseNumber;
-        this.TINNumber = entry.TINNumber;
-        // TODO 20: CHECK AGAIN NATIONALID
-        this.nationalId = entry.representativeId;
-        this.email = entry.email;
-    }
-    next();
-})
+// paymentSchema.pre('save', async function (next) {
+//     const { getModel } = require('../utils/helperFunctions');
+//     const Entry = getModel(this.model);
+//     const entry = await Entry.findById(this.entryId);
+//     if (this.paymentInAdvanceId) {
+//         const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
+//         if (payment) {
+//             this.supplierId = payment.supplierId;
+//             this.companyName = payment.companyName;
+//             this.licenseNumber = payment.licenseNumber;
+//             this.TINNumber = payment.TINNumber;
+//             this.nationalId = payment.nationalId;
+//             this.email = payment.email;
+//         }
+//     } else {
+//         this.supplierId = entry.supplierId;
+//         this.companyName = entry.companyName;
+//         this.licenseNumber = entry.licenseNumber;
+//         this.TINNumber = entry.TINNumber;
+//         // TODO 20: CHECK AGAIN NATIONALID
+//         this.nationalId = entry.representativeId;
+//         this.email = entry.email;
+//     }
+//     next();
+// })
 
 
 paymentSchema.pre('save', async function (next) {
