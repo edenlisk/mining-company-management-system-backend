@@ -158,7 +158,7 @@ const storekeeper = {
     entry: {
         view: true,
         create: true,
-        edit: false,
+        edit: true,
         delete: false
     },
     suppliers: {

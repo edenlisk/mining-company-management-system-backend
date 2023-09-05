@@ -26,7 +26,8 @@ const shipmentSchema = new mongoose.Schema(
                     return elem >= 0.0;
                 },
                 message: "Shipment grade can't be negative number"
-            }
+            },
+            default: null
         },
         shipmentPrice: {
             type: Number,
@@ -35,7 +36,8 @@ const shipmentSchema = new mongoose.Schema(
                     return elem >= 0.0;
                 },
                 message: "Shipment price can't be negative number"
-            }
+            },
+            default: null
         },
         shipmentMinerals: {
             type: String
@@ -53,21 +55,26 @@ const shipmentSchema = new mongoose.Schema(
             type: String,
         },
         buyerName: {
-            type: String
+            type: String,
+            default: null
         },
         totalShipmentQuantity: {
-            type: Number
+            type: Number,
+            default: null
         },
         averageGrade: {
-            type: Number
+            type: Number,
+            default: null
         },
         averagePrice: {
             type: Number,
+            default: null
         },
         shipmentNumber: {
             type: String,
             // unique: true,
             // required: [true, "Please provide shipment number"]
+            default: null
         },
         analysisCertificate: {
             type: String,
@@ -110,6 +117,7 @@ shipmentSchema.pre('save', async function (next) {
 shipmentSchema.pre('save', async function (next) {
     const Entry = getModel(this.model);
     if (this.isNew) {
+        this.shipmentMinerals = this.model.charAt(0).toUpperCase() + this.model.slice(1);
         if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
