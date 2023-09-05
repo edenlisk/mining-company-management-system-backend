@@ -41,9 +41,7 @@ const paymentSchema = new mongoose.Schema(
             validate: [isEmail, 'Please provide valid email address']
         },
         location: {
-            province: String,
-            district: String,
-            sector: String
+            type: String
         },
         paymentAmount: {
             type: Number,
@@ -98,7 +96,7 @@ paymentSchema.pre('save', async function (next) {
     if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
         const entry = await Entry.findOne({_id: this.entryId});
         const lot = entry.output.find(lot => lot.lotNumber === this.lotNumber);
-        if (lot.settled || lot.unpaid <= 0) return next(new AppError("This lot is already paid", 400));
+        if (lot.settled) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
             if (!payment.consumed) {
@@ -176,7 +174,7 @@ paymentSchema.pre('save', async function (next) {
         await entry.save({validateModifiedOnly: true});
     } else if (this.model === "lithium" || this.model === "beryllium") {
         const entry = await Entry.findOne({_id: this.entryId});
-        if (entry.settled || entry.unpaid <= 0) return next(new AppError("This lot is already paid", 400));
+        if (entry.settled) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
             if (!payment.consumed) {

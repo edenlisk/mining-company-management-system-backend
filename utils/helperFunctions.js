@@ -76,8 +76,8 @@ exports.getSixMonthsAgo = endMonth => {
 
 exports.handlePaidSpecific = output => {
     for (const item of output) {
-        if (item.unpaid <= 0) {
-            item.settled = true;
+        if (item.unpaid) {
+            if (item.unpaid <= 0) item.settled = true;
         }
     }
 }
