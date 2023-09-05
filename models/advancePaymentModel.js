@@ -7,6 +7,9 @@ const advancePaymentSchema = new mongoose.Schema(
         supplierId: {
             type: mongoose.Schema.Types.ObjectId,
         },
+        companyName: {
+            type: String,
+        },
         beneficiary: {
             type: String,
             required: [true, "Please provide beneficiary's name"]

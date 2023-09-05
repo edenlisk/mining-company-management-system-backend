@@ -16,7 +16,7 @@ const paymentSchema = new mongoose.Schema(
             ref: 'Entry'
         },
         lotNumber: Number,
-        supplierName: {
+        companyName: {
             type: String,
         },
         beneficiary: {
@@ -24,14 +24,14 @@ const paymentSchema = new mongoose.Schema(
         },
         nationalId: {
             type: String,
-            required: [true, "Please provide representative's national Id"]
+            // required: [true, "Please provide representative's national Id"]
         },
         licenseNumber: {
             type: String
         },
         phoneNumber: {
             type: String,
-            required: [true, "Please provide representative phone number"]
+            // required: [true, "Please provide representative phone number"]
         },
         TINNumber: {
             type: String
@@ -68,6 +68,33 @@ const paymentSchema = new mongoose.Schema(
 paymentSchema.pre('save', async function (next) {
     const { getModel } = require('../utils/helperFunctions');
     const Entry = getModel(this.model);
+    const entry = await Entry.findById(this.entryId);
+    if (this.paymentInAdvanceId) {
+        const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
+        if (payment) {
+            this.supplierId = payment.supplierId;
+            this.companyName = payment.companyName;
+            this.licenseNumber = payment.licenseNumber;
+            this.TINNumber = payment.TINNumber;
+            this.nationalId = payment.nationalId;
+            this.email = payment.email;
+        }
+    } else {
+        this.supplierId = entry.supplierId;
+        this.companyName = entry.companyName;
+        this.licenseNumber = entry.licenseNumber;
+        this.TINNumber = entry.TINNumber;
+        // TODO 20: CHECK AGAIN NATIONALID
+        this.nationalId = entry.representativeId;
+        this.email = entry.email;
+    }
+    next();
+})
+
+
+paymentSchema.pre('save', async function (next) {
+    const { getModel } = require('../utils/helperFunctions');
+    const Entry = getModel(this.model);
     if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
         const entry = await Entry.findOne({_id: this.entryId});
         const lot = entry.output.find(lot => lot.lotNumber === this.lotNumber);
@@ -92,7 +119,7 @@ paymentSchema.pre('save', async function (next) {
                     const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
                     lot.paymentHistory.push(
                         {
-                            _id: this._id,
+                            paymentId: this._id,
                             beneficiary,
                             nationalId,
                             phoneNumber,
@@ -113,7 +140,7 @@ paymentSchema.pre('save', async function (next) {
                         const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
                         lot.paymentHistory.push(
                             {
-                                _id: this._id,
+                                paymentId: this._id,
                                 beneficiary,
                                 nationalId,
                                 phoneNumber,
@@ -134,7 +161,7 @@ paymentSchema.pre('save', async function (next) {
             const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
             lot.paymentHistory.push(
                 {
-                    _id: this._id,
+                    paymentId: this._id,
                     beneficiary,
                     nationalId,
                     phoneNumber,
@@ -161,7 +188,7 @@ paymentSchema.pre('save', async function (next) {
                     const { beneficiary, nationalId, phoneNumber, location, email, currency } = payment;
                     entry.paymentHistory.push(
                         {
-                            _id: this._id,
+                            paymentId: this._id,
                             beneficiary,
                             nationalId,
                             phoneNumber,
@@ -182,7 +209,7 @@ paymentSchema.pre('save', async function (next) {
             const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
             entry.paymentHistory.push(
                 {
-                    _id: this._id,
+                    paymentId: this._id,
                     beneficiary,
                     nationalId,
                     phoneNumber,

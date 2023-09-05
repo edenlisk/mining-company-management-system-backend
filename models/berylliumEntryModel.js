@@ -60,7 +60,39 @@ const berylliumSchema = new mongoose.Schema(
             default: "RMA Fee exempted"
         },
         paymentHistory: {
-            type: [Object],
+            type: [
+                {
+                    paymentId: mongoose.Schema.Types.ObjectId,
+                    beneficiary: {
+                        type: String,
+                        default: null
+                    },
+                    nationalId: {
+                        type: String,
+                        default: null
+                    },
+                    phoneNumber:  {
+                        type: String,
+                        default: null
+                    },
+                    location: {
+                        type: String,
+                        default: null
+                    },
+                    currency:  {
+                        type: String,
+                        default: null
+                    },
+                    paymentDate: {
+                        type: Date,
+                        default: null
+                    },
+                    paymentAmount: {
+                        type: Number,
+                        default: null
+                    }
+                }
+            ],
             default: []
         }
     },
