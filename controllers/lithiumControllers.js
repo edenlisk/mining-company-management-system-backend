@@ -90,6 +90,7 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
 
 exports.deleteLithiumEntry = catchAsync(async (req, res, next) => {
     const entry = await Lithium.findByIdAndDelete(req.params.entryId);
+    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(

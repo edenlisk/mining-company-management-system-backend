@@ -161,28 +161,25 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     }
     const { rmaFeeColtan } = await Settings.findOne();
     if (req.body.output) {
-        entry.output = [];
         for (const lot of req.body.output) {
-            const singleLot = {
-                ...lot,
-                lotNumber: lot.lotNumber,
-                weightOut: lot.weightOut,
-                cumulativeAmount: lot.cumulativeAmount,
+            const existingLot = entry.output.find(value => value.lotNumber === lot.lotNumber);
+            if (existingLot) {
+                if (lot.mineralGrade) existingLot.mineralGrade = lot.mineralGrade;
+                if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
+                if (lot.tantalum) existingLot.tantalum = lot.tantalum;
+                if (lot.USDRate) existingLot.USDRate = lot.USDRate;
+                if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
+                if (existingLot.weightOut && rmaFeeColtan) {
+                    existingLot.rmaFee = rmaFeeColtan * existingLot.weightOut;
+                }
+                if (existingLot.rmaFee && existingLot.USDRate) {
+                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate);
+                }
+                // if (existingLot.tantalum && existingLot.mineralGrade) {
+                //     existingLot.pricePerUnit = existingLot.tantalum * existingLot.mineralGrade;
+                //     existingLot.mineralPrice = existingLot.pricePerUnit * existingLot.weightOut;
+                // }
             }
-            if (singleLot.weightOut) singleLot.rmaFee = rmaFeeColtan * singleLot.weightOut;
-            if (lot.mineralGrade) singleLot.mineralGrade = lot.mineralGrade;
-            if (lot.tantalum) singleLot.tantalum = lot.tantalum;
-            if (singleLot.tantalum && singleLot.mineralGrade) {
-                singleLot.pricePerUnit = singleLot.tantalum * singleLot.mineralGrade;
-            }
-            if (lot.USDRate) singleLot.USDRate = lot.USDRate;
-            if (singleLot.USDRate && singleLot.rmaFee) singleLot.rmaFeeUSD = handleConvertToUSD(singleLot.rmaFee, singleLot.USDRate);
-            if (lot.status) singleLot.status = lot.status;
-            if (lot.rmaFeeDecision) singleLot.rmaFeeDecision = lot.rmaFeeDecision;
-            if (singleLot.mineralGrade && singleLot.pricePerUnit && singleLot.weightOut) {
-                singleLot.mineralPrice = singleLot.pricePerUnit * singleLot.weightOut;
-            }
-            entry.output.push(singleLot);
         }
     }
     await entry.save({validateModifiedOnly: true});
@@ -198,6 +195,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
 
 exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findByIdAndDelete(req.params.entryId);
+    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(

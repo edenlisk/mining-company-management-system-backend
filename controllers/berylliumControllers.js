@@ -90,6 +90,7 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
 
 exports.deleteBerylliumEntry = catchAsync(async (req, res, next) => {
     const entry = await Beryllium.findByIdAndDelete(req.params.entryId);
+    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(

@@ -162,31 +162,26 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     }
     const { rmaFeeCassiterite } = await Settings.findOne();
     if (req.body.output) {
-        entry.output = [];
         for (const lot of req.body.output) {
-            // TODO 13: PAY ATTENTION -> SOME PROPERTIES MAY BE UNDEFINED
-            const singleLot = {
-                ...lot,
-                lotNumber: lot.lotNumber,
-                weightOut: lot.weightOut,
-                cumulativeAmount: lot.cumulativeAmount,
+            const existingLot = entry.output.find(value => value.lotNumber === lot.lotNumber);
+            if (existingLot) {
+                if (lot.mineralGrade) existingLot.mineralGrade = lot.mineralGrade;
+                if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
+                if (lot.treatmentCharges) existingLot.treatmentCharges = lot.treatmentCharges;
+                if (lot.londonMetalExchange) existingLot.londonMetalExchange = lot.londonMetalExchange;
+                if (lot.USDRate) existingLot.USDRate = lot.USDRate;
+                if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
+                if (existingLot.weightOut && rmaFeeCassiterite) {
+                    existingLot.rmaFee = rmaFeeCassiterite * existingLot.weightOut;
+                }
+                if (existingLot.rmaFee && existingLot.USDRate) {
+                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate);
+                }
+                // if (existingLot.treatmentCharges && existingLot.mineralGrade && existingLot.londonMetalExchange) {
+                //     existingLot.pricePerUnit = ((existingLot.londonMetalExchange * (existingLot.mineralGrade/100)) - existingLot.treatmentCharges) / 1000;
+                //     existingLot.mineralPrice = existingLot.pricePerUnit * existingLot.weightOut;
+                // }
             }
-            if (singleLot.weightOut) singleLot.rmaFee = rmaFeeCassiterite * singleLot.weightOut;
-            if (lot.mineralGrade) singleLot.mineralGrade = lot.mineralGrade;
-            if (lot.londonMetalExchange) singleLot.londonMetalExchange = lot.londonMetalExchange;
-            if (lot.treatmentCharges) singleLot.treatmentCharges = lot.treatmentCharges;
-            if (lot.rmaFeeDecision) singleLot.rmaFeeDecision = lot.rmaFeeDecision;
-            if (lot.USDRate) singleLot.USDRate = lot.USDRate;
-            if (lot.status) singleLot.status = lot.status;
-            if (singleLot.londonMetalExchange && singleLot.mineralGrade && singleLot.treatmentCharges) {
-                singleLot.pricePerUnit = ((singleLot.londonMetalExchange * (singleLot.mineralGrade/100)) - singleLot.treatmentCharges) / 1000;
-            }
-            if (singleLot.USDRate && singleLot.rmaFee) singleLot.rmaFeeUSD = handleConvertToUSD(singleLot.rmaFee, singleLot.USDRate);
-            if (singleLot.mineralGrade && singleLot.pricePerUnit && singleLot.weightOut) {
-                singleLot.mineralPrice = singleLot.pricePerUnit * singleLot.weightOut;
-                singleLot.unpaid = (singleLot.mineralPrice - singleLot.rmaFeeUSD);
-            }
-            entry.output.push(singleLot);
         }
     }
     await entry.save({validateModifiedOnly: true});
@@ -202,6 +197,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
 
 exports.deleteCassiteriteEntry = catchAsync(async (req, res, next) => {
     const entry = await Cassiterite.findByIdAndDelete(req.params.entryId);
+    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(
