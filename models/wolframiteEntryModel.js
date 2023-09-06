@@ -15,20 +15,40 @@ const wolframiteSchema = new mongoose.Schema(
         mineTags: {
             type: [
                 {
-                    weightInPerMineTag: Number,
-                    tagNumber: String,
-                    status: String
+                    weightInPerMineTag: {
+                        type: Number,
+                        default: null
+                    },
+                    tagNumber: {
+                        type: String,
+                        default: null
+                    },
+                    status: {
+                        type: String,
+                        default: null
+                    }
                 }
-            ]
+            ],
+            default: []
         },
         negociantTags: {
             type: [
                 {
-                    weightOutPerNegociantTag: Number,
-                    tagNumber: String,
-                    status: String
+                    weightOutPerNegociantTag: {
+                        type: String,
+                        default: null
+                    },
+                    tagNumber: {
+                        type: String,
+                        default: null
+                    },
+                    status: {
+                        type: String,
+                        default: null
+                    }
                 }
-            ]
+            ],
+            default: []
         },
         output: {
             type: [
