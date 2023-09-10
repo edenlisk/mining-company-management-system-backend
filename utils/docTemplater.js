@@ -95,7 +95,7 @@ exports.generate = catchAsync(async (req, res, next) => {
         paragraphLoop: true,
         linebreaks: true,
     });
-    const supplier = await Supplier.findById("64d1ffff7231b0d777b7ade2");
+    const supplier = await Supplier.findById(req.body.supplierId);
     const models = ["cassiterite", "coltan", "wolframite"];
     const mineralTypes = {
         "mineral_type1": "cassiterite",
