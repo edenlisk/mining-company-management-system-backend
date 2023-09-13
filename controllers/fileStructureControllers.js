@@ -3,8 +3,10 @@ const catchAsync = require('../utils/catchAsync');
 const fs = require('fs/promises');
 const path = require('path');
 const fileSystem = require('fs');
-const libre = require('libreoffice-convert');
-libre.convertAsync = require('util').promisify(libre.convert);
+const { promisify } = require('util');
+const docxConverter = require('docx-pdf');
+
+
 
 async function getFileStructure(directory, relativePath) {
     const files = await fs.readdir(directory);
@@ -55,18 +57,40 @@ exports.getFileStructure = catchAsync(async (req, res, next) => {
 
 exports.downloadFile = catchAsync(async (req, res, next) => {
     const filePath = `${__dirname}/../public/data/${req.body.fullPath}`;
-    // Check if the file exists
     if (fileSystem.existsSync(filePath)) {
-        // Set the appropriate headers for the response
-        res.setHeader('Content-Disposition', `attachment; filename=${req.body.filename}`);
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'); // Set the content type for DOCX files
-        // res.setHeader('Content-Type', 'application/octet-stream');
+        // Set the Content-Type header specifically for docx files
+        // const fileName = req.body.fullPath;
+        // const fileExtension = fileName.split('.').pop().toLowerCase();
+        const ext = path.extname(req.body.filename);
+        let contentType = 'application/octet-stream'; // Default content type
+        if (ext === 'docx') {
+            contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        }
 
-        // Create a read stream from the file and pipe it to the response
-        // res.sendFile(filePath);
+        res.setHeader('Content-Type', contentType);
+
+        // Read the file and send it as a response
         const fileStream = fileSystem.createReadStream(filePath);
         fileStream.pipe(res);
     } else {
-        return next(new AppError(`File requested doesn't exists!`, 400));
+        return next(new AppError(`File requested doesn't exist!`, 400));
     }
+
+    // const filePath = `${__dirname}/../public/data/${req.body.fullPath}`;
+    // // Check if the file exists
+    // if (fileSystem.existsSync(filePath)) {
+    //     // Set the appropriate headers for the response
+    //     // res.setHeader('Content-Disposition', `attachment; filename=${req.body.filename}`);
+    //     // res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'); // Set the content type for DOCX files
+    //     // res.setHeader('Content-Type', 'application/octet-stream');
+    //
+    //     // Create a read stream from the file and pipe it to the response
+    //     // res.sendFile(filePath);
+    //     // const fileStream = fileSystem.createReadStream(filePath);
+    //     // fileStream.setEncoding(null);
+    //     // fileStream.pipe(res);
+    //     res.download(filePath);
+    // } else {
+    //     return next(new AppError(`File requested doesn't exists!`, 400));
+    // }
 })

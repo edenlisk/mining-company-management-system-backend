@@ -6,7 +6,8 @@ const {
     uploadCertificates,
     updateShipment,
     shipmentReport,
-    getOneShipment
+    getOneShipment,
+    shipmentQuarterReport
 } = require('../controllers/shipmentControllers');
 
 
@@ -16,6 +17,9 @@ router.route('/')
 
 router.route('/report/:shipmentId')
     .post(shipmentReport)
+
+router.route('/quarter-report')
+    .post(shipmentQuarterReport)
 
 router.route('/:shipmentId')
     .get(getOneShipment)

@@ -8,7 +8,8 @@ exports.addSetting = catchAsync(async (req, res, next) => {
         {
             rmaFeeColtan: 125,
             rmaFeeCassiterite: 50,
-            rmaFeeWolframite: 50
+            rmaFeeWolframite: 50,
+            nameOfCompany: req.body.nameOfCompany
         }
     )
     res
@@ -26,6 +27,7 @@ exports.updateSettings = catchAsync(async (req, res, next) => {
     if (req.body.rmaFeeColtan) settings.rmaFeeColtan = req.body.rmaFeeColtan;
     if (req.body.rmaFeeCassiterite) settings.rmaFeeCassiterite = req.body.rmaFeeCassiterite;
     if (req.body.rmaFeeWolframite) settings.rmaFeeWolframite = req.body.rmaFeeWolframite;
+    if (req.body.nameOfCompany) settings.nameOfCompany = req.body.nameOfCompany;
     res
         .status(202)
         .json(

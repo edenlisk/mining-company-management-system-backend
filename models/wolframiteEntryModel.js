@@ -11,6 +11,10 @@ const wolframiteSchema = new mongoose.Schema(
             default: "wolframite",
             immutable: true
         },
+        weightIn: {
+            type: Number,
+            default: null
+        },
         numberOfTags: Number,
         mineTags: {
             type: [

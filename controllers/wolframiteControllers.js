@@ -135,6 +135,10 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     const entry = await Wolframite.findById(req.params.entryId);
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
+    if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfOutputs;
+    if (req.body.companyName) entry.companyName = req.body.companyName;
+    if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
+    if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;
     if (req.body.mineTags) {
         entry.mineTags = [];
         for (const tag of req.body.mineTags) {

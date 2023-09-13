@@ -170,3 +170,27 @@ exports.paymentHistory = catchAsync(async (req, res, next) => {
         )
     ;
 })
+
+exports.stockSummary = catchAsync(async (req, res, next) => {
+    const models = ["cassiterite", "coltan", "lithium", "wolframite", "beryllium"];
+    const stock = {};
+    for (const model of models) {
+        const Entry = getModel(model);
+        const entry = Entry.aggregate(
+            [
+            ]
+        )
+    }
+
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    stock
+                }
+            }
+        )
+    ;
+})

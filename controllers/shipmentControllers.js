@@ -204,6 +204,34 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
     pdfDoc.end();
 })
 
+exports.shipmentQuarterReport = catchAsync(async (req, res, next) => {
+    const shipments = await Shipment.aggregate(
+        [
+            {
+                $match: {
+                    model: req.body.model,
+                    createdAt: {
+                        $gt: req.body.startDate,
+                        $lte: req.body.endDate
+                    },
+                }
+            }
+        ]
+    )
+    console.log(shipments);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    shipments
+                }
+            }
+        )
+    ;
+})
+
 
 const multerStorage = multer.diskStorage(
     {
