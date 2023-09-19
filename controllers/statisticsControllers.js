@@ -1,5 +1,6 @@
 const { getModel } = require('../utils/helperFunctions');
 const catchAsync = require('../utils/catchAsync');
+const Supplier = require('../models/supplierModel');
 const { v4: uuidv4 } = require('uuid');
 const AppError = require('../utils/appError');
 
@@ -172,14 +173,51 @@ exports.paymentHistory = catchAsync(async (req, res, next) => {
 })
 
 exports.stockSummary = catchAsync(async (req, res, next) => {
-    const models = ["cassiterite", "coltan", "lithium", "wolframite", "beryllium"];
+    const models = ["cassiterite", "coltan", "wolframite"];
+    const specificModels = ["lithium", "beryllium"];
     const stock = {};
-    for (const model of models) {
-        const Entry = getModel(model);
-        const entry = Entry.aggregate(
+    for (const specificModel of specificModels) {
+        const Entry = getModel(specificModel);
+        const entry = await Entry.aggregate(
             [
+                {
+                    $group: {
+                        _id: null, // Group all documents into a single group
+                        balance: { $sum: '$cumulativeAmount' }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0, // Exclude the "_id" field from the result
+                        balance: 1
+                    }
+                }
             ]
         )
+        stock[specificModel] = entry[0].balance;
+    }
+    for (const model of models) {
+        const Entry = getModel(model);
+        const entry = await Entry.aggregate(
+            [
+                {
+                    $unwind: '$output' // Unwind the "output" array
+                },
+                {
+                    $group: {
+                        _id: null, // Group all documents into a single group
+                        balance: { $sum: '$output.cumulativeAmount' }
+                    }
+                },
+                {
+                    $project: {
+                        _id: 0, // Exclude the "_id" field from the result
+                        balance: 1
+                    }
+                }
+            ]
+        );
+        stock[model] = entry[0].balance;
     }
 
     res
@@ -189,6 +227,74 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 status: "Success",
                 data: {
                     stock
+                }
+            }
+        )
+    ;
+})
+
+exports.lastCreatedEntries = catchAsync(async (req, res, next) => {
+    const models = ["coltan", "cassiterite", "wolframite"];
+    let lastCreated = [];
+    for (const model of models) {
+        const Entry = getModel(model);
+        const entries = await Entry.find({})
+            .sort({createdAt: -1})
+            .limit(2)
+            .select({output: 0, mineTags: 0, negociantTags: 0});
+        lastCreated = [...lastCreated, ...entries];
+    }
+
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    lastCreated
+                }
+            }
+        )
+    ;
+})
+
+exports.topSuppliers = catchAsync(async (req, res, next) => {
+    const models = ["coltan", "cassiterite", "wolframite"];
+    let result = [];
+    for (const model of models) {
+        const Entry = getModel(model);
+        const entries = await Entry.aggregate(
+            [
+                {
+                    $match: {}
+                },
+                {
+                    $group: {
+                        _id: "$supplierId",
+                        totalProduction: { $sum: "$weightIn" },
+                        companyName: { $first: "$companyName" },
+                        mineralType: { $first: "$mineralType" },
+                        licenseNumber: { $first: "$licenseNumber" },
+                        TINNumber: { $first: "$TINNumber" },
+                        companyRepresentative: { $first: "$companyRepresentative" },
+                        representativePhoneNumber: { $first: "$representativePhoneNumber" }
+                    }
+                },
+                // {
+                //     $limit: 2
+                // }
+            ]
+        )
+        result.push({mineralType: model, entries});
+    }
+
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    result
                 }
             }
         )

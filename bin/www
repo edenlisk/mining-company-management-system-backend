@@ -4,6 +4,7 @@
  * Module dependencies.
  */
 const mongoose = require('mongoose');
+// const socketIo = require('socket.io');
 require('dotenv').config();
 const app = require('../app');
 const debug = require('debug')('mining-company-management-system-backend:server');
@@ -25,7 +26,22 @@ app.set('port', port);
  */
 
 const server = http.createServer(app);
+// const io = socketIo(server); // Create a Socket.io server
 
+
+// io.on('connection', (socket) => {
+//   console.log('A client connected');
+//
+//   // Handle specific events here and emit data to clients as needed
+//   // For example, when a new operation is recorded:
+//   // socket.on('newOperation', (data) => {
+//   //   io.emit('operationUpdate', data);
+//   // });
+//
+//   socket.on('disconnect', () => {
+//     console.log('A client disconnected');
+//   });
+// });
 /**
  * Listen on provided port, on all network interfaces.
  */

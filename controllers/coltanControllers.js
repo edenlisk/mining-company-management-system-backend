@@ -5,6 +5,7 @@ const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
 const { handleConvertToUSD } = require('../utils/helperFunctions');
+// const io = require('../bin/www').io;
 
 
 exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
@@ -105,6 +106,7 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
         }
     }
     await entry.save({validateModifiedOnly: true});
+    // io.emit('operation-update', {message: "New Coltan Entry was record"});
     res
         .status(204)
         .json(
@@ -135,7 +137,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfOutputs;
+    if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
     if (req.body.companyName) entry.companyName = req.body.companyName;
     if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
     if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;

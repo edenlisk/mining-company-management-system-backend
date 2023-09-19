@@ -1,6 +1,7 @@
 const Supplier = require('../models/supplierModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError  = require('../utils/appError');
+const { getModel } = require('../utils/helperFunctions');
 
 
 exports.getAllSuppliers = catchAsync(async (req, res, next) => {
@@ -101,6 +102,43 @@ exports.deleteSupplier = catchAsync(async (req, res, next) => {
         .json(
             {
                 status: "Success"
+            }
+        )
+    ;
+})
+
+exports.supplierProductionHistory = catchAsync(async (req, res, next) => {
+    if (!req.params.supplierId) return next(new AppError("Please provide supplierId", 400));
+    const models = ["coltan", "cassiterite", "wolframite"];
+    let supplierHistory = [];
+    const query = {supplierId: req.params.supplierId};
+    if (req.body.startDate && req.body.endDate) {
+        query["supplyDate"] = {
+            $gte: new Date(req.body.startDate),
+            $lte: new Date(req.body.endDate)
+        }
+    } else if (req.body.startDate) {
+        query["supplyDate"] = {
+            $gte: new Date(req.body.startDate)
+        }
+    } else if (req.body.endDate) {
+        query["supplyDate"] = {
+            $lte: new Date(req.body.endDate)
+        }
+    }
+    for (const model of models) {
+        const Entry = getModel(model);
+        const entries = await Entry.find(query);
+        supplierHistory = [...supplierHistory, ...entries];
+    }
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    supplierHistory
+                }
             }
         )
     ;
