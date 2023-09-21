@@ -40,19 +40,23 @@ const shipmentSchema = new mongoose.Schema(
             default: null
         },
         shipmentMinerals: {
-            type: String
+            type: String,
+            default: null
         },
         buyerId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'Buyer',
+            default: null
             // required: [true, "Please select the buyer"],
             // immutable: true
         },
         shipmentSamplingDate: {
             type: Date,
+            default: null
         },
         shipmentContainerLoadingDate: {
             type: String,
+            default: null
         },
         buyerName: {
             type: String,
