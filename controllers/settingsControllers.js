@@ -42,6 +42,7 @@ exports.updateSettings = catchAsync(async (req, res, next) => {
     if (req.body.rmaFeeCassiterite) settings.rmaFeeCassiterite = req.body.rmaFeeCassiterite;
     if (req.body.rmaFeeWolframite) settings.rmaFeeWolframite = req.body.rmaFeeWolframite;
     if (req.body.nameOfCompany) settings.nameOfCompany = req.body.nameOfCompany;
+    await settings.save({validateModifiedOnly: true});
     res
         .status(202)
         .json(
