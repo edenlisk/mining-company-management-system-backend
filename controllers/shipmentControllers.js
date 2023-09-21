@@ -54,7 +54,7 @@ exports.downloadCertificate = catchAsync(async (req, res, next) => {
 })
 
 exports.getOneShipment = catchAsync(async (req, res, next) => {
-    const shipment = await Shipment.findById(req.body.shipmentId);
+    const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("The selected shipment no longer exists", 400));
     res
         .status(200)
