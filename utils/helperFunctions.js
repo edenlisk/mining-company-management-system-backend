@@ -190,8 +190,8 @@ const storekeeper = {
     },
     suppliers: {
         view: true,
-        edit: true,
         create: true,
+        edit: true,
         delete: false
     },
     buyers: {
@@ -223,8 +223,8 @@ const traceabilityOfficer = {
     },
     suppliers: {
         view: true,
-        edit: true,
         create: true,
+        edit: true,
         delete: false
     },
     buyers: {

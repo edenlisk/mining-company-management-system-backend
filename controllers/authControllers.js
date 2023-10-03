@@ -49,10 +49,19 @@ exports.signup = catchAsync(async (req, res, next) => {
         }
     );
     logger.info(`create a user named: ${user.name}`);
+
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')
-    createSendToken(user, 201, res);
+    // createSendToken(user, 201, res);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success"
+            }
+        )
+    ;
 })
 
 exports.login = catchAsync(async (req, res, next) => {

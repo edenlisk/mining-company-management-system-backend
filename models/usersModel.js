@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const bcrypt = require('bcryptjs');
+const { permissions } = require('../utils/helperFunctions')
 
 const userSchema = new mongoose.Schema(
     {
@@ -79,6 +80,13 @@ userSchema.pre('save', async function (next) {
     this.passwordConfirm = undefined;
     next();
 })
+
+// userSchema.pre('save', async function (next) {
+//     if (this.isModified('role')) {
+//         this.permissions = permissions[this.role];
+//     }
+//     next();
+// })
 
 userSchema.methods.verifyPassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
