@@ -179,7 +179,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                     existingLot.rmaFee = rmaFeeColtan * existingLot.weightOut;
                 }
                 if (existingLot.rmaFee && existingLot.USDRate) {
-                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate);
+                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
                 if (existingLot.tantalum && existingLot.mineralGrade) {
                     existingLot.pricePerUnit = existingLot.tantalum * existingLot.mineralGrade;

@@ -176,7 +176,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                     existingLot.rmaFee = rmaFeeWolframite * existingLot.weightOut;
                 }
                 if (existingLot.rmaFee && existingLot.USDRate) {
-                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate);
+                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
                 // if (existingLot.treatmentCharges && existingLot.mineralGrade && existingLot.londonMetalExchange) {
                 // TODO 21: FORMULA FOR CALCULATING WOLFRAMITE PRICES.
