@@ -5,13 +5,17 @@ const {
     uploadContract,
     updateContract,
     deleteContract,
-    downloadContract } = require('../controllers/contractControllers');
+    downloadContract,
+    getBuyerContracts } = require('../controllers/contractControllers');
 const router = express.Router();
 
 router.route('/')
     .get(getAllContracts)
     .post(uploadContract, createContract)
 
+
+router.route('/:buyerId')
+    .get(getBuyerContracts)
 
 router.route('/:contractId')
     .post(downloadContract)

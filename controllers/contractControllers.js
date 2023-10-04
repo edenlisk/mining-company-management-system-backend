@@ -22,6 +22,21 @@ exports.getAllContracts = catchAsync(async (req, res, next) => {
     ;
 })
 
+exports.getBuyerContracts = catchAsync(async (req, res, next) => {
+    const contracts = await Contract.find({buyerId: req.params.buyerId});
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    contracts
+                }
+            }
+        )
+    ;
+})
+
 exports.downloadContract = catchAsync(async (req, res, next) => {
     const contract = await Contract.findById(req.params.contractId);
     if (!contract) {
@@ -40,6 +55,7 @@ exports.createContract = catchAsync(async (req, res, next) => {
         {
             name: req.file.filename,
             minerals: req.body.minerals,
+            grade: req.body.grade,
             contractStartDate: req.body.contractStartDate,
             contractExpiryDate: req.body.contractExpiryDate,
             buyerName: req.body.buyerName,

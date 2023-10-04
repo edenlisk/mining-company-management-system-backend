@@ -7,7 +7,7 @@ const contractSchema = new mongoose.Schema(
             required: true
         },
         minerals: {
-            type: String,
+            type: [String],
             required: true
         },
         contractStartDate: {

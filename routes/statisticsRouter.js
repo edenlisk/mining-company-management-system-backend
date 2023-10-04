@@ -4,7 +4,7 @@ const {
     paymentHistory,
     stockSummary,
     lastCreatedEntries,
-    topSuppliers
+    topSuppliers, unsettledLots
 } = require('../controllers/statisticsControllers');
 const router = Router();
 
@@ -22,5 +22,8 @@ router.route('/last-created')
 
 router.route('/top-suppliers')
     .get(topSuppliers)
+
+router.route('/unpaid-lots/:supplierId/:model/')
+    .get(unsettledLots)
 
 module.exports = router;

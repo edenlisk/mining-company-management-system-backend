@@ -181,10 +181,13 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate);
                 }
-                // if (existingLot.tantalum && existingLot.mineralGrade) {
-                //     existingLot.pricePerUnit = existingLot.tantalum * existingLot.mineralGrade;
-                //     existingLot.mineralPrice = existingLot.pricePerUnit * existingLot.weightOut;
-                // }
+                if (existingLot.tantalum && existingLot.mineralGrade) {
+                    existingLot.pricePerUnit = existingLot.tantalum * existingLot.mineralGrade;
+                    existingLot.mineralPrice = existingLot.pricePerUnit * existingLot.weightOut;
+                    if (!existingLot.unpaid && existingLot.unpaid !== 0) {
+                        existingLot.unpaid = existingLot.mineralPrice;
+                    }
+                }
             }
         }
     }

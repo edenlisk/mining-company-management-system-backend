@@ -1,7 +1,8 @@
-const { getModel } = require('../utils/helperFunctions');
+const {getModel} = require('../utils/helperFunctions');
+const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
-const { v4: uuidv4 } = require('uuid');
+const {v4: uuidv4} = require('uuid');
 const AppError = require('../utils/appError');
 
 exports.detailedStock = catchAsync(async (req, res, next) => {
@@ -76,7 +77,7 @@ exports.currentStock = catchAsync(async (req, res, next) => {
             {
                 $group: {
                     _id: null,
-                    totalCumulativeAmount: { $sum: "$output.cumulativeAmount" }
+                    totalCumulativeAmount: {$sum: "$output.cumulativeAmount"}
                 }
             }
         ]
@@ -89,7 +90,7 @@ exports.currentStock = catchAsync(async (req, res, next) => {
             {
                 $group: {
                     _id: null,
-                    totalCumulativeAmount: { $sum: "$output.cumulativeAmount" }
+                    totalCumulativeAmount: {$sum: "$output.cumulativeAmount"}
                 }
             }
         ]
@@ -102,7 +103,7 @@ exports.currentStock = catchAsync(async (req, res, next) => {
             {
                 $group: {
                     _id: null,
-                    totalCumulativeAmount: { $sum: "$output.cumulativeAmount" }
+                    totalCumulativeAmount: {$sum: "$output.cumulativeAmount"}
                 }
             }
         ]
@@ -112,7 +113,7 @@ exports.currentStock = catchAsync(async (req, res, next) => {
             {
                 $group: {
                     _id: null,
-                    totalCumulativeAmount: { $sum: "$cumulativeAmount" }
+                    totalCumulativeAmount: {$sum: "$cumulativeAmount"}
                 }
             }
         ]
@@ -122,7 +123,7 @@ exports.currentStock = catchAsync(async (req, res, next) => {
             {
                 $group: {
                     _id: null,
-                    totalCumulativeAmount: { $sum: "$cumulativeAmount" }
+                    totalCumulativeAmount: {$sum: "$cumulativeAmount"}
                 }
             }
         ]
@@ -183,7 +184,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 {
                     $group: {
                         _id: null, // Group all documents into a single group
-                        balance: { $sum: '$cumulativeAmount' }
+                        balance: {$sum: '$cumulativeAmount'}
                     }
                 },
                 {
@@ -206,7 +207,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 {
                     $group: {
                         _id: null, // Group all documents into a single group
-                        balance: { $sum: '$output.cumulativeAmount' }
+                        balance: {$sum: '$output.cumulativeAmount'}
                     }
                 },
                 {
@@ -271,13 +272,13 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
                 {
                     $group: {
                         _id: "$supplierId",
-                        totalProduction: { $sum: "$weightIn" },
-                        companyName: { $first: "$companyName" },
-                        mineralType: { $first: "$mineralType" },
-                        licenseNumber: { $first: "$licenseNumber" },
-                        TINNumber: { $first: "$TINNumber" },
-                        companyRepresentative: { $first: "$companyRepresentative" },
-                        representativePhoneNumber: { $first: "$representativePhoneNumber" }
+                        totalProduction: {$sum: "$weightIn"},
+                        companyName: {$first: "$companyName"},
+                        mineralType: {$first: "$mineralType"},
+                        licenseNumber: {$first: "$licenseNumber"},
+                        TINNumber: {$first: "$TINNumber"},
+                        companyRepresentative: {$first: "$companyRepresentative"},
+                        representativePhoneNumber: {$first: "$representativePhoneNumber"}
                     }
                 },
                 // {
@@ -295,6 +296,65 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
                 status: "Success",
                 data: {
                     result
+                }
+            }
+        )
+    ;
+})
+
+exports.unsettledLots = catchAsync(async (req, res, next) => {
+    const Entry = getModel(req.params.model);
+    const entries = await Entry.aggregate(
+        [
+            {
+                $match: {
+                    supplierId: { $in: [new mongoose.Types.ObjectId(req.params.supplierId)] },
+                },
+            },
+            {
+                $unwind: '$output',
+            },
+            {
+                $match: {
+                    'output.settled': false,
+                },
+            },
+            {
+                $project: {
+                    _id: 0, // Exclude the default _id field
+                    // Include other fields from the output array as needed
+                    companyName: 1,
+                    beneficiary: 1,
+                    lotNumber: '$output.lotNumber',
+                    weightOut: '$output.weightOut',
+                    mineralGrade: '$output.mineralGrade',
+                    mineralPrice: '$output.mineralPrice',
+                    // exportedAmount: '$output.exportedAmount',
+                    // cumulativeAmount: '$output.cumulativeAmount',
+                    rmaFee: '$output.rmaFee',
+                    // USDRate: '$output.USDRate',
+                    // rmaFeeUSD: '$output.rmaFeeUSD',
+                    // rmaFeeDecision: '$output.rmaFeeDecision',
+                    paid: '$output.paid',
+                    unpaid: '$output.unpaid',
+                    settled: '$output.settled',
+                    pricePerUnit: '$output.pricePerUnit',
+                    // status: '$output.status',
+                    // londonMetalExchange: '$output.londonMetalExchange',
+                    // treatmentCharges: '$output.treatmentCharges',
+                    // shipments: '$output.shipments',
+                    // paymentHistory: '$output.paymentHistory',
+                },
+            },
+        ]
+    )
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    entries
                 }
             }
         )

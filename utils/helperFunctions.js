@@ -211,7 +211,22 @@ const storekeeper = {
         create: false,
         edit: false,
         delete: false
-    }
+    },
+    contracts: {
+        view: false,
+        create: false,
+        delete: false
+    },
+    settings: {
+        view: false,
+        edit: false
+    },
+    users: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
 }
 
 const traceabilityOfficer = {
@@ -246,8 +261,18 @@ const traceabilityOfficer = {
         delete: false
     },
     contracts: {
-        view: true,
+        view: false,
         create: false,
+        delete: false
+    },
+    settings: {
+        view: false,
+        edit: false
+    },
+    users: {
+        view: false,
+        create: false,
+        edit: false,
         delete: false
     },
 }
@@ -291,6 +316,12 @@ const managingDirector = {
     settings: {
         view: false,
         edit: false
+    },
+    users: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
     }
 }
 
@@ -327,12 +358,18 @@ const ceo = {
     },
     contracts: {
         view: true,
-        create: false,
-        delete: false
+        create: true,
+        delete: true
     },
     settings: {
         view: true,
         edit: true
+    },
+    users: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
     }
 }
 
@@ -375,6 +412,12 @@ const operationsManager = {
     settings: {
         view: false,
         edit: false
+    },
+    users: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
     }
 }
 
@@ -417,6 +460,12 @@ const accountant = {
     settings: {
         view: false,
         edit: false
+    },
+    users: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
     }
 }
 
