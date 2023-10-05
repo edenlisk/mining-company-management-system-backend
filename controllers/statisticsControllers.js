@@ -10,7 +10,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
     const detailedStock = [];
     if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
         // TODO 16: CHANGE STATUS
-        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}});
+        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}, visible: true});
         for (const entry of entries) {
             for (const lot of entry.output) {
                 detailedStock.push(
@@ -32,7 +32,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
             }
         }
     } else if (req.params.model === "lithium" || req.params.model === "beryllium") {
-        const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}});
+        const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}, visible: true});
         for (const entry of entries) {
             detailedStock.push(
                 {
@@ -72,6 +72,9 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     const cassiteriteStock = await Cassiterite.aggregate(
         [
             {
+                $match: {visible: true}
+            },
+            {
                 $unwind: "$output"
             },
             {
@@ -84,6 +87,9 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     );
     const coltanStock = await Coltan.aggregate(
         [
+            {
+                $match: {visible: true}
+            },
             {
                 $unwind: "$output"
             },
@@ -98,6 +104,9 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     const wolframiteStock = await Wolframite.aggregate(
         [
             {
+                $match: {visible: true}
+            },
+            {
                 $unwind: "$output"
             },
             {
@@ -111,6 +120,9 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     const berylliumStock = await Beryllium.aggregate(
         [
             {
+                $match: {visible: true}
+            },
+            {
                 $group: {
                     _id: null,
                     totalCumulativeAmount: {$sum: "$cumulativeAmount"}
@@ -120,6 +132,9 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     )
     const lithumStock = await Lithium.aggregate(
         [
+            {
+                $match: {visible: true}
+            },
             {
                 $group: {
                     _id: null,
@@ -182,6 +197,9 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
         const entry = await Entry.aggregate(
             [
                 {
+                    $match: {visible: true}
+                },
+                {
                     $group: {
                         _id: null, // Group all documents into a single group
                         balance: {$sum: '$cumulativeAmount'}
@@ -239,7 +257,7 @@ exports.lastCreatedEntries = catchAsync(async (req, res, next) => {
     let lastCreated = [];
     for (const model of models) {
         const Entry = getModel(model);
-        const entries = await Entry.find({})
+        const entries = await Entry.find({visible: true})
             .sort({createdAt: -1})
             .limit(2)
             .select({output: 0, mineTags: 0, negociantTags: 0});
@@ -267,7 +285,7 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
         const entries = await Entry.aggregate(
             [
                 {
-                    $match: {}
+                    $match: {visible: true}
                 },
                 {
                     $group: {
@@ -309,6 +327,7 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
             {
                 $match: {
                     supplierId: { $in: [new mongoose.Types.ObjectId(req.params.supplierId)] },
+                    visible: true
                 },
             },
             {
