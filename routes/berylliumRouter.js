@@ -4,13 +4,17 @@ const {
     getOneBerylliumEntry,
     createBerylliumEntry,
     deleteBerylliumEntry,
-    updateBerylliumEntry
+    updateBerylliumEntry,
+    trashEntries
 } = require('../controllers/berylliumControllers');
 const router = express.Router();
 
 router.route('/')
     .get(getAllBerylliumEntries)
     .post(createBerylliumEntry)
+
+router.route('/trash')
+    .get(trashEntries)
 
 router.route('/:entryId')
     .get(getOneBerylliumEntry)

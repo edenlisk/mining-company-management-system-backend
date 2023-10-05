@@ -5,7 +5,7 @@ const AppError = require('../utils/appError');
 
 
 exports.getAllLithiumEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Lithium.find({}), req.query)
+    const result = new APIFeatures(Lithium.find({visible: true}), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -70,6 +70,7 @@ exports.getOneLithiumEntry = catchAsync(async (req, res, next) => {
 
 exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
     const entry = await Lithium.findById(req.params.entryId);
+    if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     // if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.weightOut) entry.weightOut = req.body.weightOut;
@@ -95,13 +96,28 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteLithiumEntry = catchAsync(async (req, res, next) => {
-    const entry = await Lithium.findByIdAndDelete(req.params.entryId);
+    const entry = await Lithium.findByIdAndUpdate(req.params.entryId, {visible: false});
     if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(
             {
                 status: "Success"
+            }
+        )
+    ;
+})
+
+exports.trashEntries = catchAsync(async (req, res, next) => {
+    const entries = await Lithium.find({visible: false});
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    entries
+                }
             }
         )
     ;

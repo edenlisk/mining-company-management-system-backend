@@ -8,7 +8,7 @@ const {handleConvertToUSD} = require("../utils/helperFunctions");
 
 
 exports.getAllWolframiteEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Wolframite.find({}), req.query)
+    const result = new APIFeatures(Wolframite.find({visible: true}), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -133,6 +133,7 @@ exports.getOneWolframiteEntry = catchAsync(async (req, res, next) => {
 
 exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     const entry = await Wolframite.findById(req.params.entryId);
+    if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
@@ -197,13 +198,28 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteWolframiteEntry = catchAsync(async (req, res, next) => {
-    const entry = await Wolframite.findByIdAndDelete(req.params.entryId);
+    const entry = await Wolframite.findByIdAndUpdate(req.params.entryId, {visible: false});
     if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(
             {
                 status: "Success"
+            }
+        )
+    ;
+})
+
+exports.trashEntries = catchAsync(async (req, res, next) => {
+    const entries = await Wolframite.find({visible: false});
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    entries
+                }
             }
         )
     ;

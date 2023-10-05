@@ -4,7 +4,8 @@ const {
     createCassiteriteEntry,
     getOneCassiteriteEntry,
     deleteCassiteriteEntry,
-    updateCassiteriteEntry
+    updateCassiteriteEntry,
+    trashEntries
 } = require('../controllers/cassiteriteControllers');
 const router = express.Router();
 
@@ -12,6 +13,8 @@ router.route('/')
     .get(getAllCassiteriteEntries)
     .post(createCassiteriteEntry)
 
+router.route('/trash')
+    .get(trashEntries)
 
 router.route('/:entryId')
     .get(getOneCassiteriteEntry)

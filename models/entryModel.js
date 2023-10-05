@@ -42,6 +42,10 @@ exports.entry = {
     time: {
         type: String
     },
+    visible: {
+        type: Boolean,
+        default: true
+    }
 }
 
 

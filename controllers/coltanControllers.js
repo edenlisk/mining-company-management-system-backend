@@ -9,7 +9,7 @@ const { handleConvertToUSD } = require('../utils/helperFunctions');
 
 
 exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Coltan.find({}), req.query)
+    const result = new APIFeatures(Coltan.find({visible: true}), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -135,6 +135,7 @@ exports.getOneColtanEntry = catchAsync(async (req, res, next) => {
 
 exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
+    if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
@@ -203,13 +204,28 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
-    const entry = await Coltan.findByIdAndDelete(req.params.entryId);
+    const entry = await Coltan.findByIdAndUpdate(req.params.entryId, {visible: false});
     if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
     res
         .status(204)
         .json(
             {
                 status: "Success"
+            }
+        )
+    ;
+})
+
+exports.trashEntries = catchAsync(async (req, res, next) => {
+    const entries = await Coltan.find({visible: false});
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    entries
+                }
             }
         )
     ;

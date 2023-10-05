@@ -86,6 +86,10 @@ const lithiumSchema = new mongoose.Schema(
                 }
             ],
             default: []
+        },
+        visible: {
+            type: Boolean,
+            default: true
         }
     },
     {
