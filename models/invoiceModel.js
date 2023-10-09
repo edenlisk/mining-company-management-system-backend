@@ -5,7 +5,12 @@ const invoiceSchema = new mongoose.Schema(
         supplierId: {
             type: mongoose.Schema.Types.ObjectId
         },
-        paymentDate: {
+        invoiceNo: {
+            type: String,
+            unique: true,
+            required: [true, "Please provide invoice number"]
+        },
+        dateOfIssue: {
             type: Date,
             default: null
         },
@@ -19,6 +24,15 @@ const invoiceSchema = new mongoose.Schema(
                     quantity: {
                         type: Number,
                         default: null
+                    },
+                    rmaFee: {
+                        type: Number
+                    },
+                    lotNumber: {
+                        type: Number
+                    },
+                    supplyDate: {
+                        type: Date
                     },
                     pricePerUnit: {
                         type: Number,
@@ -34,33 +48,40 @@ const invoiceSchema = new mongoose.Schema(
                     }
                 }
             ],
+            required: [true, "Please add items to this invoice"],
             default: []
+        },
+        beneficiary: {
+            type: String,
+            required: [true, "Please provide beneficiary's name"]
+        },
+        supplierCompanyName: {
+            type: String
         },
         supplierAddress: {
             province: String,
             district: String,
             sector: String,
         },
-        paymentToAddress: {
-            province: String,
-            district: String,
-            sector: String,
-        },
-        paymentToEmail: {
+        // processorEmail: {
+        //     type: String,
+        //     default: null
+        // },
+        // supplierEmail: {
+        //     type: String,
+        //     default: null
+        // },
+        processorCompanyName: {
             type: String,
             default: null
         },
-        paymentNo: {
-            type: String,
-            default: null
-        },
-        supplierEmail: {
-            type: String,
-            default: null
+        mineralsSupplied: {
+            type: [String],
+            default: []
         },
         extraNotes: {
             type: String,
-            default: null
+            default: ""
         },
         paymentId: {
             type: mongoose.Schema.Types.ObjectId

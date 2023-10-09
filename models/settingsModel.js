@@ -37,6 +37,24 @@ const settingsSchema = new mongoose.Schema(
             default: () => {
                 return "Kanzamin"
             }
+        },
+        representative: {
+            type: String,
+            default: "Nzaramba Dan"
+        },
+        address: {
+            province: {
+                type: String,
+                default: "Kigali City",
+            },
+            district: {
+                type: String,
+                default: "Kicukiro"
+            },
+            sector: {
+                type: String,
+                default: ""
+            }
         }
     }
 )

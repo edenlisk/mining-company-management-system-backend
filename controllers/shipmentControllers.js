@@ -170,6 +170,8 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
 
     // SAVE THE DOCUMENT ON THE FILE SYSTEM
     const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    // pdfDoc.pipe(fs.createWriteStream('document.pdf'));
+    // pdfDoc.end();
     // 1. create structure of the report
     // 2. populate data into report
     // 3. send report back to client
