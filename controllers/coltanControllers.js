@@ -9,7 +9,7 @@ const { handleConvertToUSD } = require('../utils/helperFunctions');
 
 
 exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Coltan.find({visible: true}), req.query)
+    const result = new APIFeatures(Coltan.find(), req.query)
         .filter()
         .sort()
         .limitFields()
