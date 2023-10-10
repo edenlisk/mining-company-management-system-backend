@@ -249,3 +249,52 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
 
 })
 
+exports.getSuppliersInvoice = catchAsync(async (req, res, next) => {
+    const invoices = await Invoice.find({supplierId: req.params.supplierId});
+
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    invoices
+                }
+            }
+        )
+    ;
+})
+
+exports.getInvoice = catchAsync(async (req, res, next) => {
+    const invoice = await Invoice.findById(req.params.invoiceId);
+    if (!invoice) return next(new AppError("Selected invoice no longer exists!", 400));
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    invoice
+                }
+            }
+        )
+    ;
+})
+
+exports.updateInvoice = catchAsync(async (req, res, next) => {
+    const invoice = await Invoice.findById(req.params.invoiceId);
+    if (!invoice) return next(new AppError("The Selected invoice no longer exists!", 400));
+    if (req.body.items) invoice.items = req.body.items;
+    if (req.body.extraNotes) invoice.extraNotes = req.body.extraNotes;
+    if (req.body.dateOfIssue) invoice.dateOfIssue = req.body.dateOfIssue;
+    if (req.body.mineralsSupplied) invoice.mineralsSupplied = req.body.mineralsSupplied;
+    await invoice.save({validateModifiedOnly: true});
+    res
+        .status(202)
+        .json(
+            {
+                status: "Success"
+            }
+        )
+    ;
+})
