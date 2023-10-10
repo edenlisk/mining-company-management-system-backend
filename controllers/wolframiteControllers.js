@@ -8,7 +8,7 @@ const {handleConvertToUSD} = require("../utils/helperFunctions");
 
 
 exports.getAllWolframiteEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Wolframite.find({visible: true}), req.query)
+    const result = new APIFeatures(Wolframite.find(), req.query)
         .filter()
         .sort()
         .limitFields()

@@ -8,7 +8,7 @@ const {handleConvertToUSD} = require("../utils/helperFunctions");
 
 
 exports.getAllCassiteriteEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Cassiterite.find({visible: true}), req.query)
+    const result = new APIFeatures(Cassiterite.find(), req.query)
         .filter()
         .sort()
         .limitFields()

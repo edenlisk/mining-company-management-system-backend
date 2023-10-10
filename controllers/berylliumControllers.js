@@ -5,7 +5,7 @@ const AppError = require('../utils/appError');
 
 
 exports.getAllBerylliumEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Beryllium.find({visible: true}), req.query)
+    const result = new APIFeatures(Beryllium.find(), req.query)
         .filter()
         .sort()
         .limitFields()

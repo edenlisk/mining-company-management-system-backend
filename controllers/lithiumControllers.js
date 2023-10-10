@@ -5,7 +5,7 @@ const AppError = require('../utils/appError');
 
 
 exports.getAllLithiumEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Lithium.find({visible: true}), req.query)
+    const result = new APIFeatures(Lithium.find(), req.query)
         .filter()
         .sort()
         .limitFields()
