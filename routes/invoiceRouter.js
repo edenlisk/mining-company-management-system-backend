@@ -1,5 +1,11 @@
 const express = require('express');
-const { getAllInvoices, generateInvoice, getSuppliersInvoice, getInvoice } = require('../controllers/invoiceControllers');
+const {
+    getAllInvoices,
+    generateInvoice,
+    getSuppliersInvoice,
+    getInvoice,
+    updateInvoice
+} = require('../controllers/invoiceControllers');
 const router = express.Router();
 
 router.route('/')
@@ -11,7 +17,7 @@ router.route('/supplier/:supplierId')
 
 router.route('/:invoiceId')
     .get(getInvoice)
-    .patch()
+    .patch(updateInvoice)
 
 
 module.exports = router;
