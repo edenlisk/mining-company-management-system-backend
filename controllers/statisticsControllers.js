@@ -330,7 +330,7 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                 {
                     $match: {
                         supplierId: { $in: [new mongoose.Types.ObjectId(req.params.supplierId)] },
-                        visible: true
+                        // visible: true
                     },
                 },
                 {

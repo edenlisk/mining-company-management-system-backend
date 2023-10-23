@@ -23,7 +23,7 @@ router.route('/last-created')
 router.route('/top-suppliers')
     .get(topSuppliers)
 
-router.route('/unpaid-lots/:supplierId/:model/')
+router.route('/unpaid-lots/:supplierId')
     .get(unsettledLots)
 
 module.exports = router;
