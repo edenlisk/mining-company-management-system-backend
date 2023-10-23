@@ -321,59 +321,65 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
 })
 
 exports.unsettledLots = catchAsync(async (req, res, next) => {
-    const Entry = getModel(req.params.model);
-    const entries = await Entry.aggregate(
-        [
-            {
-                $match: {
-                    supplierId: { $in: [new mongoose.Types.ObjectId(req.params.supplierId)] },
-                    visible: true
+    const models = ["cassiterite", "coltan", "wolframite", "lithium", "beryllium"];
+    let lots = [];
+    for (const model of models) {
+        const Entry = getModel(model);
+        const entries = await Entry.aggregate(
+            [
+                {
+                    $match: {
+                        supplierId: { $in: [new mongoose.Types.ObjectId(req.params.supplierId)] },
+                        visible: true
+                    },
                 },
-            },
-            {
-                $unwind: '$output',
-            },
-            {
-                $match: {
-                    'output.settled': false,
+                {
+                    $unwind: '$output',
                 },
-            },
-            {
-                $project: {
-                    _id: 0, // Exclude the default _id field
-                    // Include other fields from the output array as needed
-                    companyName: 1,
-                    beneficiary: 1,
-                    lotNumber: '$output.lotNumber',
-                    weightOut: '$output.weightOut',
-                    mineralGrade: '$output.mineralGrade',
-                    mineralPrice: '$output.mineralPrice',
-                    // exportedAmount: '$output.exportedAmount',
-                    // cumulativeAmount: '$output.cumulativeAmount',
-                    rmaFee: '$output.rmaFee',
-                    // USDRate: '$output.USDRate',
-                    // rmaFeeUSD: '$output.rmaFeeUSD',
-                    // rmaFeeDecision: '$output.rmaFeeDecision',
-                    paid: '$output.paid',
-                    unpaid: '$output.unpaid',
-                    settled: '$output.settled',
-                    pricePerUnit: '$output.pricePerUnit',
-                    // status: '$output.status',
-                    // londonMetalExchange: '$output.londonMetalExchange',
-                    // treatmentCharges: '$output.treatmentCharges',
-                    // shipments: '$output.shipments',
-                    // paymentHistory: '$output.paymentHistory',
+                {
+                    $match: {
+                        'output.settled': false,
+                    },
                 },
-            },
-        ]
-    )
+                {
+                    $project: {
+                        _id: 0, // Exclude the default _id field
+                        // Include other fields from the output array as needed
+                        companyName: 1,
+                        beneficiary: 1,
+                        lotNumber: '$output.lotNumber',
+                        weightOut: '$output.weightOut',
+                        supplyDate: 1,
+                        mineralGrade: '$output.mineralGrade',
+                        mineralPrice: '$output.mineralPrice',
+                        // exportedAmount: '$output.exportedAmount',
+                        // cumulativeAmount: '$output.cumulativeAmount',
+                        rmaFee: '$output.rmaFee',
+                        // USDRate: '$output.USDRate',
+                        // rmaFeeUSD: '$output.rmaFeeUSD',
+                        // rmaFeeDecision: '$output.rmaFeeDecision',
+                        paid: '$output.paid',
+                        unpaid: '$output.unpaid',
+                        settled: '$output.settled',
+                        pricePerUnit: '$output.pricePerUnit',
+                        // status: '$output.status',
+                        // londonMetalExchange: '$output.londonMetalExchange',
+                        // treatmentCharges: '$output.treatmentCharges',
+                        // shipments: '$output.shipments',
+                        // paymentHistory: '$output.paymentHistory',
+                    },
+                },
+            ]
+        )
+        lots = [...lots, ...entries];
+    }
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    entries
+                    lots
                 }
             }
         )

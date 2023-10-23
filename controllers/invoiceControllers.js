@@ -28,6 +28,7 @@ exports.getAllInvoices = catchAsync(async (req, res, next) => {
 })
 
 exports.generateInvoice = catchAsync(async (req, res, next) => {
+    const settings = await Settings.findOne();
     const invoicedoc = await Invoice.create(
         {
             dateOfIssue: req.body.dateOfIssue,
@@ -38,14 +39,13 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
             supplierAddress: req.body.supplierAddress,
             // processorEmail: req.body.processorEmail,
             // supplierEmail: req.body.supplierEmail,
-            processorCompanyName: req.body.processorCompanyName,
+            processorCompanyName: settings.nameOfCompany,
             mineralsSupplied: req.body.mineralsSupplied,
             extraNotes: req.body.extraNotes,
             paymentId: req.body.paymentId,
             supplierId: req.body.supplierId
         }
     )
-    const settings = await Settings.findOne();
     const invoiceDescription = [
         [
             {
@@ -246,7 +246,6 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
     //         }
     //     )
     // ;
-
 })
 
 exports.getSuppliersInvoice = catchAsync(async (req, res, next) => {
