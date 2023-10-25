@@ -182,13 +182,13 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
-                if (existingLot.treatmentCharges && existingLot.mineralGrade && existingLot.londonMetalExchange) {
-                    existingLot.pricePerUnit = (((existingLot.londonMetalExchange * (existingLot.mineralGrade/100)) - existingLot.treatmentCharges) / 1000).toFixed(3);
-                    existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
-                    if (!existingLot.unpaid && existingLot.unpaid !== 0) {
-                        existingLot.unpaid = existingLot.mineralPrice;
-                    }
-                }
+                // if (existingLot.treatmentCharges && existingLot.mineralGrade && existingLot.londonMetalExchange) {
+                //     existingLot.pricePerUnit = (((existingLot.londonMetalExchange * (existingLot.mineralGrade/100)) - existingLot.treatmentCharges) / 1000).toFixed(3);
+                //     existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
+                //     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
+                //         existingLot.unpaid = existingLot.mineralPrice;
+                //     }
+                // }
             }
         }
     }
