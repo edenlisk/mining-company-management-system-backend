@@ -47,10 +47,11 @@ exports.createEditRequest = catchAsync(async (req, res, next) => {
 exports.updateEditRequest = catchAsync(async (req, res, next) => {
     const editRequest = await EditPermission.findById(req.params.requestId);
     if (!editRequest) return next(new AppError("Edit request was not found!", 400));
-    if (new Date() > editRequest.editExpiresAt) return next(new AppError("Edit request expired!", 400));
-    if (req.body.decision === true) editRequest.decision = true;
-    if (req.body.decision === false) editRequest.decision = false;
-    if (req.body.requestStatus) editRequest.requestStatus = req.body.requestStatus;
+    if (!(new Date() > editRequest.editExpiresAt)) {
+        if (req.body.decision === true) editRequest.decision = true;
+        if (req.body.decision === false) editRequest.decision = false;
+        if (req.body.requestStatus) editRequest.requestStatus = req.body.requestStatus;
+    }
     await editRequest.save({validateModifiedOnly: true});
     res
         .status(201)
