@@ -23,7 +23,7 @@ const editPermissionSchema = new mongoose.Schema(
         },
         requestStatus: {
             type: String,
-            enum: ["pending", "authorized", "rejected"],
+            enum: ["pending", "authorized", "rejected", "expired"],
             default: "pending"
         },
         recordId: {

@@ -49,6 +49,7 @@ exports.updateEditRequest = catchAsync(async (req, res, next) => {
     if (!editRequest) return next(new AppError("Edit request was not found!", 400));
     if (req.body.decision === true) editRequest.decision = true;
     if (req.body.decision === false) editRequest.decision = false;
+    if (req.body.requestStatus) editRequest.requestStatus = req.body.requestStatus;
     await editRequest.save({validateModifiedOnly: true});
     res
         .status(201)
