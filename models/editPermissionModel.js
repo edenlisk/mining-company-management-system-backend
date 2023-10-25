@@ -43,9 +43,9 @@ const editPermissionSchema = new mongoose.Schema(
 
 editPermissionSchema.pre('save', async function (next) {
     if (this.isNew) {
-        this.editRequestedAt = Date.now();
+        this.editRequestedAt = new Date();
         const { editExpiresIn } = await Settings.findOne();
-        this.editExpiresAt = this.editRequestedAt + (editExpiresIn * 60000);
+        this.editExpiresAt = new Date(this.editRequestedAt.getTime() + editExpiresIn * 60000);
     }
     if (this.isModified('decision') && !this.isNew) {
         if (this.decision === true) {
