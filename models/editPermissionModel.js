@@ -9,6 +9,7 @@ const editPermissionSchema = new mongoose.Schema(
             immutable: true
         },
         editExpiresAt: Date,
+        fulfilledAt: Date,
         editableFields: {
             type: [
                 {
