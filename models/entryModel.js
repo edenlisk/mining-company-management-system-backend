@@ -45,7 +45,13 @@ exports.entry = {
     visible: {
         type: Boolean,
         default: true
-    }
+    },
+    // editRequestedAt: Date,
+    // editExpiresAt: Date,
+    // editableFields: {
+    //     type: [String],
+    //     default: []
+    // }
 }
 
 

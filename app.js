@@ -36,6 +36,7 @@ const statisticsRouter = require('./routes/statisticsRouter');
 const settingsRouter = require('./routes/settingsRouter');
 const fileStructureRouter = require('./routes/fileStructureRouter');
 const invoiceRouter = require('./routes/invoiceRouter');
+const editPermissionRouter = require('./routes/editPermissionRouter');
 
 const app = express();
 
@@ -89,6 +90,7 @@ app.use('/api/v1/advance-payment', advancePaymentRouter);
 app.use('/api/v1/settings', settingsRouter);
 app.use('/api/v1/file-structure', fileStructureRouter);
 app.use('/api/v1/invoice', invoiceRouter);
+app.use('/api/v1/edit-request', editPermissionRouter);
 // app.use('/api/v1/risk-assessment', riskAssessmentRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,

@@ -55,9 +55,19 @@ const settingsSchema = new mongoose.Schema(
                 type: String,
                 default: ""
             }
+        },
+        editExpiresIn: {
+            type: Number,
+            default: 30
         }
     }
 )
+
+// settingsSchema.pre('save', async function (next) {
+//     if (this.isModified('editExpiresIn')) {
+//
+//     }
+// })
 
 
 module.exports = mongoose.model('Settings', settingsSchema)

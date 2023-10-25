@@ -230,3 +230,12 @@ exports.trashEntries = catchAsync(async (req, res, next) => {
         )
     ;
 })
+
+exports.EntryEditPermission = catchAsync(async (req, res, next) => {
+    const entry = await Coltan.findById(req.params.entryId);
+    if (!entry) return next(new AppError("Entry selected was not found!", 400));
+    if (req.body.fields.length > 0) {
+        entry.editableFields = req.body.fields;
+    }
+    entry.requestEditPermission();
+})

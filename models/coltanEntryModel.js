@@ -167,6 +167,10 @@ coltanSchema.pre('save', async function (next) {
     // formula = tantal * grade
 })
 
+coltanSchema.methods.requestEditPermission = function (editExpiresIn = 30) {
+    this.editRequestedAt = Date.now();
+    this.editExpiresAt = this.editRequestedAt + (editExpiresIn * 60000);
+}
 
 
 module.exports = mongoose.model('Coltan', coltanSchema);
