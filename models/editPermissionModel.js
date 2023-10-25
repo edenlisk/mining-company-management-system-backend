@@ -13,7 +13,7 @@ const editPermissionSchema = new mongoose.Schema(
             type: [
                 {
                     fieldname: String,
-                    initialValue: String
+                    initialValue: mongoose.Schema.Types.Mixed
                 }
             ],
             default: []
