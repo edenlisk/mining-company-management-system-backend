@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const Settings = require('../models/settingsModel');
+const { getModel } = require('../utils/helperFunctions');
 
 
 const editPermissionSchema = new mongoose.Schema(
@@ -14,7 +15,8 @@ const editPermissionSchema = new mongoose.Schema(
             type: [
                 {
                     fieldname: String,
-                    initialValue: mongoose.Schema.Types.Mixed
+                    initialValue: mongoose.Schema.Types.Mixed,
+                    newValue: mongoose.Schema.Types.Mixed
                 }
             ],
             default: []
@@ -51,6 +53,8 @@ editPermissionSchema.pre('save', async function (next) {
     if (this.isModified('decision') && !this.isNew) {
         if (this.decision === true) {
             this.requestStatus = "authorized";
+            const Collection = getModel(this.model);
+
         } else if (this.decision === false) {
             this.requestStatus = "rejected";
         }

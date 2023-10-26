@@ -343,8 +343,9 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                 },
                 {
                     $project: {
-                        _id: 0, // Exclude the default _id field
+                        _id: 1, // Exclude the default _id field
                         // Include other fields from the output array as needed
+                        newId: uuidv4(6),
                         companyName: 1,
                         beneficiary: 1,
                         lotNumber: '$output.lotNumber',
