@@ -1,5 +1,7 @@
 const multer = require('multer');
 const path = require('path');
+const exifreader = require('exifreader');
+const fs = require('fs');
 const Coltan = require('../models/coltanEntryModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -137,8 +139,37 @@ exports.getOneColtanEntry = catchAsync(async (req, res, next) => {
 
 exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
-    if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
+    // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
+    if (req.files) {
+        for (const file of req.files) {
+            // const exifData = await exifreader.load(file.path);
+            // console.log(exifData);
+            // // Access specific properties from the EXIF data, e.g., exifData['DateTimeOriginal']
+            // const dateTaken = exifData['DateTimeOriginal'].description;
+            // console.log(dateTaken);
+
+            fs.readFile(file.path, (err, data) => {
+                if (err) {
+                    return next(new AppError("Error occurred while processing file"))
+                } else {
+                    const tags = exifreader.load(data);
+                    const imageDate = tags['CreateDate'];
+                    const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
+                    lot.gradeImg.filename = file.originalname;
+                    lot.gradeImg.filePath = file.path;
+                    if (imageDate) {
+                        lot.gradeImg.createdAt = imageDate.description;
+                    }
+                }
+            })
+
+
+            // const exifData = exifParser.create(file.buffer).parse();
+            // const dateTaken = exifData.tags['DateTimeOriginal'];
+            // console.log(file.buffer);
+        }
+    }
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
     if (req.body.companyName) entry.companyName = req.body.companyName;
@@ -250,9 +281,9 @@ const multerStorage = multer.diskStorage(
             cb(null, `${__dirname}/../public/data/coltan`);
         },
         filename: function (req, file, cb) {
-            // const fileExtension = path.extname(file.originalname);
+            const fileExtension = path.extname(file.originalname);
             // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
-            cb(null, `${file.originalname} - ${new Date().toISOString()}`);
+            cb(null, `${file.originalname.split('.')[0]} - ${new Date()}.${fileExtension}`);
         }
     }
 )
