@@ -71,6 +71,11 @@ const coltanSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
+                    gradeImg: {
+                        filename: String,
+                        createdAt: Date,
+                        modifiedAt: Date
+                    },
                     shipments: {
                         type: [
                             {

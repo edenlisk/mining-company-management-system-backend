@@ -1,3 +1,5 @@
+const multer = require('multer');
+const path = require('path');
 const Coltan = require('../models/coltanEntryModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
@@ -182,13 +184,13 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
-                if (existingLot.tantalum && existingLot.mineralGrade) {
-                    existingLot.pricePerUnit = (existingLot.tantalum * existingLot.mineralGrade/100).toFixed(3);
-                    existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
-                    if (!existingLot.unpaid && existingLot.unpaid !== 0) {
-                        existingLot.unpaid = existingLot.mineralPrice;
-                    }
-                }
+                // if (existingLot.tantalum && existingLot.mineralGrade) {
+                //     existingLot.pricePerUnit = (existingLot.tantalum * existingLot.mineralGrade/100).toFixed(3);
+                //     existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
+                //     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
+                //         existingLot.unpaid = existingLot.mineralPrice;
+                //     }
+                // }
             }
         }
     }
@@ -202,6 +204,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
         )
     ;
 })
+
 
 exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findByIdAndUpdate(req.params.entryId, {visible: false});
@@ -239,3 +242,36 @@ exports.EntryEditPermission = catchAsync(async (req, res, next) => {
     }
     entry.requestEditPermission();
 })
+
+
+const multerStorage = multer.diskStorage(
+    {
+        destination: function (req, file, cb) {
+            cb(null, `${__dirname}/../public/data/coltan`);
+        },
+        filename: function (req, file, cb) {
+            // const fileExtension = path.extname(file.originalname);
+            // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
+            cb(null, `${file.originalname} - ${new Date().toISOString()}`);
+        }
+    }
+)
+
+const multerFilter = (req, file, cb) => {
+    const fileExtension = path.extname(file.originalname);
+    const allowExtension = ['.png', '.jpg', '.jpeg'];
+    if (allowExtension.includes(fileExtension.toLowerCase())) {
+        cb(null, true);
+    } else {
+        cb(new AppError("Not a .jpg, .jpeg or .png file selected", 400), false);
+    }
+}
+
+const upload = multer(
+    {
+        storage: multerStorage,
+        fileFilter: multerFilter
+    }
+)
+
+exports.uploadGradeImg = upload;

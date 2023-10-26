@@ -5,6 +5,7 @@ const {
     createColtanEntry,
     updateColtanEntry,
     deleteColtanEntry,
+    uploadGradeImg,
     trashEntries
 } = require('../controllers/coltanControllers');
 const router = express.Router();
@@ -18,7 +19,7 @@ router.route('/trash')
 
 router.route('/:entryId')
     .get(getOneColtanEntry)
-    .patch(updateColtanEntry)
+    .patch(uploadGradeImg.any(), updateColtanEntry)
     .delete(deleteColtanEntry)
 
 
