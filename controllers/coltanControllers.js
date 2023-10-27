@@ -281,9 +281,9 @@ const multerStorage = multer.diskStorage(
             cb(null, `${__dirname}/../public/data/coltan`);
         },
         filename: function (req, file, cb) {
-            const fileExtension = path.extname(file.originalname);
+            // const fileExtension = path.extname(file.originalname);
             // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
-            cb(null, `${file.originalname.split('.')[0]} - ${new Date()}.${fileExtension}`);
+            cb(null, file.originalname);
         }
     }
 )

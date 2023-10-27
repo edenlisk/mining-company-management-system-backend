@@ -54,19 +54,22 @@ editPermissionSchema.pre('save', async function (next) {
     if (this.isModified('decision') && !this.isNew) {
         if (this.decision === true) {
             this.requestStatus = "authorized";
-            const Collection = getModel(this.model);
-            const record = await Collection.findById(this.recordId);
-            if (!record) return next(new AppError("Record was not found!", 400));
-            for (const field of this.editableFields) {
-                console.log(field.newValue);
-                // use field to update modified fields
-                record[toCamelCase(field.fieldname)] = field.newValue;
-            }
         } else if (this.decision === false) {
             this.requestStatus = "rejected";
         }
     }
     next();
 })
+
+
+// const Collection = getModel(this.model);
+// const record = await Collection.findById(this.recordId);
+// if (!record) return next(new AppError("Record was not found!", 400));
+// for (const field of this.editableFields) {
+//     console.log(field.newValue);
+//     // use field to update modified fields
+//     record[toCamelCase(field.fieldname)] = field.newValue;
+// }
+
 
 module.exports = mongoose.model("EditPermission", editPermissionSchema);
