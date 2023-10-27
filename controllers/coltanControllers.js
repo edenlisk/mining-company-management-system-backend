@@ -157,7 +157,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                     const imageDate = tags['CreateDate'];
                     const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
                     lot.gradeImg.filename = file.originalname;
-                    lot.gradeImg.filePath = `${req.hostname}/data/coltan/${file.originalname}`;
+                    lot.gradeImg.filePath = `${req.protocol}://${req.hostname}/data/coltan/${file.originalname}`;
                     if (imageDate) {
                         lot.gradeImg.createdAt = imageDate.description;
                     }
