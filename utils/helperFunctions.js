@@ -497,10 +497,10 @@ exports.deleteGradeImg = catchAsync(async (req, res, next) => {
     if (!entry) return next(new AppError("Entry was not found!", 400));
     const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
     await imagekit.deleteFile(lot.gradeImg.fileId);
-    delete lot.gradeImg;
+    lot.gradeImg = undefined;
     await entry.save({validateModifiedOnly: true});
     res
-        .status(202)
+        .status(204)
         .json(
             {
                 status: "Success"
