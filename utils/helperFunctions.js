@@ -1,7 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
-const Imagekit = require('imagekit');
+const imagekit = require('./imagekit');
 const Supplier = require('../models/supplierModel');
 const Coltan = require('../models/coltanEntryModel');
 const Cassiterite = require('../models/cassiteriteEntryModel');
@@ -9,6 +9,7 @@ const Wolframite = require('../models/wolframiteEntryModel');
 const Beryllium = require('../models/berylliumEntryModel');
 const Lithium = require('../models/lithiumEntryModel');
 const AppError = require('./appError');
+const catchAsync = require('./catchAsync');
 
 exports.getModel = (model) => {
     switch (model) {
@@ -490,10 +491,20 @@ exports.toCamelCase = str => {
     }).join('');
 }
 
-exports.imagekit = new Imagekit(
-    {
-        publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
-        privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
-        urlEndpoint: `https://ik.imagekit.io/${process.env.IMAGEKIT_ID}`
-    }
-)
+
+exports.deleteGradeImg = catchAsync(async (req, res, next) => {
+    const entry = await Coltan.findById(req.params.entryId);
+    if (!entry) return next(new AppError("Entry was not found!", 400));
+    const lot = entry.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+    await imagekit.deleteFile(lot.gradeImg.fileId);
+    delete lot.gradeImg;
+    await entry.save({validateModifiedOnly: true});
+    res
+        .status(202)
+        .json(
+            {
+                status: "Success"
+            }
+        )
+    ;
+})

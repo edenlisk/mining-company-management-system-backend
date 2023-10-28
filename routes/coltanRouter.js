@@ -7,8 +7,9 @@ const {
     deleteColtanEntry,
     uploadGradeImg,
     trashEntries,
-    deleteGradeImg
 } = require('../controllers/coltanControllers');
+
+const { deleteGradeImg } = require('../utils/helperFunctions');
 const router = express.Router();
 
 router.route('/')

@@ -8,7 +8,8 @@ const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
-const { handleConvertToUSD, imagekit } = require('../utils/helperFunctions');
+const { handleConvertToUSD } = require('../utils/helperFunctions');
+const imagekit = require('../utils/imagekit');
 // const io = require('../bin/www').io;
 
 
@@ -284,23 +285,6 @@ exports.EntryEditPermission = catchAsync(async (req, res, next) => {
         entry.editableFields = req.body.fields;
     }
     entry.requestEditPermission();
-})
-
-exports.deleteGradeImg = catchAsync(async (req, res, next) => {
-    const entry = await Coltan.findById(req.params.entryId);
-    if (!entry) return next(new AppError("Entry was not found!", 400));
-    const lot = entry.find(item => item.lotNumber === parseInt(req.body.lotNumber));
-    await imagekit.deleteFile(lot.gradeImg.fileId);
-    delete lot.gradeImg;
-    await entry.save({validateModifiedOnly: true});
-    res
-        .status(202)
-        .json(
-            {
-                status: "Success"
-            }
-        )
-    ;
 })
 
 
