@@ -6,6 +6,8 @@ const { getFileStructure, downloadFile } = require('../controllers/fileStructure
 
 router.route('/')
     .get(getFileStructure)
-    .post(downloadFile)
+
+router.route('/download')
+    .get(downloadFile)
 
 module.exports = router;
