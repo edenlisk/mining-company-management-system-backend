@@ -495,7 +495,7 @@ exports.toCamelCase = str => {
 exports.deleteGradeImg = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
     if (!entry) return next(new AppError("Entry was not found!", 400));
-    const lot = entry.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+    const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
     await imagekit.deleteFile(lot.gradeImg.fileId);
     delete lot.gradeImg;
     await entry.save({validateModifiedOnly: true});
