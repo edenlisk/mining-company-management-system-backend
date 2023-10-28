@@ -8,6 +8,6 @@ router.route('/')
     .get(getFileStructure)
 
 router.route('/download')
-    .get(downloadFile)
+    .post(downloadFile)
 
 module.exports = router;
