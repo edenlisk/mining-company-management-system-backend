@@ -8,7 +8,7 @@ const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
-const { handleConvertToUSD } = require('../utils/helperFunctions');
+const { handleConvertToUSD, imagekit } = require('../utils/helperFunctions');
 // const io = require('../bin/www').io;
 
 
@@ -143,26 +143,38 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     if (req.files) {
         for (const file of req.files) {
+            const fileData = fs.readFileSync(file.path);
             // const exifData = await exifreader.load(file.path);
             // console.log(exifData);
             // // Access specific properties from the EXIF data, e.g., exifData['DateTimeOriginal']
             // const dateTaken = exifData['DateTimeOriginal'].description;
             // console.log(dateTaken);
+            const response = await imagekit.upload({
+                file: fileData,
+                fileName: file.originalname
+            });
 
-            fs.readFile(file.path, (err, data) => {
-                if (err) {
-                    return next(new AppError("Error occurred while processing file"))
-                } else {
-                    const tags = exifreader.load(data);
-                    const imageDate = tags['CreateDate'];
-                    const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
-                    lot.gradeImg.filename = file.originalname;
-                    lot.gradeImg.filePath = `${req.protocol}://${req.hostname}/data/coltan/${file.originalname}`;
-                    if (imageDate) {
-                        lot.gradeImg.createdAt = imageDate.description;
+            if (response) {
+                fs.readFile(file.path, (err, data) => {
+                    if (err) {
+                        return next(new AppError("Error occurred while processing file"))
+                    } else {
+                        const tags = exifreader.load(data);
+                        const imageDate = tags['CreateDate'];
+                        const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
+                        lot.gradeImg.filename = response.name;
+                        lot.gradeImg.filePath = response.url;
+                        lot.gradeImg.fileId = response.fileId;
+                        if (imageDate) {
+                            lot.gradeImg.createdAt = imageDate.description;
+                        }
                     }
-                }
-            })
+                    fs.unlink(file.path, () => {
+                        console.log('file deleted successfully from file system');
+                    })
+                })
+
+            }
 
 
             // const exifData = exifParser.create(file.buffer).parse();
@@ -272,6 +284,23 @@ exports.EntryEditPermission = catchAsync(async (req, res, next) => {
         entry.editableFields = req.body.fields;
     }
     entry.requestEditPermission();
+})
+
+exports.deleteGradeImg = catchAsync(async (req, res, next) => {
+    const entry = await Coltan.findById(req.params.entryId);
+    if (!entry) return next(new AppError("Entry was not found!", 400));
+    const lot = entry.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+    await imagekit.deleteFile(lot.gradeImg.fileId);
+    delete lot.gradeImg;
+    await entry.save({validateModifiedOnly: true});
+    res
+        .status(202)
+        .json(
+            {
+                status: "Success"
+            }
+        )
+    ;
 })
 
 

@@ -74,7 +74,8 @@ const coltanSchema = new mongoose.Schema(
                     gradeImg: {
                         filename: String,
                         createdAt: Date,
-                        filePath: String
+                        filePath: String,
+                        fileId: String
                     },
                     shipments: {
                         type: [

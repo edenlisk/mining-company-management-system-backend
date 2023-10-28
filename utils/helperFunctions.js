@@ -1,6 +1,7 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const Imagekit = require('imagekit');
 const Supplier = require('../models/supplierModel');
 const Coltan = require('../models/coltanEntryModel');
 const Cassiterite = require('../models/cassiteriteEntryModel');
@@ -178,7 +179,7 @@ exports.sendAttachment = (filePath, fileName, res) => {
     res.setHeader('Content-Type', getHeader(fileName));
     fileStream.pipe(res);
 }
-        // 1                // 2        ....n
+// 1                // 2        ....n
 // ((quantity * grade) + (quantity * grade))/ total quantity
 
 const storekeeper = {
@@ -488,3 +489,11 @@ exports.toCamelCase = str => {
         }
     }).join('');
 }
+
+exports.imagekit = new Imagekit(
+    {
+        publicKey: process.env.IMAGEKIT_PUBLIC_KEY,
+        privateKey: process.env.IMAGEKIT_PRIVATE_KEY,
+        urlEndpoint: `https://ik.imagekit.io/${process.env.IMAGEKIT_ID}`
+    }
+)
