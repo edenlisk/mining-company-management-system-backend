@@ -70,7 +70,7 @@ exports.downloadFile = catchAsync(async (req, res, next) => {
         res.setHeader('Content-Type', contentType);
 
         // Read the file and send it as a response
-        const fileStream = fileSystem.createReadStream(filePath);
+        const fileStream = fileSystem.createReadStream(req.body.filePath);
         fileStream.pipe(res);
     } else {
         return next(new AppError(`File requested doesn't exist!`, 400));
