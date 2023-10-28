@@ -56,8 +56,8 @@ exports.getFileStructure = catchAsync(async (req, res, next) => {
 })
 
 exports.downloadFile = catchAsync(async (req, res, next) => {
-    const filePath = `${__dirname}/../public/data/${req.body.fullPath}`;
-    if (fileSystem.existsSync(filePath)) {
+    // const filePath = `${__dirname}/../public/data/${req.body.fullPath}`;
+    if (fileSystem.existsSync(req.body.fullPath)) {
         // Set the Content-Type header specifically for docx files
         // const fileName = req.body.fullPath;
         // const fileExtension = fileName.split('.').pop().toLowerCase();
