@@ -6,6 +6,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const {getModel, fonts} = require('../utils/helperFunctions');
 const fs = require('fs');
+const imagekit = require('../utils/imagekit');
 // const { multerFilter, multerStorage } = require('../utils/helperFunctions');
 
 
@@ -74,6 +75,24 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
     if (!shipment) return next(new AppError("Selected shipment no longer exists!", 400));
     if (req.files) {
         for (const file of req.files) {
+            fs.readFile(file.path, (err, data) => {
+                imagekit.upload(
+                    {
+                        file: data,
+                        fileName: file.originalname,
+                        folder: `/shipments/${req.params.shipmentId}`
+                    }, err1 => {
+                        if (err1) {
+                            console.log(err1)
+                        }
+                    }
+                )
+                fs.unlink(file.path, err1 => {
+                    if (err1) {
+                        console.log(err1);
+                    }
+                })
+            })
             shipment[file.fieldname] = file.originalname;
         }
     }

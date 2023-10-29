@@ -5,35 +5,59 @@ const path = require('path');
 const fileSystem = require('fs');
 const { promisify } = require('util');
 const docxConverter = require('docx-pdf');
+const imagekit = require('../utils/imagekit');
 
 
 
-async function getFileStructure(directory, relativePath) {
-    const files = await fs.readdir(directory);
+// async function getFileStructure(directory, relativePath) {
+//     const files = await fs.readdir(directory);
+//
+//     const fileStructure = [];
+//
+//     for (const file of files) {
+//         const filePath = path.join(directory, file);
+//         const stats = await fs.stat(filePath);
+//
+//
+//         const item = {
+//             type: stats.isDirectory() ? 'directory' : 'file',
+//             name: file,
+//             fullPath: path.join(relativePath, file), // Add fullPath property
+//         };
+//         if (stats.isDirectory()) {
+//             item.content = await getFileStructure(filePath, item.fullPath);
+//         }
+//         fileStructure.push(item);
+//
+//         // if (stats.isDirectory()) {
+//         //     const subFiles = await getFileStructure(filePath);
+//         //     fileStructure.push({ type: 'directory', name: file, content: subFiles, fullPath: path.join(relativePath, file) });
+//         // } else {
+//         //     fileStructure.push({ type: 'file', name: file, fullPath: path.join(relativePath, file) });
+//         // }
+//     }
+//
+//     return fileStructure;
+// }
+
+async function getImageKitFileStructure(directory) {
+    const fileList = await imagekit.listFiles({ path: directory, includeFolder: true });
 
     const fileStructure = [];
 
-    for (const file of files) {
-        const filePath = path.join(directory, file);
-        const stats = await fs.stat(filePath);
-
-
+    for (const file of fileList) {
         const item = {
-            type: stats.isDirectory() ? 'directory' : 'file',
-            name: file,
-            fullPath: path.join(relativePath, file), // Add fullPath property
+            type: file.type,
+            name: file.name,
+            url: file.url
         };
-        if (stats.isDirectory()) {
-            item.content = await getFileStructure(filePath, item.fullPath);
-        }
-        fileStructure.push(item);
 
-        // if (stats.isDirectory()) {
-        //     const subFiles = await getFileStructure(filePath);
-        //     fileStructure.push({ type: 'directory', name: file, content: subFiles, fullPath: path.join(relativePath, file) });
-        // } else {
-        //     fileStructure.push({ type: 'file', name: file, fullPath: path.join(relativePath, file) });
-        // }
+        if (file.type && file.type === 'folder') {
+            // const subDirectory = path.join(directory, file.name);
+            item.content = await getImageKitFileStructure(file.folderPath);
+        }
+
+        fileStructure.push(item);
     }
 
     return fileStructure;
@@ -41,7 +65,8 @@ async function getFileStructure(directory, relativePath) {
 
 
 exports.getFileStructure = catchAsync(async (req, res, next) => {
-    const files = await getFileStructure(path.join(__dirname, "..", 'public', "data"), "");
+    // const files = await getFileStructure(path.join(__dirname, "..", 'public', "data"), "");
+    const files = await getImageKitFileStructure('/');
     res
         .status(200)
         .json(

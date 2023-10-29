@@ -27,7 +27,8 @@ const supplierSchema = new mongoose.Schema(
         address: {
             province: String,
             district: String,
-            sector: String
+            sector: String,
+            cell: String
         },
         mineSites: {
             type: [
@@ -41,9 +42,30 @@ const supplierSchema = new mongoose.Schema(
                 }
             ]
         },
-        numberOfDiggers: Number,
-        numberOfWashers: Number,
-        numberOfTransporters: Number,
+        equipmentList: {
+            type: [String],
+            default: []
+        },
+        typeOfMining: {
+            type: String,
+            enum: ['Underground', 'Open Pits', 'Both']
+        },
+        surfaceArea: {
+            type: Number,
+            default: null
+        },
+        numberOfDiggers: {
+            type: Number,
+            default: null
+        },
+        numberOfWashers: {
+            type: Number,
+            default: null
+        },
+        numberOfTransporters: {
+            type: Number,
+            default: null
+        },
         typeOfMinerals: [String],
         status: {
             type: String
@@ -52,5 +74,22 @@ const supplierSchema = new mongoose.Schema(
     },
     {timestamps: true}
 )
+
+supplierSchema.pre('save', async function (next) {
+    const imagekit = require('../utils/imagekit');
+    if (this.isNew) {
+        imagekit.createFolder(
+            {
+                folderName: `${this.companyName}`,
+                parentFolderPath: `/invoices`
+            }, err => {
+                if (err) {
+                    console.log(err);
+                }
+            }
+        )
+    }
+    next()
+})
 
 module.exports = mongoose.model('Supplier', supplierSchema);

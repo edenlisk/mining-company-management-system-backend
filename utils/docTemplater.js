@@ -7,6 +7,7 @@ const Supplier = require('../models/supplierModel');
 const { getModel, getMonthWords, getSixMonthsAgo } = require('../utils/helperFunctions');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
+const imagekit = require('./imagekit');
 
 const populateSitesCoordinates = (minesites) => {
     let sites_coordinates = "";
@@ -95,7 +96,7 @@ exports.generate = catchAsync(async (req, res, next) => {
         paragraphLoop: true,
         linebreaks: true,
     });
-    const supplier = await Supplier.findById(req.body.supplierId);
+    const supplier = await Supplier.findById(req.params.supplierId);
     const models = ["cassiterite", "coltan", "wolframite"];
     const mineralTypes = {
         "mineral_type1": "cassiterite",
@@ -163,6 +164,8 @@ exports.generate = catchAsync(async (req, res, next) => {
         // number_of_transporters_per_team_observations: this.docInfo.number_of_transporters_per_team_observations,
     }).getZip().generate({type: "nodebuffer", compression: "DEFLATE",})
 
+
+
     // res.setHeader('Content-Type', 'application/octet-stream');
     // res.setHeader('Content-Disposition', `attachment; filename="amarongi-risk-assessment.docx"`);
     // res.send(buf);
@@ -179,15 +182,149 @@ exports.generate = catchAsync(async (req, res, next) => {
 
     const year = (new Date()).getFullYear();
     const month = getMonthWords((new Date()).getMonth());
-    const filePath = `${__dirname}/../public/data/DD Reports/${year}/${month}`;
-    if (!fs.existsSync(filePath)) {
-        fs.mkdir(filePath, {recursive: true}, err => {
+    // const filePath = `${__dirname}/../public/data/DD Reports/${year}/${month}`;
+    // let imagekitPath = `/dd_reports/${year}/${month}`;
+    // if (!fs.existsSync(filePath)) {
+    //
+    //     fs.mkdir(filePath, {recursive: true}, err => {
+    //         if (err) {
+    //             console.log(err);
+    //         }
+    //
+    //     });
+    //
+    // }
+
+    imagekit.listFiles(
+        {
+            path: '/dd_reports',
+            includeFolder: true
+        }, (err, response) => {
             if (err) {
                 console.log(err);
+            } else {
+                const existingYear = response.find(item => item.name === `${year}`);
+                if (existingYear) {
+                    imagekit.listFiles(
+                        {
+                            path: `/dd_reports/${year}`,
+                            includeFolder: true
+                        }, (err1, response1) => {
+                            if (err1) {
+                                console.log(err1);
+                            } else {
+                                const existingMonth = response1.find(item => item.name === `${month}`);
+                                if (!existingMonth) {
+                                    imagekit.createFolder(
+                                        {
+                                            folderName: `${month}`,
+                                            parentFolderPath: `/dd_reports/${year}`
+                                        }, (err2, response2) => {
+                                            if (err2) {
+                                                console.log(err2);
+                                            } else {
+                                                console.log(response2);
+                                            }
+                                        }
+                                    )
+                                }
+                                imagekit.upload(
+                                    {
+                                        file: buffer,
+                                        fileName: `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`,
+                                        folder: `/dd_reports/${year}/${month}`,
+                                    }, (err2, response2) => {
+                                        if (err2) {
+                                            console.log(err2)
+                                        } else {
+                                            console.log(response2)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+                    )
+
+                } else {
+                    imagekit.createFolder(
+                        {
+                            folderName: `${year}`,
+                            parentFolderPath: `/dd_reports`
+                        }, (err1, response1) => {
+                            if (err) {
+                                console.log(err1)
+                            } else {
+                                imagekit.createFolder(
+                                    {
+                                        folderName: `${month}`,
+                                        parentFolderPath: `/dd_reports/${year}/${month}`
+                                    }, (err2, response2) => {
+                                        if (err2) {
+                                            console.log(err2)
+                                        } else {
+                                            console.log(response2)
+                                        }
+                                    }
+                                )
+                            }
+                            imagekit.upload(
+                                {
+                                    file: buffer,
+                                    fileName: `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`,
+                                    folder: `/dd_reports/${year}/${month}`
+                                }, (err2, response2) => {
+                                    if (err2) {
+                                        console.log(err2);
+                                    } else {
+                                        console.log(response2);
+                                    }
+                                }
+                            )
+                        }
+                    )
+
+                }
+                console.log(response)
             }
-        });
-    }
-    fs.writeFileSync(path.resolve(filePath, `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`), buffer);
+        }
+    )
+
+    // imagekit.createFolder({
+    //     folderName: `${year}`,
+    //     parentFolderPath: "/dd_reports"
+    // }, (err, response) => {
+    //     if (err) {
+    //         console.log(err)
+    //     } else {
+    //         imagekit.createFolder({
+    //             folderName: `${month}`,
+    //             parentFolderPath: `/dd_reports/${year}/${month}`
+    //         }, (err, response) => {
+    //             if (err) {
+    //                 console.log(err);
+    //             } else {
+    //                 imagekitPath = `/dd_reports/${year}/${month}`
+    //             }
+    //         })
+    //     }
+    // })
+
+    // imagekit.upload(
+    //     {
+    //         file: buffer,
+    //         fileName: `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`,
+    //         folder: imagekitPath
+    //     }, (err, response) => {
+    //         if (err) {
+    //             console.log(err)
+    //         } else {
+    //             console.log(response)
+    //         }
+    //     }
+    // )
+
+
+    // fs.writeFileSync(path.resolve(filePath, `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`), buffer);
     res
         .status(200)
         .json(

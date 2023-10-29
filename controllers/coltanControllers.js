@@ -152,7 +152,8 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
             // console.log(dateTaken);
             const response = await imagekit.upload({
                 file: fileData,
-                fileName: file.originalname
+                fileName: file.originalname,
+                folder: `/coltan`
             });
 
             if (response) {

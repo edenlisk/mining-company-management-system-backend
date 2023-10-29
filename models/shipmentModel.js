@@ -120,7 +120,18 @@ shipmentSchema.pre('save', async function (next) {
 
 shipmentSchema.pre('save', async function (next) {
     const Entry = getModel(this.model);
+    const imagekit = require('../utils/imagekit');
     if (this.isNew) {
+        imagekit.createFolder(
+            {
+                folderName: `${this._id}`,
+                parentFolderPath: `/shipments`
+            }, err => {
+                if (err) {
+                    console.log(err);
+                }
+            }
+        )
         this.shipmentMinerals = this.model.charAt(0).toUpperCase() + this.model.slice(1);
         if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
             for (const item of this.entries) {
