@@ -11,13 +11,14 @@ const userSchema = new mongoose.Schema(
             maxLength: 50,
             required: [true, "Please provide name"]
         },
-        // username: {
-        //     type: String,
-        //     lowercase: true,
-        //     required: [true, "Please provide username"],
-        //     minLength: 4,
-        //     maxLength: 20
-        // },
+        username: {
+            type: String,
+            lowercase: true,
+            unique: true,
+            required: [true, "Please provide username"],
+            minLength: 4,
+            maxLength: 20
+        },
         phoneNumber: {
             type: String,
             required: [true, "Please provide phone number"],

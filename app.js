@@ -37,6 +37,8 @@ const settingsRouter = require('./routes/settingsRouter');
 const fileStructureRouter = require('./routes/fileStructureRouter');
 const invoiceRouter = require('./routes/invoiceRouter');
 const editPermissionRouter = require('./routes/editPermissionRouter');
+const messageRouter = require('./routes/messageRouter');
+const chatRouter = require('./routes/chatRouter');
 
 const app = express();
 
@@ -96,6 +98,8 @@ app.use('/api/v1/settings', settingsRouter);
 app.use('/api/v1/file-structure', fileStructureRouter);
 app.use('/api/v1/invoice', invoiceRouter);
 app.use('/api/v1/edit-request', editPermissionRouter);
+app.use('/api/v1/chat', chatRouter);
+app.use('/api/v1/message', messageRouter);
 // app.use('/api/v1/risk-assessment', riskAssessmentRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,
