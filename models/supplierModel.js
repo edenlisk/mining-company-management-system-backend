@@ -54,6 +54,10 @@ const supplierSchema = new mongoose.Schema(
             type: Number,
             default: null
         },
+        categoryOfMine: {
+            type: String,
+            default: null
+        },
         numberOfDiggers: {
             type: Number,
             default: null

@@ -30,6 +30,10 @@ exports.addSupplier = catchAsync(async (req, res, next) => {
             phoneNumber: req.body.phoneNumber,
             mineSites: req.body.mineSites,
             address: req.body.address,
+            equipmentList: req.body.equipmentList,
+            typeOfMining: req.body.typeOfMining,
+            surfaceArea: req.body.surfaceArea,
+            categoryOfMine: req.body.categoryOfMine,
             typeOfMinerals: req.body.typeOfMinerals,
             numberOfDiggers: req.body.numberOfDiggers,
             numberOfWashers: req.body.numberOfWashers,
@@ -55,6 +59,10 @@ exports.updateSupplier = catchAsync(async (req, res, next) => {
     if (req.body.email) supplier.email = req.body.email;
     if (req.body.nationalId) supplier.nationalId = req.body.nationalId;
     if (req.body.address) supplier.address = req.body.address;
+    if (req.body.equipmentList) supplier.equipmentList = req.body.equipmentList;
+    if (req.body.typeOfMining) supplier.typeOfMining = req.body.typeOfMining;
+    if (req.body.surfaceArea) supplier.surfaceArea = req.body.surfaceArea;
+    if (req.body.categoryOfMine) supplier.categoryOfMine = req.body.categoryOfMine;
     if (req.body.numberOfDiggers) supplier.numberOfDiggers = req.body.numberOfDiggers;
     if (req.body.numberOfWashers) supplier.numberOfWashers = req.body.numberOfWashers;
     if (req.body.numberOfTransporters) supplier.numberOfTransporters = req.body.numberOfTransporters;
