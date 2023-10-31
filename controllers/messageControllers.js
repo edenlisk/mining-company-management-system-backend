@@ -17,7 +17,10 @@ exports.addMessage = catchAsync(async (req, res, next) => {
         .status(202)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                data: {
+                    message
+                }
             }
         )
     ;
