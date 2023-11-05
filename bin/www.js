@@ -29,8 +29,8 @@ const server = http.createServer(app);
 // Create a Socket.io server
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Replace with your frontend app's origin
-    methods: ["GET", "POST"], // Add the HTTP methods you want to allow
+    origin: "*",
+    methods: ["GET", "POST"],
   },
 });
 let inactiveUsers = [];
