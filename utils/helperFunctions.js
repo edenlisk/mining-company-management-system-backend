@@ -492,6 +492,14 @@ exports.toCamelCase = str => {
 }
 
 
+exports.toInitialCase = str => {
+    return str
+        .replace(/([a-z])([A-Z])/g, '$1 $2')
+        .replace(/^./, function(str) {
+            return str.toUpperCase();
+        });
+}
+
 exports.deleteGradeImg = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
     if (!entry) return next(new AppError("Entry was not found!", 400));

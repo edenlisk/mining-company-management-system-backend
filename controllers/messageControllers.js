@@ -42,3 +42,19 @@ exports.getMessages = catchAsync(async (req, res, next) => {
         )
     ;
 })
+
+exports.getLastMessage = catchAsync(async (req, res, next) => {
+    const { chatId } = req.params;
+    const message = await Message.find({chatId}).sort({createdAt: -1}).limit(1);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    message
+                }
+            }
+        )
+    ;
+})

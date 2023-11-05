@@ -6,6 +6,7 @@ const { promisify } = require('util');
 const { permissions } = require('../utils/helperFunctions');
 const { logger } = require('../utils/loggers');
 // const Email = require('../utils/email');
+// const {recordLogs, prepareLog} = require('../utils/activityLogs');
 
 const signToken = id => {
     return jwt.sign({ id }, process.env.JWT_SECRET_KEY, {expiresIn: process.env.EXPIRES_IN});
@@ -17,7 +18,7 @@ const createSendToken = (user, statusCode, res) => {
         expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN + 20 * 60 * 60 * 1000),
         httpOnly: true
     }
-    if (process.env.NODE_ENV === 'Production') cookieOptions.secure = true;
+    if (process.env.NODE_ENV === 'production') cookieOptions.secure = true;
     res.cookie('jwt', token, cookieOptions);
     res
         .status(statusCode)
@@ -34,6 +35,7 @@ const createSendToken = (user, statusCode, res) => {
 }
 
 exports.signup = catchAsync(async (req, res, next) => {
+    // const logs = [];
     const existingUser = await User.findOne({email: req.body.email.trim()});
     if (existingUser) return next(new AppError(`User with this ${req.body.email} email already exists`, 409));
     const user = await User.create(
@@ -49,7 +51,9 @@ exports.signup = catchAsync(async (req, res, next) => {
         }
     );
     logger.info(`create a user named: ${user.name}`);
-
+    // logs.push(`${req.user.username} created a user named: ${user.name}`);
+    // const preparedLogs = prepareLog(logs, `/users/${user._id}`, {userId: req.user._id, username: req.user.username});
+    // await recordLogs(preparedLogs);
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')
@@ -65,6 +69,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 })
 
 exports.login = catchAsync(async (req, res, next) => {
+    // const logs = [];
     const { email, password } = req.body;
     if (!email || !password) return next(new AppError("Please provide email and password", 400));
     const user = await User.findOne({email: email.trim()}).select("+password");
@@ -76,12 +81,17 @@ exports.login = catchAsync(async (req, res, next) => {
         return next(new AppError("Your account was suspended, please contact admin to re-activate", 401));
     }
     user.password = undefined;
-    logger.info(`${user.name} logged in successfully.`)
+    // recordLogs(`${user.username} logged in`, {userId: user._id, username: user.username});
+    logger.info(`${user.name} logged in successfully.`);
+    // logs.push(`${user.username} logged in successfully`);
+    // const preparedLogs = prepareLog(logs, `/users`, {userId: user._id, username: user.username});
+    // await recordLogs(preparedLogs);
     createSendToken(user, 200, res);
 })
 
 exports.logout = catchAsync(async (req, res, next) => {
     res.cookie('jwt', '', {expires: new Date(Date.now() + 1000)});
+    // recordLogs(`${req.body.username} logged out`, {userId: req.body._id, username: req.body.username});
     res
         .status(204)
         .json(

@@ -13,6 +13,7 @@ const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
 const expressWinston = require('express-winston');
 const { requestLogger, logger: appLogger } = require('./utils/loggers');
+const { deleteOverDueLogs } = require('./utils/cron');
 
 
 // const entriesRouter = require('./routes/entriesRouter');
@@ -39,6 +40,7 @@ const invoiceRouter = require('./routes/invoiceRouter');
 const editPermissionRouter = require('./routes/editPermissionRouter');
 const messageRouter = require('./routes/messageRouter');
 const chatRouter = require('./routes/chatRouter');
+const activityLogsRouter = require('./routes/activityLogsRouter');
 
 const app = express();
 
@@ -59,6 +61,7 @@ const corsOptions ={
     optionSuccessStatus:200,
 }
 app.use(cors(corsOptions));
+deleteOverDueLogs();
 
 
 const limiter = rateLimit(
@@ -100,6 +103,7 @@ app.use('/api/v1/invoice', invoiceRouter);
 app.use('/api/v1/edit-request', editPermissionRouter);
 app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/message', messageRouter);
+app.use('/api/v1/logs', activityLogsRouter);
 // app.use('/api/v1/risk-assessment', riskAssessmentRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,

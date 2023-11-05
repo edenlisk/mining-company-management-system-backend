@@ -10,6 +10,10 @@ const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
 const { handleConvertToUSD } = require('../utils/helperFunctions');
 const imagekit = require('../utils/imagekit');
+const { trackUpdateModifications,
+    trackDeleteOperations,
+    trackCreateOperations } = require('./activityLogsControllers');
+
 // const io = require('../bin/www').io;
 
 
@@ -110,7 +114,12 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
             )
         }
     }
+    // const log = trackCreateOperations(entry?._id, "coltan", req);
     await entry.save({validateModifiedOnly: true});
+    // if (!result) {
+    //     log.status = "failed";
+    // }
+    // await log.save({validateBeforeSave: false});
     // io.emit('operation-update', {message: "New Coltan Entry was record"});
     res
         .status(204)
@@ -142,6 +151,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
     // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
+    // const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
@@ -165,6 +175,13 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                         const imageDate = tags['CreateDate'];
                         const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
                         lot.gradeImg.filename = response.name;
+                        // logs.modifications.push(
+                        //     {
+                        //         fieldName: "gradeImg",
+                        //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
+                        //         newValue: `${response.url}--${imageDate ? imageDate.description : "No date"}`,
+                        //     }
+                        // )
                         lot.gradeImg.filePath = response.url;
                         lot.gradeImg.fileId = response.fileId;
                         if (imageDate) {
@@ -240,6 +257,10 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
         }
     }
     await entry.save({validateModifiedOnly: true});
+    // if (!result) {
+    //     logs.status = "failed";
+    // }
+    // await logs.save({validateBeforeSave: false});
     res
         .status(202)
         .json(
@@ -252,8 +273,17 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
 
 
 exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
+    // const log = trackDeleteOperations(req.params?.entryId, "coltan", req);
     const entry = await Coltan.findByIdAndUpdate(req.params.entryId, {visible: false});
-    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
+    if (!entry) {
+        // log.status = "failed";
+        // log.link = `/complete/coltan/${req.params.entryId}`;
+        // await log.save({validateBeforeSave: false});
+        return next(new AppError("The selected entry no longer exists!", 400));
+    }
+    // else {
+    //     await log.save({validateBeforeSave: false});
+    // }
     res
         .status(204)
         .json(

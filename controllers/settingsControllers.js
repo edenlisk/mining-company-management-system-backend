@@ -24,7 +24,7 @@ exports.addSetting = catchAsync(async (req, res, next) => {
             rmaFeeCassiterite: 50,
             rmaFeeWolframite: 50,
             nameOfCompany: req.body.nameOfCompany,
-            editExpiresIn: req.body.editExpiresIn
+            editExpiresIn: req.body.editExpiresIn,
         }
     )
     res
@@ -44,6 +44,7 @@ exports.updateSettings = catchAsync(async (req, res, next) => {
     if (req.body.rmaFeeWolframite) settings.rmaFeeWolframite = req.body.rmaFeeWolframite;
     if (req.body.nameOfCompany) settings.nameOfCompany = req.body.nameOfCompany;
     if (req.body.editExpiresIn) settings.editExpiresIn = req.body.editExpiresIn;
+    if (req.body.logsLifeTime) settings.logsLifeTime = req.body.logsLifeTime;
     await settings.save({validateModifiedOnly: true});
     res
         .status(202)

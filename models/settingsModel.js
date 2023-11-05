@@ -59,6 +59,10 @@ const settingsSchema = new mongoose.Schema(
         editExpiresIn: {
             type: Number,
             default: 30
+        },
+        logsLifeTime: {
+            type: Number,
+            default: 90
         }
     }
 )
@@ -70,4 +74,4 @@ const settingsSchema = new mongoose.Schema(
 // })
 
 
-module.exports = mongoose.model('Settings', settingsSchema)
+module.exports = mongoose.model('Settings', settingsSchema);
