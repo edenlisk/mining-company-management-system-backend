@@ -74,6 +74,12 @@ const wolframiteSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
+                    gradeImg: {
+                        filename: String,
+                        createdAt: Date,
+                        filePath: String,
+                        fileId: String
+                    },
                     shipments: {
                         type: [
                             {

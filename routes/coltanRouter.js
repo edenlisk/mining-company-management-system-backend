@@ -5,11 +5,11 @@ const {
     createColtanEntry,
     updateColtanEntry,
     deleteColtanEntry,
+    deleteGradeImg,
     uploadGradeImg,
     trashEntries,
 } = require('../controllers/coltanControllers');
 
-const { deleteGradeImg } = require('../utils/helperFunctions');
 const router = express.Router();
 
 router.route('/')
@@ -24,7 +24,7 @@ router.route('/:entryId')
     .patch(uploadGradeImg.any(), updateColtanEntry)
     .delete(deleteColtanEntry)
 
-router.route('/delete-grade-img/:entryId')
+router.route('/delete-grade-img/:model/:entryId')
     .delete(deleteGradeImg)
 
 

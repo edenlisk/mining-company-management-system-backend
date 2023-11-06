@@ -11,6 +11,7 @@ const Lithium = require('../models/lithiumEntryModel');
 const AppError = require('./appError');
 const catchAsync = require('./catchAsync');
 
+
 exports.getModel = (model) => {
     switch (model) {
         case "coltan":
@@ -196,39 +197,39 @@ const storekeeper = {
         edit: true,
         delete: false
     },
-    buyers: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
-    },
-    payments: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
-    },
+    // buyers: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
+    // payments: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
     shipments: {
         view: false,
         create: false,
         edit: false,
         delete: false
     },
-    contracts: {
-        view: false,
-        create: false,
-        delete: false
-    },
-    settings: {
-        view: false,
-        edit: false
-    },
-    users: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
-    },
+    // contracts: {
+    //     view: false,
+    //     create: false,
+    //     delete: false
+    // },
+    // settings: {
+    //     view: false,
+    //     edit: false
+    // },
+    // users: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
 }
 
 const traceabilityOfficer = {
@@ -244,39 +245,39 @@ const traceabilityOfficer = {
         edit: true,
         delete: false
     },
-    buyers: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
-    },
-    payments: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
-    },
+    // buyers: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
+    // payments: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
     shipments: {
         view: false,
         create: false,
         edit: false,
         delete: false
     },
-    contracts: {
-        view: false,
-        create: false,
-        delete: false
-    },
-    settings: {
-        view: false,
-        edit: false
-    },
-    users: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
-    },
+    // contracts: {
+    //     view: false,
+    //     create: false,
+    //     delete: false
+    // },
+    // settings: {
+    //     view: false,
+    //     edit: false
+    // },
+    // users: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
 }
 
 const managingDirector = {
@@ -292,12 +293,6 @@ const managingDirector = {
         edit: true,
         delete: true
     },
-    buyers: {
-        view: true,
-        create: true,
-        edit: true,
-        delete: true
-    },
     payments: {
         view: true,
         create: true,
@@ -310,21 +305,75 @@ const managingDirector = {
         edit: true,
         delete: true
     },
-    contracts: {
+    mineralGrade: {
         view: true,
-        create: false,
-        delete: false
+        create: true,
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
     },
     settings: {
         view: false,
         edit: false
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
     },
     users: {
         view: true,
         create: true,
         edit: true,
         delete: true
-    }
+    },
+    contracts: {
+        view: true,
+        create: false,
+        delete: false
+    },
 }
 
 const ceo = {
@@ -471,13 +520,93 @@ const accountant = {
     }
 }
 
+const labTechnician = {
+    entry: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: false
+    },
+    // suppliers: {
+    //     view: true,
+    //     create: true,
+    //     edit: true,
+    //     delete: false
+    // },
+    // buyers: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
+    // payments: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
+    shipments: {
+        view: false,
+        create: false,
+        edit: false,
+        delete: false
+    },
+    // contracts: {
+    //     view: false,
+    //     create: false,
+    //     delete: false
+    // },
+    settings: {
+        view: false,
+        edit: false
+    },
+    // users: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    //     delete: false
+    // },
+    mineralGrade: {
+        view: true,
+        create: true,
+        edit: false,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: false,
+    },
+    // tantal: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    // },
+    // londonMetalExchange: {
+    //     view: false,
+    //     create: false,
+    //     edit: false,
+    // },
+    // treatmentCharges: {
+    //     view: false,
+    //     create: false,
+    //     edit: false
+    // },
+    // paymentHistory: {
+    //     view: false,
+    //     create: false,
+    //     edit: false
+    // }
+
+}
+
 exports.permissions = {
     storekeeper,
     traceabilityOfficer,
     managingDirector,
     operationsManager,
     ceo,
-    accountant
+    accountant,
+    labTechnician
 }
 
 
@@ -495,24 +624,8 @@ exports.toCamelCase = str => {
 exports.toInitialCase = str => {
     return str
         .replace(/([a-z])([A-Z])/g, '$1 $2')
-        .replace(/^./, function(str) {
+        .replace(/^./, function (str) {
             return str.toUpperCase();
         });
 }
 
-exports.deleteGradeImg = catchAsync(async (req, res, next) => {
-    const entry = await Coltan.findById(req.params.entryId);
-    if (!entry) return next(new AppError("Entry was not found!", 400));
-    const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
-    await imagekit.deleteFile(lot.gradeImg.fileId);
-    lot.gradeImg = undefined;
-    await entry.save({validateModifiedOnly: true});
-    res
-        .status(204)
-        .json(
-            {
-                status: "Success"
-            }
-        )
-    ;
-})

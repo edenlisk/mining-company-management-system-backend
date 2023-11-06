@@ -10,6 +10,7 @@ const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
 const { handleConvertToUSD } = require('../utils/helperFunctions');
 const imagekit = require('../utils/imagekit');
+const { getModel } = require('../utils/helperFunctions');
 const { trackUpdateModifications,
     trackDeleteOperations,
     trackCreateOperations } = require('./activityLogsControllers');
@@ -236,6 +237,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
             const existingLot = entry.output.find(value => value.lotNumber === lot.lotNumber);
             if (existingLot) {
                 if (lot.mineralGrade) existingLot.mineralGrade = lot.mineralGrade;
+                if (lot.pricePerUnit) existingLot.pricePerUnit = lot.pricePerUnit;
                 if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
                 if (lot.tantalum) existingLot.tantalum = lot.tantalum;
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
@@ -271,7 +273,6 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     ;
 })
 
-
 exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
     // const log = trackDeleteOperations(req.params?.entryId, "coltan", req);
     const entry = await Coltan.findByIdAndUpdate(req.params.entryId, {visible: false});
@@ -284,6 +285,26 @@ exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
     // else {
     //     await log.save({validateBeforeSave: false});
     // }
+    res
+        .status(204)
+        .json(
+            {
+                status: "Success"
+            }
+        )
+    ;
+})
+
+exports.deleteGradeImg = catchAsync(async (req, res, next) => {
+    const Entry = getModel(req.params.model);
+    if (!Entry) return next(new AppError("Invalid model!", 400));
+    const entry = await Entry.findById(req.params.entryId);
+    if (!entry) return next(new AppError("Unable to delete gradeImg!", 400));
+    const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+    // await imagekit.deleteFile(lot.gradeImg.fileId);
+    lot.gradeImg = undefined;
+
+    await entry.save({validateModifiedOnly: true});
     res
         .status(204)
         .json(
