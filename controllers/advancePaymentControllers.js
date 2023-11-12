@@ -23,17 +23,18 @@ exports.getAllAdvancePayments = catchAsync(async (req, res, next) => {
 exports.addAdvancePayment = catchAsync(async (req, res, next) => {
     await AdvancePayment.create(
         {
+            companyName: req.body.companyName,
             supplierId: req.body.supplierId ? req.body.supplierId : null,
-            beneficiaryName: req.body.beneficiaryName,
-            beneficiaryNationalId: req.body.beneficiaryNationalId,
+            beneficiary: req.body.beneficiary,
+            nationalId: req.body.nationalId,
             phoneNumber: req.body.phoneNumber,
             email: req.body.email,
             paymentAmount: req.body.paymentAmount,
             currency: req.body.currency,
             location: req.body.location,
             paymentDate: req.body.paymentDate,
-            contractName: req.file.filename,
-            message: req.body.message,
+            // contractName: req.file.filename,
+            // message: req.body.message,
         }
     )
     res

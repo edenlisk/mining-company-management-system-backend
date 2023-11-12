@@ -21,7 +21,10 @@ const advancePaymentSchema = new mongoose.Schema(
             type: String,
         },
         location: {
-            type: String
+            province: String,
+            district: String,
+            sector: String,
+            cell: String,
         },
         email: {
             type: String,

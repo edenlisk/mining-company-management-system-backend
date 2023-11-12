@@ -49,7 +49,7 @@ const paymentSchema = new mongoose.Schema(
         currency: {
             type: String,
             enum: ['RWF', 'USD'],
-            default: () => 'RWF'
+            default: () => 'USD'
         },
         paymentDate: {
             type: Date
