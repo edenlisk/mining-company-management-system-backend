@@ -26,7 +26,7 @@ exports.getAllEditRequests = catchAsync(async (req, res, next) => {
 })
 
 exports.createEditRequest = catchAsync(async (req, res, next) => {
-    await EditPermission.create(
+    const editRequest = await EditPermission.create(
         {
             editableFields: req.body.editableFields,
             recordId: req.body.recordId,
@@ -35,10 +35,13 @@ exports.createEditRequest = catchAsync(async (req, res, next) => {
         }
     )
     res
-        .status(202)
+        .status(201)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                data: {
+                    editRequest
+                }
             }
         )
     ;

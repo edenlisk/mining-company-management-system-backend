@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
-const Settings = require('../models/settingsModel');
+const Settings = require('./settingsModel');
+const User = require('./usersModel');
 const { getModel, toCamelCase } = require('../utils/helperFunctions');
 const AppError = require('../utils/appError');
 
@@ -46,18 +47,48 @@ const editPermissionSchema = new mongoose.Schema(
 )
 
 editPermissionSchema.pre('save', async function (next) {
+    const user = await User.findOne({ username: this.username }).select('+notifications');
     if (this.isNew) {
         this.editRequestedAt = new Date();
-        const { editExpiresIn } = await Settings.findOne();
-        this.editExpiresAt = new Date(this.editRequestedAt.getTime() + editExpiresIn * 60000);
-    }
-    if (this.isModified('decision') && !this.isNew) {
-        if (this.decision === true) {
-            this.requestStatus = "authorized";
-        } else if (this.decision === false) {
-            this.requestStatus = "rejected";
+        // const user = await User.findOne({ username: this.username }).select('+notifications');
+        if (user) {
+            user.notifications.push(
+                {
+                    message: `Your Edit Request has been sent successfully.`
+                }
+            )
         }
     }
+    if (this.isModified('decision') && !this.isNew) {
+        const { editExpiresIn } = await Settings.findOne();
+        if (this.decision === true) {
+            this.editExpiresAt = new Date(new Date().getTime() + editExpiresIn * 60000);
+            this.requestStatus = "authorized";
+            if (user) {
+                user.notifications.push(
+                    {
+                        message: `Your edit request has been authorized. 
+                        \n You can use this link to edit the record: 
+                        \n **/entry/edit/${this.model}/${this.recordId}/${this._id}**
+                        \n This link will expire at ${this.editExpiresAt}
+                        `
+                    }
+                )
+            }
+            // console.log(`/entry/edit/${this.model}/${this.recordId}`);
+        } else if (this.decision === false) {
+            this.editExpiresAt = null;
+            this.requestStatus = "rejected";
+            if (user) {
+                user.notifications.push(
+                    {
+                        message: `Your edit request has been rejected.`
+                    }
+                )
+            }
+        }
+    }
+    await user.save({validateModifiedOnly: true});
     next();
 })
 
