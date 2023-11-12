@@ -37,12 +37,14 @@ let inactiveUsers = [];
 let activeUsers = [];
 io.on('connection', (socket) => {
 
-  socket.on('new-user-add', (newUserId) => {
-    if (!activeUsers.some(user => user.userId === newUserId)) {
+  socket.on('new-user-add', (userData) => {
+    if (!activeUsers.some(user => user.userId === userData._id)) {
       activeUsers.push(
           {
-            userId: newUserId,
-            socketId: socket.id
+            userId: userData._id,
+            socketId: socket.id,
+            username: userData.username,
+            permissions: userData.permissions
           }
       )
     }
@@ -68,6 +70,29 @@ io.on('connection', (socket) => {
       io.to(activeUser.socketId).emit('typing', data);
     }
   })
+
+  socket.on("new-edit-request", data => {
+    const admins = activeUsers.filter(user => {
+      if (user.permissions.editRequests) {
+        if (user.permissions.editRequests.authorize === true) {
+            return true;
+        }
+      }
+    });
+    if (admins) {
+      admins.forEach(admin => {
+        io.to(admin.socketId).emit('new-edit-request', data);
+      })
+    }
+  })
+
+  socket.on("request-decision", ({decision, userName}) => {
+    const user = activeUsers.find(user => user.username === userName);
+    if (user) {
+      io.to(user.socketId).emit(decision === true ? "request-authorized" : "request-rejected");
+    }
+  })
+
 
   // socket.on('register-conversation', newUserId => {
   //   if (!activeUsers.some(user => user.userId === newUserId) && !inactiveUsers.some(user => user.userId === newUserId)) {
