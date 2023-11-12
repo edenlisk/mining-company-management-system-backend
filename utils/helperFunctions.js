@@ -374,6 +374,11 @@ const managingDirector = {
         create: false,
         delete: false
     },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
+    }
 }
 
 const ceo = {
