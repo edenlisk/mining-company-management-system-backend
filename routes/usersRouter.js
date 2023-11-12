@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllUsers, getOneUser, updateUser, deleteUser} = require('../controllers/usersControllers');
+const { getAllUsers, getOneUser, updateUser, deleteUser, getNotifications, updateNotificationStatus} = require('../controllers/usersControllers');
 const { signup, login, logout } = require('../controllers/authControllers');
 
 router.route('/')
@@ -10,6 +10,11 @@ router.route('/:userId')
     .get(getOneUser)
     .patch(updateUser)
     .delete(deleteUser)
+
+router.route('/notifications/:userId/:notificationId?')
+    .get(getNotifications)
+    .patch(updateNotificationStatus)
+
 
 router.route('/signup')
     .post(signup)

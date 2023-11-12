@@ -1,4 +1,5 @@
 const User = require('../models/usersModel');
+const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { logger } = require('../utils/loggers');
@@ -65,6 +66,66 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
     }
     res
         .status(204)
+        .json(
+            {
+                status: "Success"
+            }
+        )
+    ;
+})
+
+exports.getNotifications = catchAsync(async (req, res, next) => {
+    // const notifications = await User.findById(req.params.userId).select({notifications: 1, _id: 1});
+    const notifications = await User.aggregate([
+        { $match: { _id: new mongoose.Types.ObjectId(req.params.userId) } },
+        {
+            $unwind: '$notifications',
+        },
+        {
+            $sort: {
+                'notifications.createdAt': -1,
+            },
+        },
+        {
+            $group: {
+                _id: '$_id',
+                notifications: { $push: '$notifications' },
+            },
+        },
+        {
+            $project: {
+                _id: 1,
+                notifications: 1,
+            },
+        },
+        {
+            $limit: 20,
+        }
+    ]);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    notifications
+                }
+            }
+        )
+    ;
+})
+
+exports.updateNotificationStatus = catchAsync(async (req, res, next) => {
+    const user = await User.findById(req.params.userId).select({notifications: 1, _id: 1});
+    if (user) {
+        const notification = user.notifications.find(item => item._id.equals(req.params.notificationId));
+        if (notification) {
+            notification.read = true;
+        }
+        await user.save({validateModifiedOnly: true});
+    }
+    res
+        .status(200)
         .json(
             {
                 status: "Success"

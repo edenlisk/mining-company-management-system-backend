@@ -1,7 +1,22 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const bcrypt = require('bcryptjs');
-const { permissions } = require('../utils/helperFunctions')
+const {permissions} = require('../utils/helperFunctions')
+
+const notificationsSchema = new mongoose.Schema(
+    {
+        message: {
+            type: String,
+            required: [true, "Notification message is required"]
+        },
+        read: {
+            type: Boolean,
+            default: false
+        }
+    }, {
+        timestamps: true
+    }
+)
 
 const userSchema = new mongoose.Schema(
     {
@@ -44,6 +59,11 @@ const userSchema = new mongoose.Schema(
         //     type: String,
         //     enum: ["storekeeper", "ceo", "managing-director", "operations-manager", "accountant", "traceability-officer"],
         // },
+        notifications: {
+            type: [notificationsSchema],
+            default: [],
+            select: false
+        },
         permissions: {
             type: Object,
         },
@@ -67,7 +87,7 @@ const userSchema = new mongoose.Schema(
             type: Boolean,
             default: () => true
         },
-        passwordChangedAt: Date
+        passwordChangedAt: Date,
     },
     {
         indexes: [{unique: true, fields: ['phoneNumber', "email"]}]
@@ -89,7 +109,7 @@ userSchema.pre('save', async function (next) {
 //     next();
 // })
 
-userSchema.methods.verifyPassword = async function(candidatePassword) {
+userSchema.methods.verifyPassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 }
 
