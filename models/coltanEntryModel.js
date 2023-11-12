@@ -113,7 +113,7 @@ const coltanSchema = new mongoose.Schema(
                                     default: null
                                 },
                                 location: {
-                                    type: String,
+                                    type: Object,
                                     default: null
                                 },
                                 currency:  {
