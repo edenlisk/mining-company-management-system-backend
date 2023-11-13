@@ -61,6 +61,7 @@ const wolframiteSchema = new mongoose.Schema(
                     weightOut: Number,
                     mineralGrade: Number,
                     mineralPrice: Number,
+                    metricTonUnit: Number,
                     exportedAmount: Number,
                     cumulativeAmount: Number,
                     rmaFee: Number,

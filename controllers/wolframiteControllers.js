@@ -103,6 +103,7 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
                     paid: 0,
                     mineralGrade: null,
                     mineralPrice: null,
+                    metricTonUnit: null,
                     pricePerUnit: null,
                     unpaid: null,
                     settled: false,
@@ -161,7 +162,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
             const response = await imagekit.upload({
                 file: fileData,
                 fileName: file.originalname,
-                folder: `/coltan`
+                folder: `/wolframite`
             });
 
             if (response) {
@@ -235,6 +236,8 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
             if (existingLot) {
                 if (lot.mineralGrade) existingLot.mineralGrade = lot.mineralGrade;
                 if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
+                if (lot.metricTonUnit) existingLot.metricTonUnit = lot.metricTonUnit;
+                if (lot.pricePerUnit) existingLot.pricePerUnit = lot.pricePerUnit;
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
                 if (existingLot.weightOut && rmaFeeWolframite) {

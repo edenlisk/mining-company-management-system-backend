@@ -5,6 +5,7 @@ const {
     getOneCassiteriteEntry,
     deleteCassiteriteEntry,
     updateCassiteriteEntry,
+    uploadGradeImg,
     trashEntries
 } = require('../controllers/cassiteriteControllers');
 const router = express.Router();
@@ -18,7 +19,7 @@ router.route('/trash')
 
 router.route('/:entryId')
     .get(getOneCassiteriteEntry)
-    .patch(updateCassiteriteEntry)
+    .patch(uploadGradeImg.any(), updateCassiteriteEntry)
     .delete(deleteCassiteriteEntry)
 
 

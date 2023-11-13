@@ -156,6 +156,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     // req.user.userId = entry._id;
     // const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
+        console.log("files found");
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
             // const exifData = await exifreader.load(file.path);
@@ -166,7 +167,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
             const response = await imagekit.upload({
                 file: fileData,
                 fileName: file.originalname,
-                folder: `/coltan`
+                folder: `/cassiterite`
             });
 
             if (response) {

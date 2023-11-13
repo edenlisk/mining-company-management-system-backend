@@ -340,6 +340,11 @@ const managingDirector = {
         create: true,
         edit: true
     },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
     USDRate: {
         view: true,
         create: true,
@@ -371,7 +376,7 @@ const managingDirector = {
     },
     contracts: {
         view: true,
-        create: false,
+        create: true,
         delete: false
     },
     editRequests: {
