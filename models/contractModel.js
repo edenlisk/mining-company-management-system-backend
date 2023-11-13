@@ -18,9 +18,9 @@ const contractSchema = new mongoose.Schema(
             type: Date,
             required: true
         },
-        grade: {
-            type: String
-        },
+        // grade: {
+        //     type: String
+        // },
         buyerName: {
             type: String,
             required: [true, "Please provide contract buyer's name"]
@@ -30,6 +30,10 @@ const contractSchema = new mongoose.Schema(
             ref: 'Buyer',
             required: true
         },
+        filePath: {
+            type: String,
+            default: null
+        }
     },
     {timestamps: true}
 )

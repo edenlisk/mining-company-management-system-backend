@@ -5,6 +5,8 @@ const Contract = require('../models/contractModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const { sendAttachment } = require('../utils/helperFunctions');
+const imagekit = require('../utils/imagekit');
+const { logger } = require('../utils/loggers');
 
 
 exports.getAllContracts = catchAsync(async (req, res, next) => {
@@ -51,17 +53,69 @@ exports.downloadContract = catchAsync(async (req, res, next) => {
 })
 
 exports.createContract = catchAsync(async (req, res, next) => {
-    await Contract.create(
+    const contract = new Contract(
         {
-            name: req.file.filename,
+            name: req.file?.originalname,
             minerals: req.body.minerals,
-            grade: req.body.grade,
             contractStartDate: req.body.contractStartDate,
             contractExpiryDate: req.body.contractExpiryDate,
             buyerName: req.body.buyerName,
             buyerId: req.body.buyerId
         }
     )
+    if (req.file) {
+        const fileData = fs.readFileSync(req.file.path);
+        const response = await imagekit.upload(
+            {
+                file: fileData,
+                fileName: req.file.originalname,
+                folder: "/contracts"
+            }
+        )
+        if (response) {
+            contract.filePath = response.url;
+            await contract.save({validateModifiedOnly: true});
+            fs.unlink(req.file.path, (err) => {
+                if (err) {
+                    console.log(err.message);
+                    logger.warn(err);
+                } else {
+                    console.log("File deleted successfully");
+                }
+            })
+        }
+    }
+    // if (req.file) {
+    //     fs.readFile(req.file.path, (err, data) => {
+    //         if (err) {
+    //             console.log(err.message);
+    //             logger.warn(err);
+    //         } else {
+    //             imagekit.upload(
+    //                 {
+    //                     file: data,
+    //                     fileName: req.body.name,
+    //                     folder: "/contracts"
+    //                 }
+    //             ).then(response => {
+    //                 if (response) {
+    //                     contract.filePath = response.url;
+    //                     fs.unlink(req.file.path, (err) => {
+    //                         if (err) {
+    //                             console.log(err.message);
+    //                             logger.warn(err);
+    //                         } else {
+    //                             console.log("File deleted successfully");
+    //                         }
+    //                     })
+    //                 }
+    //             })
+    //         }
+    //     })
+    // }
+    // await contract.save({validateModifiedOnly: true});
+
+
     res
         .status(201)
         .json(
@@ -117,32 +171,21 @@ exports.updateContract = catchAsync(async (req, res, next) => {
 const multerStorage = multer.diskStorage(
     {
         destination: function (req, file, cb) {
-            cb(null, 'public/data/contracts/');
+            cb(null, 'public/data/contracts');
         },
         filename: function (req, file, cb) {
-            const fileExtension = path.extname(file.originalname);
-            const filePath = `${__dirname}/../public/data/contracts/${req.headers.buyername} - ${req.headers.minerals} - contract${fileExtension}`;
-            if (fs.existsSync(filePath)) {
-                fs.rename(filePath, `${__dirname}/..public/data/contracts/ex-${req.headers.buyername} - ${req.headers.minerals} - contract${fileExtension}`, (err) => {
-                    if (err) {
-                        console.log(err);
-                        return;
-                    }
-                    console.log('File renamed successfully');
-                });
-            }
-            cb(null, `${req.headers.buyername} - ${req.headers.minerals} - contract${fileExtension}`);
+            cb(null, file.originalname);
         }
     }
 )
 
 const multerFilter = (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);
-    const allowExtension = ['.doc', '.docx', '.pdf'];
+    const allowExtension = ['.doc', '.docx', '.pdf', '.jpg', '.jpeg', '.png'];
     if (allowExtension.includes(fileExtension.toLowerCase())) {
         cb(null, true);
     } else {
-        cb(new AppError("Not a .doc, .docx, or .pdf selected", 400), false);
+        cb(new AppError("Not a .doc, .docx, .jpeg , .jpg, .png or .pdf selected", 400), false);
     }
 }
 
