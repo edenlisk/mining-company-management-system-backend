@@ -31,6 +31,7 @@ exports.createShipment = catchAsync(async (req, res, next) => {
             entries: req.body.entries,
             shipmentPrice: req.body.shipmentPrice,
             shipmentGrade: req.body.shipmentGrade,
+            shipmentNumber: req.body.shipmentNumber,
             totalShipmentQuantity: req.body.totalShipmentQuantity,
             buyerId: req.body.buyerId,
             shipmentSamplingDate: req.body.shipmentSamplingDate,
@@ -81,9 +82,11 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                         file: data,
                         fileName: file.originalname,
                         folder: `/shipments/${req.params.shipmentId}`
-                    }, err1 => {
+                    }, (err1, result) => {
                         if (err1) {
-                            console.log(err1)
+                            console.log(err1);
+                        } else {
+                            shipment[file.fieldname] = result.url;
                         }
                     }
                 )
@@ -93,7 +96,6 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                     }
                 })
             })
-            shipment[file.fieldname] = file.originalname;
         }
     }
     if (req.body.entries) shipment.entries = req.body.entries;
@@ -337,6 +339,63 @@ exports.shipmentQuarterReport = catchAsync(async (req, res, next) => {
     res.setHeader('Content-Type', 'application/pdf');
     pdfDoc.pipe(res);
     pdfDoc.end();
+})
+
+exports.tagList = catchAsync(async (req, res, next) => {
+    const shipment = await Shipment.findById(req.params.shipmentId);
+    if (!shipment) return next(new AppError('Unable to get shipment', 400));
+    const Entry = getModel(shipment.model);
+    const entryIds = shipment.entries.map(entry => entry.entryId);
+    const entries = await Entry.find({_id: {$in: entryIds}}).populate('mineTags negociantTags');
+    // const entries = await Entry.aggregate(
+    //     [
+    //         {
+    //             $match: {
+    //                 _id: {$in: entryIds}
+    //             }
+    //         }
+    //     ]
+    // )
+
+    // {
+    //     $unwind: "$output"
+    // },
+    // // Unwind the 'shipments' array within the 'output' array
+    // {
+    //     $unwind: "$output.shipments"
+    // },
+    // // Match documents with the specific shipment number
+    // {
+    //     $match: {
+    //         "output.shipments.shipmentNumber": shipment.shipmentNumber
+    //     }
+    // },
+    // {
+    //     $group: {
+    //         _id: '$_id',
+    //             mineTags: { $push: '$mineTags' },
+    //         negociantTags: { $push: '$negociantTags' },
+    //     },
+    // },
+    // {
+    //     $project: {
+    //         _id: 1,
+    //             mineTags: 1,
+    //             negociantTags: 1,
+    //     }
+    // },
+
+    res
+        .status(200)
+        .json(
+            {
+                status: "success",
+                data: {
+                    entries
+                }
+            }
+        )
+    ;
 })
 
 

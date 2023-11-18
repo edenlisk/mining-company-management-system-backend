@@ -76,9 +76,8 @@ const shipmentSchema = new mongoose.Schema(
         },
         shipmentNumber: {
             type: String,
-            // unique: true,
-            // required: [true, "Please provide shipment number"]
-            default: null
+            unique: true,
+            required: [true, "Please provide shipment number"],
         },
         analysisCertificate: {
             type: String,
@@ -102,16 +101,16 @@ const shipmentSchema = new mongoose.Schema(
 // TODO 8: PRE `SAVE` FOR SHIPMENT
 
 shipmentSchema.pre('save', async function (next) {
-    if (this.isNew) {
-        // TODO 18: REPLACE this._id with this.shipmentNumber
-        const filePath = `${__dirname}/../public/data/shipment/${this._id}`;
-        fs.mkdir(filePath, {recursive: true}, err => {
-            if (err) {
-                console.log(err);
-            }
-        });
-    }
-    if (this.buyerId) {
+    // if (this.isNew) {
+    //     // TODO 18: REPLACE this._id with this.shipmentNumber
+    //     const filePath = `${__dirname}/../public/data/shipment/${this._id}`;
+    //     fs.mkdir(filePath, {recursive: true}, err => {
+    //         if (err) {
+    //             console.log(err);
+    //         }
+    //     });
+    // }
+    if (this.buyerId && !this.buyerName) {
         const buyer = await Buyer.findById(this.buyerId).select({name: 1});
         this.buyerName = buyer.name;
     }
@@ -136,15 +135,21 @@ shipmentSchema.pre('save', async function (next) {
         if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
+                if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
                 const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
-                if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
+                if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
                 lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                lot.exportedAmount += item.quantity;
+                lot.cumulativeAmount -= item.quantity;
                 await entry.save({validateModifiedOnly: true});
             }
         } else if (this.model === "lithium" || this.model === "beryllium") {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
+                if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
                 entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                entry.exportedAmount += item.quantity;
+                entry.cumulativeAmount -= item.quantity;
                 await entry.save({validateModifiedOnly: true});
             }
         }
@@ -156,9 +161,13 @@ shipmentSchema.pre('save', async function (next) {
                 if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
                 const shipment = lot.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
                 if (shipment) {
-                    shipment.weight = item.quantity;
+                    shipment.weight += item.quantity;
+                    lot.exportedAmount += item.quantity;
+                    lot.cumulativeAmount -= item.quantity;
                 } else {
                     lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                    lot.exportedAmount += item.quantity;
+                    lot.cumulativeAmount -= item.quantity;
                 }
                 await entry.save({validateModifiedOnly: true});
             }
@@ -166,7 +175,11 @@ shipmentSchema.pre('save', async function (next) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
                 const shipment = entry.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
-                shipment.weight = item.quantity;
+                if (shipment) {
+                    shipment.weight += item.quantity;
+                    entry.exportedAmount += item.quantity;
+                    entry.cumulativeAmount -= item.quantity;
+                }
                 await entry.save({validateModifiedOnly: true});
             }
         }

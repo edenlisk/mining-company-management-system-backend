@@ -43,6 +43,8 @@ const editPermissionSchema = new mongoose.Schema(
             type: String,
             required: [true, "Please provide username"]
         }
+    }, {
+        timestamps: true
     }
 )
 

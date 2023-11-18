@@ -8,6 +8,7 @@ const Cassiterite = require('../models/cassiteriteEntryModel');
 const Wolframite = require('../models/wolframiteEntryModel');
 const Beryllium = require('../models/berylliumEntryModel');
 const Lithium = require('../models/lithiumEntryModel');
+const Tag = require('../models/tagsModel');
 const AppError = require('./appError');
 const catchAsync = require('./catchAsync');
 
@@ -619,8 +620,11 @@ exports.permissions = {
     labTechnician
 }
 
+const specialStrings = ["TINNumber", "rmaFee", "USDRate", "rmaFeeUSD"];
+
 
 exports.toCamelCase = str => {
+    if (specialStrings.includes(str)) return str;
     return str.split(' ').map((word, index) => {
         if (index === 0) {
             return word.toLowerCase();
@@ -630,8 +634,8 @@ exports.toCamelCase = str => {
     }).join('');
 }
 
-
 exports.toInitialCase = str => {
+    if (specialStrings.includes(str)) return str;
     return str
         .replace(/([a-z])([A-Z])/g, '$1 $2')
         .replace(/^./, function (str) {
@@ -639,3 +643,48 @@ exports.toInitialCase = str => {
         });
 }
 
+exports.updateMineTags = async (mineTags, entry) => {
+    for (const tag of mineTags) {
+        const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine", entryId: entry._id});
+        if (!existingTag) {
+            const newTag = await Tag.create(
+                {
+                    tagNumber: tag.tagNumber,
+                    tagType: "mine",
+                    weight: tag.weight,
+                    status: tag.status,
+                    entryId: entry._id,
+                }
+            )
+            entry.mineTags.push(newTag._id);
+        } else {
+            if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
+            if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
+            if (existingTag.status !== tag.status) existingTag.status = tag.status;
+            await existingTag.save({validateModifiedOnly: true});
+        }
+    }
+}
+
+exports.updateNegociantTags = async (negociantTags, entry) => {
+    for (const tag of negociantTags) {
+        const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "negociant", entryId: entry._id});
+        if (!existingTag) {
+            const newTag = await Tag.create(
+                {
+                    tagNumber: tag.tagNumber,
+                    tagType: "negociant",
+                    weight: tag.weight,
+                    status: tag.status,
+                    entryId: entry._id,
+                }
+            )
+            entry.negociantTags.push(newTag._id);
+        } else {
+            if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
+            if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
+            if (existingTag.status !== tag.status) existingTag.status = tag.status;
+            await existingTag.save({validateModifiedOnly: true});
+        }
+    }
+}

@@ -87,8 +87,11 @@ io.on('connection', (socket) => {
   })
 
   socket.on("request-decision", ({decision, userName}) => {
+    console.log("request decision received");
     const user = activeUsers.find(user => user.username === userName);
     if (user) {
+      console.log("request decision sent");
+      console.log(userName)
       io.to(user.socketId).emit(decision === true ? "request-authorized" : "request-rejected");
     }
   })
