@@ -17,18 +17,8 @@ const cassiteriteSchema = new mongoose.Schema(
         mineTags: {
             type: [
                 {
-                    weightInPerMineTag: {
-                        type: Number,
-                        default: null
-                    },
-                    tagNumber: {
-                        type: String,
-                        default: null
-                    },
-                    status: {
-                        type: String,
-                        default: null
-                    }
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Tag"
                 }
             ],
             default: []
@@ -36,18 +26,8 @@ const cassiteriteSchema = new mongoose.Schema(
         negociantTags: {
             type: [
                 {
-                    weightOutPerNegociantTag: {
-                        type: String,
-                        default: null
-                    },
-                    tagNumber: {
-                        type: String,
-                        default: null
-                    },
-                    status: {
-                        type: String,
-                        default: null
-                    }
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Tag"
                 }
             ],
             default: []
@@ -150,10 +130,6 @@ const cassiteriteSchema = new mongoose.Schema(
 cassiteriteSchema.pre('save', async function (next) {
     const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
-    if (this.isNew) {
-        this.londonMetalExchange = null;
-        this.treatmentCharges = null;
-    }
 
     // if (this.isModified('netQuantity')) {
     //     this.rmaFee = 50 * this.netQuantity;

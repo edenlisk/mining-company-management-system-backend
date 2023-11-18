@@ -8,7 +8,7 @@ const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const AppError = require('../utils/appError');
 const Settings = require('../models/settingsModel');
-const {handleConvertToUSD} = require("../utils/helperFunctions");
+const {handleConvertToUSD, updateNegociantTags, updateMineTags} = require("../utils/helperFunctions");
 const imagekit = require('../utils/imagekit');
 const { trackUpdateModifications,
     trackDeleteOperations,
@@ -16,7 +16,7 @@ const { trackUpdateModifications,
 
 
 exports.getAllWolframiteEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Wolframite.find(), req.query)
+    const result = new APIFeatures(Wolframite.find().populate('mineTags').populate('negociantTags'), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -131,7 +131,8 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.getOneWolframiteEntry = catchAsync(async (req, res, next) => {
-    const entry = await Wolframite.findById(req.params.entryId);
+    const entry = await Wolframite.findById(req.params.entryId)
+        .populate('mineTags').populate('negociantTags');
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     res
         .status(200)
@@ -205,30 +206,8 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     if (req.body.companyName) entry.companyName = req.body.companyName;
     if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
     if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;
-    if (req.body.mineTags) {
-        entry.mineTags = [];
-        for (const tag of req.body.mineTags) {
-            entry.mineTags.push(
-                {
-                    weightInPerMineTag: tag.weightInPerMineTag,
-                    tagNumber: tag.tagNumber,
-                    status: tag.status
-                }
-            )
-        }
-    }
-    if (req.body.negociantTags) {
-        entry.negociantTags = [];
-        for (const tag of req.body.negociantTags) {
-            entry.negociantTags.push(
-                {
-                    weightOutPerNegociantTag: tag.weightOutPerNegociantTag,
-                    tagNumber: tag.tagNumber,
-                    status: tag.status
-                }
-            )
-        }
-    }
+    if (req.body.mineTags) await updateMineTags(req.body.mineTags, entry);
+    if (req.body.negociantTags) await updateNegociantTags(req.body.negociantTags, entry);
     const { rmaFeeWolframite } = await Settings.findOne();
     if (req.body.output) {
         for (const lot of req.body.output) {

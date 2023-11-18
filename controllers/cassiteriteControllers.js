@@ -1,3 +1,5 @@
+const fs = require("fs");
+const path = require("path");
 const Cassiterite = require('../models/cassiteriteEntryModel');
 const Supplier = require('../models/supplierModel');
 const Settings = require('../models/settingsModel');
@@ -6,17 +8,15 @@ const catchAsync = require('../utils/catchAsync');
 const APIFeatures = require('../utils/apiFeatures');
 const multer = require("multer");
 const exifreader = require('exifreader');
-const {handleConvertToUSD} = require("../utils/helperFunctions");
+const {handleConvertToUSD, updateMineTags, updateNegociantTags} = require("../utils/helperFunctions");
 const imagekit = require('../utils/imagekit');
-const fs = require("fs");
-const path = require("path");
 const { trackUpdateModifications,
     trackDeleteOperations,
     trackCreateOperations } = require('./activityLogsControllers');
 
 
 exports.getAllCassiteriteEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Cassiterite.find(), req.query)
+    const result = new APIFeatures(Cassiterite.find().populate('mineTags').populate('negociantTags'), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -132,7 +132,8 @@ exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.getOneCassiteriteEntry = catchAsync(async (req, res, next) => {
-    const entry = await Cassiterite.findById(req.params.entryId);
+    const entry = await Cassiterite.findById(req.params.entryId)
+        .populate('mineTags').populate('negociantTags');
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     res
         .status(200)
@@ -205,36 +206,14 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
             // console.log(file.buffer);
         }
     }
-
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
     if (req.body.companyName) entry.companyName = req.body.companyName;
     if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
     if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;
-    if (req.body.mineTags) {
-        entry.mineTags = [];
-        for (const tag of req.body.mineTags) {
-            entry.mineTags.push(
-                {
-                    weightInPerMineTag: tag.weightInPerMineTag,
-                    tagNumber: tag.tagNumber,
-                    status: tag.status
-                }
-            )
-        }
-    }
-    if (req.body.negociantTags) {
-        entry.negociantTags = [];
-        for (const tag of req.body.negociantTags) {
-            entry.negociantTags.push(
-                {
-                    weightOutPerNegociantTag: tag.weightOutPerNegociantTag,
-                    tagNumber: tag.tagNumber,
-                    status: tag.status
-                }
-            )
-        }
-    }
+    if (req.body.time) entry.time = req.body.time;
+    if (req.body.mineTags) await updateMineTags(req.body.mineTags, entry);
+    if (req.body.negociantTags) await updateNegociantTags(req.body.negociantTags, entry);
     const { rmaFeeCassiterite } = await Settings.findOne();
     if (req.body.output) {
         for (const lot of req.body.output) {
@@ -262,8 +241,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
             }
         }
     }
-
-    const result = entry.save({validateModifiedOnly: true});
+    entry.save({validateModifiedOnly: true});
     // if (!result) {
     //     logs.status = "failed";
     // }

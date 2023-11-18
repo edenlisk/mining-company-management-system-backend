@@ -3,6 +3,7 @@ const path = require('path');
 const exifreader = require('exifreader');
 const fs = require('fs');
 const Coltan = require('../models/coltanEntryModel');
+const Tag = require('../models/tagsModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
@@ -10,7 +11,7 @@ const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
 const { handleConvertToUSD } = require('../utils/helperFunctions');
 const imagekit = require('../utils/imagekit');
-const { getModel } = require('../utils/helperFunctions');
+const { getModel, updateMineTags, updateNegociantTags } = require('../utils/helperFunctions');
 const { trackUpdateModifications,
     trackDeleteOperations,
     trackCreateOperations } = require('./activityLogsControllers');
@@ -19,7 +20,7 @@ const { trackUpdateModifications,
 
 
 exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
-    const result = new APIFeatures(Coltan.find(), req.query)
+    const result = new APIFeatures(Coltan.find().populate('mineTags').populate('negociantTags'), req.query)
         .filter()
         .sort()
         .limitFields()
@@ -41,17 +42,17 @@ exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
 
 exports.createColtanEntry = catchAsync(async (req, res, next) => {
     const supplier = await Supplier.findById(req.body.supplierId);
-    if (!supplier) return next(new AppError("This supplier no longer exists!", 400));
+    // if (!supplier) return next(new AppError("This supplier no longer exists!", 400));
     let entry;
     if (req.body.isSupplierBeneficiary) {
         entry = await Coltan.create(
             {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: supplier.licenseNumber,
+                supplierId: supplier?._id,
+                companyName: supplier ? supplier.companyName : req.body.companyName,
+                licenseNumber: supplier ? supplier.licenseNumber : req.body.licenseNumber,
                 companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
                 beneficiary: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
-                TINNumber: supplier.TINNumber,
+                TINNumber: supplier ? supplier.TINNumber : req.body.TINNumber,
                 email: supplier.email ? supplier.email : req.body.email,
                 representativeId: supplier.representativeId ? supplier.representativeId : req.body.representativeId,
                 representativePhoneNumber: supplier.representativePhoneNumber ? supplier.representativePhoneNumber : req.body.representativePhoneNumber,
@@ -133,7 +134,8 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.getOneColtanEntry = catchAsync(async (req, res, next) => {
-    const entry = await Coltan.findById(req.params.entryId);
+    const entry = await Coltan.findById(req.params.entryId)
+        .populate('mineTags').populate('negociantTags');
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     res
         .status(200)
@@ -207,30 +209,8 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     if (req.body.companyName) entry.companyName = req.body.companyName;
     if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
     if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;
-    if (req.body.mineTags) {
-        entry.mineTags = [];
-        for (const tag of req.body.mineTags) {
-            entry.mineTags.push(
-                {
-                    weightInPerMineTag: tag.weightInPerMineTag,
-                    tagNumber: tag.tagNumber,
-                    status: tag.status
-                }
-            )
-        }
-    }
-    if (req.body.negociantTags) {
-        entry.negociantTags = [];
-        for (const tag of req.body.negociantTags) {
-            entry.negociantTags.push(
-                {
-                    weightOutPerNegociantTag: tag.weightOutPerNegociantTag,
-                    tagNumber: tag.tagNumber,
-                    status: tag.status
-                }
-            )
-        }
-    }
+    if (req.body.mineTags) await updateMineTags(req.body.mineTags, entry);
+    if (req.body.negociantTags) await updateNegociantTags(req.body.negociantTags, entry);
     const { rmaFeeColtan } = await Settings.findOne();
     if (req.body.output) {
         for (const lot of req.body.output) {

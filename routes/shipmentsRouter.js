@@ -7,6 +7,7 @@ const {
     updateShipment,
     shipmentReport,
     getOneShipment,
+    tagList,
     shipmentQuarterReport
 } = require('../controllers/shipmentControllers');
 
@@ -20,6 +21,9 @@ router.route('/report/:shipmentId')
 
 router.route('/quarter-report')
     .post(shipmentQuarterReport)
+
+router.route('/tags/:shipmentId')
+    .get(tagList)
 
 router.route('/:shipmentId')
     .get(getOneShipment)
