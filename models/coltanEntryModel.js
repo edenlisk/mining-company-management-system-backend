@@ -148,6 +148,11 @@ coltanSchema.pre('save', async function (next) {
     // }
     if (this.output) {
         handlePaidSpecific(this.output);
+        for (const lot of this.output) {
+            if(lot.cumulativeAmount <= 0) {
+                lot.status = "sold out";
+            }
+        }
     }
     next();
     // formula = tantal * grade

@@ -7,6 +7,7 @@ const AppError = require('../utils/appError');
 const {getModel, fonts} = require('../utils/helperFunctions');
 const fs = require('fs');
 const imagekit = require('../utils/imagekit');
+const ExcelJS = require('exceljs');
 // const { multerFilter, multerStorage } = require('../utils/helperFunctions');
 
 
@@ -347,43 +348,6 @@ exports.tagList = catchAsync(async (req, res, next) => {
     const Entry = getModel(shipment.model);
     const entryIds = shipment.entries.map(entry => entry.entryId);
     const entries = await Entry.find({_id: {$in: entryIds}}).populate('mineTags negociantTags');
-    // const entries = await Entry.aggregate(
-    //     [
-    //         {
-    //             $match: {
-    //                 _id: {$in: entryIds}
-    //             }
-    //         }
-    //     ]
-    // )
-
-    // {
-    //     $unwind: "$output"
-    // },
-    // // Unwind the 'shipments' array within the 'output' array
-    // {
-    //     $unwind: "$output.shipments"
-    // },
-    // // Match documents with the specific shipment number
-    // {
-    //     $match: {
-    //         "output.shipments.shipmentNumber": shipment.shipmentNumber
-    //     }
-    // },
-    // {
-    //     $group: {
-    //         _id: '$_id',
-    //             mineTags: { $push: '$mineTags' },
-    //         negociantTags: { $push: '$negociantTags' },
-    //     },
-    // },
-    // {
-    //     $project: {
-    //         _id: 1,
-    //             mineTags: 1,
-    //             negociantTags: 1,
-    //     }
-    // },
 
     res
         .status(200)
@@ -392,6 +356,127 @@ exports.tagList = catchAsync(async (req, res, next) => {
                 status: "success",
                 data: {
                     entries
+                }
+            }
+        )
+    ;
+})
+
+exports.generateTagList = catchAsync(async (req, res, next) => {
+    const shipment = await Shipment.findById(req.params.shipmentId);
+    if (!shipment) return next(new AppError('Unable to get shipment', 400));
+    const Entry = getModel(shipment.model);
+    const entryIds = shipment.entries.map(entry => entry.entryId);
+    const entries = await Entry.find({_id: {$in: entryIds}}).populate('mineTags negociantTags');
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Tags');
+    worksheet.columns = [
+        {header: '#', key: 'index', width: 15},
+        {header: 'Entry date', key: 'supplyDate', width: 15},
+        {header: 'Company name', key: 'companyName', width: 15},
+        {header: 'weight In', key: 'weightIn', width: 15},
+        { header: 'Export weight', key: "exportWeight", width: 15 },
+        { header: 'Mine Tags', key: "mineTags", width: 15 },
+        { header: 'Negociant Tags', key: "negociantTags", width: 15 },
+    ];
+
+    let totalMineTags = 0;
+    let totalWeightIn = 0;
+    let totalExportWeight = 0;
+
+
+    for (const entry of entries) {
+        let mineTags;
+        let negociantTags;
+        if (entry.mineTags) {
+            mineTags = entry.mineTags.filter(tag => tag.status === "out of store")
+                .map(tag => tag.tagNumber).join('\n');
+            totalMineTags += mineTags.split('\n').length;
+        }
+        if (entry.negociantTags) {
+            negociantTags = entry.negociantTags.filter(tag => tag.status === "out of store")
+                .map(tag => tag.tagNumber).join('\n');
+        }
+        totalWeightIn += entry.weightIn;
+        let exportWeight = 0;
+        if (entry.output) {
+            for (const lot of entry.output) {
+                if (lot.shipments) {
+                    for (const lotShipment of lot.shipments) {
+                        if (lotShipment.shipmentNumber === shipment.shipmentNumber) {
+                            exportWeight += lotShipment.weight;
+                        }
+                    }
+                }
+            }
+        }
+        totalExportWeight += exportWeight;
+        worksheet.addRow({
+            index: entries.indexOf(entry) + 1,
+            supplyDate: entry.supplyDate,
+            companyName: entry.companyName,
+            weightIn: entry.weightIn,
+            exportWeight,
+            mineTags: mineTags ? mineTags : 'No tags',
+            negociantTags: null
+        });
+    }
+    worksheet.addRow({
+        index: "Total",
+        weightIn: totalWeightIn,
+        exportWeight: totalExportWeight,
+        mineTags: totalMineTags,
+        negociantTags: null
+    });
+    worksheet.getRow(1).font = {bold: true};
+    worksheet.getRow(entries.length + 2).font = {bold: true};
+    await workbook.xlsx.writeFile(`${__dirname}/../public/data/shipment/tags-export.xlsx`);
+    if (shipment.tagListFile && shipment.tagListFile.fileId) {
+        imagekit.deleteFile(shipment.tagListFile.fileId, (err) => {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log('file deleted');
+            }
+        })
+        shipment.tagListFile.fileId = "";
+        shipment.tagListFile.url = "";
+    }
+    let fileId = ""
+    let url = ""
+    const data = fs.readFileSync(`${__dirname}/../public/data/shipment/tags-export.xlsx`);
+    if (data) {
+        const response = await imagekit.upload(
+            {
+                file: data,
+                fileName: `${shipment.shipmentNumber}-taglist.xlsx`,
+                folder: `/shipments/${shipment.shipmentNumber}`,
+                overwriteFile: true,
+            }
+        )
+        if (response) {
+            fileId = response.url;
+            url = response.fileId;
+            fs.unlink(`${__dirname}/../public/data/shipment/tags-export.xlsx`, (err) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    console.log('file deleted successfully');
+                }
+            })
+        }
+    }
+    shipment.tagListFile.url = fileId;
+    shipment.tagListFile.fileId = url;
+    await shipment.save({validateModifiedOnly: true});
+    res
+        .status(200)
+        .json(
+            {
+                status: "success",
+                data: {
+                    tagListFile: shipment.tagListFile?.url
                 }
             }
         )

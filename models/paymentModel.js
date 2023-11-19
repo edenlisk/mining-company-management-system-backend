@@ -96,7 +96,7 @@ paymentSchema.pre('save', async function (next) {
     if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
         const entry = await Entry.findOne({_id: this.entryId});
         const lot = entry.output.find(lot => lot.lotNumber === this.lotNumber);
-        if (lot.settled) return next(new AppError("This lot is already paid", 400));
+        if (lot.settled === true) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
             if (!payment.consumed) {
@@ -104,7 +104,7 @@ paymentSchema.pre('save', async function (next) {
                     lot.paid += (lot.mineralPrice - lot.rmaFeeUSD);
                     lot.unpaid = 0;
                     lot.settled = true;
-                    lot.rmaFeeDecision = "RMA Fee pending";
+                    lot.rmaFeeDecision = "pending";
                     payment.remainingAmount -= lot.mineralPrice;
                     // TODO 12: FIND APPROPRIATE COMMENT.
                     // payment.consumptionDetails.push(
@@ -129,8 +129,8 @@ paymentSchema.pre('save', async function (next) {
                         }
                     );
                 } else {
-                    if (paymentSchema.remainingAmount >= lot.rmaFeeUSD) {
-                        lot.rmaFeeDecision = "RMA Fee pending";
+                    if (payment.remainingAmount >= lot.rmaFeeUSD) {
+                        lot.rmaFeeDecision = "pending";
                         lot.paid += (payment.remainingAmount - lot.rmaFeeUSD);
                         lot.unpaid -= (payment.remainingAmount - lot.rmaFeeUSD);
                         // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
@@ -152,6 +152,7 @@ paymentSchema.pre('save', async function (next) {
                     }
                 }
             }
+            await payment.save({validateModifiedOnly: true});
         } else {
             lot.paid += this.paymentAmount;
             lot.unpaid -= this.paymentAmount;

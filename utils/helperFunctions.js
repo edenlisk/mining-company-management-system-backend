@@ -644,30 +644,37 @@ exports.toInitialCase = str => {
 }
 
 exports.updateMineTags = async (mineTags, entry) => {
+    console.log(mineTags);
     for (const tag of mineTags) {
         const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine", entryId: entry._id});
+        console.log("before check");
         if (!existingTag) {
+            console.log("no tag found");
             const newTag = await Tag.create(
                 {
                     tagNumber: tag.tagNumber,
                     tagType: "mine",
-                    weight: tag.weight,
-                    status: tag.status,
+                    weight: Number(tag.weight),
+                    // status: tag.status,
                     entryId: entry._id,
                 }
             )
+            console.log(newTag);
             entry.mineTags.push(newTag._id);
         } else {
+            console.log("tag found");
             if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
             if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
-            if (existingTag.status !== tag.status) existingTag.status = tag.status;
+            // if (existingTag.status !== tag.status) existingTag.status = tag.status;
             await existingTag.save({validateModifiedOnly: true});
         }
     }
 }
 
 exports.updateNegociantTags = async (negociantTags, entry) => {
+    console.log(negociantTags);
     for (const tag of negociantTags) {
+        if (tag.tagNumber === '') continue;
         const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "negociant", entryId: entry._id});
         if (!existingTag) {
             const newTag = await Tag.create(
@@ -675,7 +682,7 @@ exports.updateNegociantTags = async (negociantTags, entry) => {
                     tagNumber: tag.tagNumber,
                     tagType: "negociant",
                     weight: tag.weight,
-                    status: tag.status,
+                    // status: tag.status,
                     entryId: entry._id,
                 }
             )
@@ -683,7 +690,7 @@ exports.updateNegociantTags = async (negociantTags, entry) => {
         } else {
             if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
             if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
-            if (existingTag.status !== tag.status) existingTag.status = tag.status;
+            // if (existingTag.status !== tag.status) existingTag.status = tag.status;
             await existingTag.save({validateModifiedOnly: true});
         }
     }

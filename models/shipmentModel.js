@@ -91,7 +91,17 @@ const shipmentSchema = new mongoose.Schema(
         rmbIcglrCertificate: {
             type: String,
         },
-        model: String
+        model: String,
+        tagListFile: {
+            fileId: {
+                type: String,
+                default: null
+            },
+            url: {
+                type: String,
+                default: null
+            }
+        },
     },
     {timestamps: true}
 )
@@ -123,7 +133,7 @@ shipmentSchema.pre('save', async function (next) {
     if (this.isNew) {
         imagekit.createFolder(
             {
-                folderName: `${this._id}`,
+                folderName: `${this.shipmentNumber}`,
                 parentFolderPath: `/shipments`
             }, err => {
                 if (err) {
@@ -161,6 +171,7 @@ shipmentSchema.pre('save', async function (next) {
                 if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
                 const shipment = lot.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
                 if (shipment) {
+                    item.quantity += shipment.weight;
                     shipment.weight += item.quantity;
                     lot.exportedAmount += item.quantity;
                     lot.cumulativeAmount -= item.quantity;
@@ -176,7 +187,12 @@ shipmentSchema.pre('save', async function (next) {
                 const entry = await Entry.findById(item.entryId);
                 const shipment = entry.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
                 if (shipment) {
+                    item.quantity += shipment.weight;
                     shipment.weight += item.quantity;
+                    entry.exportedAmount += item.quantity;
+                    entry.cumulativeAmount -= item.quantity;
+                } else {
+                    entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
                     entry.exportedAmount += item.quantity;
                     entry.cumulativeAmount -= item.quantity;
                 }

@@ -10,9 +10,10 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
     const detailedStock = [];
     if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
         // TODO 16: CHANGE STATUS
-        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}, visible: true});
+        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}});
         for (const entry of entries) {
             for (const lot of entry.output) {
+                if (lot.cumulativeAmount === 0 || lot.status === "sold out") continue;
                 detailedStock.push(
                     {
                         _id: entry._id,

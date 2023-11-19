@@ -209,8 +209,8 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     if (req.body.companyName) entry.companyName = req.body.companyName;
     if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
     if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;
-    if (req.body.mineTags) await updateMineTags(req.body.mineTags, entry);
-    if (req.body.negociantTags) await updateNegociantTags(req.body.negociantTags, entry);
+    if (req.body.mineTags.length > 0) await updateMineTags(req.body.mineTags, entry);
+    if (req.body.negociantTags.length > 0) await updateNegociantTags(req.body.negociantTags, entry);
     const { rmaFeeColtan } = await Settings.findOne();
     if (req.body.output) {
         for (const lot of req.body.output) {
@@ -219,6 +219,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (lot.mineralGrade) existingLot.mineralGrade = lot.mineralGrade;
                 if (lot.pricePerUnit) existingLot.pricePerUnit = lot.pricePerUnit;
                 if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
+                if (lot.weightOut) existingLot.weightOut = lot.weightOut;
                 if (lot.tantalum) existingLot.tantalum = lot.tantalum;
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
@@ -235,6 +236,27 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 //         existingLot.unpaid = existingLot.mineralPrice;
                 //     }
                 // }
+            } else {
+                entry.output.push(
+                    {
+                        lotNumber: lot.lotNumber,
+                        weightOut: lot.weightOut,
+                        exportedAmount: 0,
+                        cumulativeAmount: lot.weightOut,
+                        rmaFee: null,
+                        USDRate: null,
+                        rmaFeeUSD: null,
+                        rmaFeeDecision: "pending",
+                        paid: 0,
+                        mineralGrade: null,
+                        mineralPrice: null,
+                        pricePerUnit: null,
+                        unpaid: null,
+                        settled: false,
+                        tantalum: null,
+                        status: "in stock"
+                    }
+                )
             }
         }
     }
