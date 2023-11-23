@@ -4,7 +4,7 @@ const path = require('path');
 const Shipment = require("../models/shipmentModel");
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const {getModel, fonts} = require('../utils/helperFunctions');
+const {getModel, fonts, getModelAcronym} = require('../utils/helperFunctions');
 const fs = require('fs');
 const imagekit = require('../utils/imagekit');
 const ExcelJS = require('exceljs');
@@ -135,71 +135,145 @@ exports.deleteShipment = catchAsync(async (req, res, next) => {
 
 exports.shipmentReport = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findOne({_id: req.params.shipmentId});
-    const tableData = [
-        [
-            {text: "Supply date", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: 'Supplier name', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: "Lot No", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: 'Weight out', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: "Exported amount", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: "Balance", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: "Grade", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-        ]
-    ];
-
-    const populateDoc = async (tableData) => {
-        for (const item of shipment.entries) {
-            const Entry = getModel(shipment.model);
-            const entry = await Entry.findById(item.entryId);
-            const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
-            tableData.push([
-                {text: entry.supplyDate.toISOString().split('T')[0]},
-                {text: entry.companyName},
-                {text: item.lotNumber},
-                {text: lot.weightOut},
-                {text: item.quantity},
-                {text: lot.cumulativeAmount},
-                {text: lot.mineralGrade}
-            ])
-        }
-        return tableData;
-    }
-
-    const docDefinition = {
-        pageOrientation: 'landscape',
-        pageMargins: [40, 50, 40, 50],
-        content: [
-            {
-                text: `Shipment details with shipment number: ${shipment.shipmentNumber}`,
-                alignment: 'left',
-                margin: [30, 20, 30, 20],
-                fontSize: 25
-            },
-            {
-                table: {
-                    width: ['*', '*', '*', 'auto'],
-                    body: await populateDoc(tableData),
-                },
-                alignment: 'center',
-            }
-        ],
-        defaultStyle: {
-            font: 'Helvetica',
-            fontSize: 20
-        }
-    };
-    const printer = new PdfPrinter(fonts);
-
-    // SAVE THE DOCUMENT ON THE FILE SYSTEM
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    // pdfDoc.pipe(fs.createWriteStream('document.pdf'));
+    if (!shipment) return next(new AppError("Something went wrong, shipment is missing!", 400));
+    const Entry = getModel(shipment.model);
+    const entryIds = shipment.entries.map(entry => entry.entryId);
+    const entries = await Entry.find({_id: {$in: entryIds}});
+    // const tableData = [
+    //     [
+    //         {text: "Supply date", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //         {text: 'Supplier name', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //         {text: "Lot No", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //         {text: 'Weight out', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //         {text: "Exported amount", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //         {text: "Balance", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //         {text: "Grade", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+    //     ]
+    // ];
+    //
+    // const populateDoc = async (tableData) => {
+    //     for (const item of shipment.entries) {
+    //         const Entry = getModel(shipment.model);
+    //         const entry = await Entry.findById(item.entryId);
+    //         const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
+    //         tableData.push([
+    //             {text: entry.supplyDate.toISOString().split('T')[0]},
+    //             {text: entry.companyName},
+    //             {text: item.lotNumber},
+    //             {text: lot.weightOut},
+    //             {text: item.quantity},
+    //             {text: lot.cumulativeAmount},
+    //             {text: lot.mineralGrade}
+    //         ])
+    //     }
+    //     return tableData;
+    // }
+    //
+    // const docDefinition = {
+    //     pageOrientation: 'landscape',
+    //     pageMargins: [40, 50, 40, 50],
+    //     content: [
+    //         {
+    //             text: `Shipment details with shipment number: ${shipment.shipmentNumber}`,
+    //             alignment: 'left',
+    //             margin: [30, 20, 30, 20],
+    //             fontSize: 25
+    //         },
+    //         {
+    //             table: {
+    //                 width: ['*', '*', '*', 'auto'],
+    //                 body: await populateDoc(tableData),
+    //             },
+    //             alignment: 'center',
+    //         }
+    //     ],
+    //     defaultStyle: {
+    //         font: 'Helvetica',
+    //         fontSize: 20
+    //     }
+    // };
+    // const printer = new PdfPrinter(fonts);
+    //
+    // // SAVE THE DOCUMENT ON THE FILE SYSTEM
+    // const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    // // pdfDoc.pipe(fs.createWriteStream('document.pdf'));
+    // // pdfDoc.end();
+    // // 1. create structure of the report
+    // // 2. populate data into report
+    // // 3. send report back to client
+    // res.setHeader('Content-Type', 'application/pdf');
+    // pdfDoc.pipe(res);
     // pdfDoc.end();
-    // 1. create structure of the report
-    // 2. populate data into report
-    // 3. send report back to client
-    res.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.pipe(res);
-    pdfDoc.end();
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`${shipment.shipmentNumber}`);
+    worksheet.columns = [
+        { header: 'DATE', key: 'supplyDate', width: 15, style: {alignment: "left"} },
+        { header: 'COMPANY\n/COOPERATIVE NAME', key: 'companyName', width: 15, style: {alignment: "left"} },
+        { header: 'REPRESENTATIVE NAME', key: 'beneficiary', width: 15, style: {alignment: "left"} },
+        { header: 'NET QUANTITY (KG)', key: "exportWeight", width: 15, style: {alignment: "left"} },
+        { header: 'TYPE OF MINERAL', key: "mineralType", width: 15, style: {alignment: "left"} },
+        { header: 'LOT NUMBER', key: "lotNumber", width: 15, style: {alignment: "left"} },
+        { header: 'ASI LABO GRADE (%)', key: "mineralGrade", width: 15, style: {alignment: "left"} },
+        { header: 'PRICE/KG ($USD)', key: "pricePerUnit", width: 15, style: {alignment: "left"} },
+        { header: 'TOTAL PRICE', key: "mineralPrice", width: 15, style: {alignment: "left"} },
+        { header: 'WEIGHT * GRADE', key: "weightGrade", width: 15, style: {alignment: "left"} },
+    ];
+    // TODO 22: USE DIFFERENT TABLE INFO FOR EACH MODEL (COLTAN, CASSITERITE(DONE), WOLFRAMITE)
+    if (shipment.entries) {
+        let totalExportWeight = 0;
+        let totalPrice = 0;
+        let totalWeightGrade = 0;
+        for (const item of shipment.entries) {
+            const entry = await Entry.findById(item.entryId);
+            if (!entry) continue;
+            const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
+            let exportWeight = 0;
+            const lotShipment = lot.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
+            if (lotShipment) exportWeight = lotShipment.weight;
+            totalExportWeight += exportWeight;
+            totalPrice += lot.mineralPrice;
+            totalWeightGrade += (lot.weightOut * lot.mineralGrade);
+            worksheet.addRow({
+                supplyDate: entry.supplyDate?.toISOString().split('T')[0],
+                companyName: entry.companyName,
+                beneficiary: entry.beneficiary,
+                exportWeight,
+                mineralType: getModelAcronym(shipment.model),
+                lotNumber: item.lotNumber,
+                mineralGrade: lot.mineralGrade,
+                pricePerUnit: lot.pricePerUnit,
+                mineralPrice: lot.mineralPrice,
+                weightGrade: lot.weightGrade * lot.mineralGrade
+            })
+        }
+        const averagePrice = totalPrice / totalExportWeight;
+        const averageGradeSN = totalWeightGrade / totalExportWeight;
+
+        worksheet.addRow({
+            companyName: "TOTAL",
+            exportWeight: totalExportWeight,
+            mineralPrice: totalPrice,
+            weightGrade: totalWeightGrade,
+        });
+        worksheet.addRow({
+            companyName: "AVERAGE PRICE",
+            pricePerUnit: averagePrice,
+        });
+        worksheet.addRow({
+            companyName: "AVERAGE GRADE SN",
+            mineralGrade: averageGradeSN,
+        });
+    }
+    worksheet.getRow(1).font = {bold: true};
+    await workbook.xlsx.writeFile(`${__dirname}/../public/data/shipment/shipment.xlsx`);
+    res
+        .status(200)
+        .json(
+            {
+                status: "success",
+            }
+        )
+    ;
 })
 
 exports.shipmentQuarterReport = catchAsync(async (req, res, next) => {

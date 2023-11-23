@@ -148,7 +148,7 @@ shipmentSchema.pre('save', async function (next) {
                 if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
                 const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
                 if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
-                lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
                 lot.exportedAmount += item.quantity;
                 lot.cumulativeAmount -= item.quantity;
                 await entry.save({validateModifiedOnly: true});
@@ -157,7 +157,7 @@ shipmentSchema.pre('save', async function (next) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
                 if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
-                entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
                 entry.exportedAmount += item.quantity;
                 entry.cumulativeAmount -= item.quantity;
                 await entry.save({validateModifiedOnly: true});
@@ -167,7 +167,7 @@ shipmentSchema.pre('save', async function (next) {
         if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
-                const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
+                const lot = entry?.output.find(value => value.lotNumber === item.lotNumber);
                 if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
                 const shipment = lot.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
                 if (shipment) {
@@ -176,7 +176,7 @@ shipmentSchema.pre('save', async function (next) {
                     lot.exportedAmount += item.quantity;
                     lot.cumulativeAmount -= item.quantity;
                 } else {
-                    lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                    lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
                     lot.exportedAmount += item.quantity;
                     lot.cumulativeAmount -= item.quantity;
                 }
@@ -192,7 +192,7 @@ shipmentSchema.pre('save', async function (next) {
                     entry.exportedAmount += item.quantity;
                     entry.cumulativeAmount -= item.quantity;
                 } else {
-                    entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity});
+                    entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
                     entry.exportedAmount += item.quantity;
                     entry.cumulativeAmount -= item.quantity;
                 }
