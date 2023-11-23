@@ -51,6 +51,16 @@ const coltanSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
+                    nonSellAgreement: {
+                        weight: {
+                            type: Number,
+                            default: 0
+                        },
+                        date:  {
+                            type: Date,
+                            default: null
+                        }
+                    },
                     gradeImg: {
                         filename: String,
                         createdAt: Date,
@@ -64,9 +74,7 @@ const coltanSchema = new mongoose.Schema(
                                 weight: Number,
                                 date: {
                                     type: Date,
-                                    default: () => {
-                                        return (new Date()).toDateString();
-                                    }
+                                    default: null
                                 }
                             }
                         ]
@@ -146,13 +154,8 @@ coltanSchema.pre('save', async function (next) {
     //         // this.unsettled = 0;
     //     }
     // }
-    if (this.output) {
-        handlePaidSpecific(this.output);
-        for (const lot of this.output) {
-            if(lot.cumulativeAmount <= 0) {
-                lot.status = "sold out";
-            }
-        }
+    if (this.isModified('output') && !this.isNew) {
+        if (this.output) handlePaidSpecific(this.output);
     }
     next();
     // formula = tantal * grade

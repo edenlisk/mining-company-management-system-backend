@@ -52,6 +52,16 @@ const cassiteriteSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
+                    nonSellAgreement: {
+                        weight: {
+                            type: Number,
+                            default: 0
+                        },
+                        date:  {
+                            type: Date,
+                            default: null
+                        }
+                    },
                     gradeImg: {
                         filename: String,
                         createdAt: Date,
@@ -68,9 +78,7 @@ const cassiteriteSchema = new mongoose.Schema(
                                 weight: Number,
                                 date: {
                                     type: Date,
-                                    default: () => {
-                                        return (new Date()).toDateString();
-                                    }
+                                    default: null
                                 }
                             }
                         ]
@@ -143,8 +151,8 @@ cassiteriteSchema.pre('save', async function (next) {
     //         // this.unsettled = 0;
     //     }
     // }
-    if (this.output) {
-        handlePaidSpecific(this.output);
+    if (this.isModified('output') && !this.isNew) {
+        if (this.output) handlePaidSpecific(this.output);
     }
     next()
     // formula = ((LME * Grade/100) - TC)/1000

@@ -219,6 +219,14 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                 if (lot.pricePerUnit) existingLot.pricePerUnit = lot.pricePerUnit;
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
+                if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
+                if (lot.nonSellAgreement?.weight > 0) {
+                    existingLot.status = "non-sell agreement"
+                    existingLot.nonSellAgreement.date = new Date();
+                } else {
+                    existingLot.status = "in stock"
+                    existingLot.nonSellAgreement.date = null;
+                }
                 if (existingLot.weightOut && rmaFeeWolframite) {
                     existingLot.rmaFee = rmaFeeWolframite * existingLot.weightOut;
                 }

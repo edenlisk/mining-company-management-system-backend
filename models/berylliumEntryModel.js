@@ -36,6 +36,16 @@ const berylliumSchema = new mongoose.Schema(
         status: String,
         settled: Boolean,
         pricePerUnit: Number,
+        nonSellAgreement: {
+            weight: {
+                type: Number,
+                default: 0
+            },
+            date:  {
+                type: Date,
+                default: null
+            }
+        },
         shipments: {
             type: [
                 {
@@ -43,9 +53,7 @@ const berylliumSchema = new mongoose.Schema(
                     weight: Number,
                     date: {
                         type: Date,
-                        default: () => {
-                            return (new Date()).toDateString();
-                        }
+                        default: null
                     }
                 }
             ]
@@ -57,7 +65,7 @@ const berylliumSchema = new mongoose.Schema(
         },
         rmaFeeDecision: {
             type: String,
-            default: "RMA Fee exempted"
+            default: "exempted"
         },
         paymentHistory: {
             type: [
@@ -95,10 +103,6 @@ const berylliumSchema = new mongoose.Schema(
             ],
             default: []
         },
-        visible: {
-            type: Boolean,
-            default: true
-        }
     },
     {
         timestamps: true,

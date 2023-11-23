@@ -3,3 +3,5 @@ node_modules
 .env
 loggings.log
 requestLoggings.log
+forward-note.docx
+local invoice.docx

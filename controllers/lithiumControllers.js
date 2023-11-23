@@ -76,6 +76,14 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
     if (req.body.weightOut) entry.weightOut = req.body.weightOut;
     if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
     if (req.body.pricePerUnit) entry.pricePerUnit = req.body.pricePerUnit;
+    if (req.body?.nonSellAgreement?.weight) entry.nonSellAgreement.weight = req.body?.nonSellAgreement?.weight;
+    if (req.body?.nonSellAgreement?.weight > 0) {
+        entry.status = "non-sell agreement"
+        entry.nonSellAgreement.date = new Date();
+    } else {
+        entry.status = "in stock"
+        entry.nonSellAgreement.date = null;
+    }
     if (req.body.mineralPrice) {
         entry.mineralPrice = req.body.mineralPrice;
         if (!entry.unpaid && entry.unpaid !== 0) {

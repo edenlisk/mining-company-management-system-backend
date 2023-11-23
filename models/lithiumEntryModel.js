@@ -28,6 +28,16 @@ const lithiumSchema = new mongoose.Schema(
         status: String,
         settled: Boolean,
         pricePerUnit: Number,
+        nonSellAgreement: {
+            weight: {
+                type: Number,
+                default: 0
+            },
+            date:  {
+                type: Date,
+                default: null
+            }
+        },
         rmaFee: {
             type: Number,
             default: 0,
@@ -40,16 +50,14 @@ const lithiumSchema = new mongoose.Schema(
                     weight: Number,
                     date: {
                         type: Date,
-                        default: () => {
-                            return (new Date()).toDateString();
-                        }
+                        default: null
                     }
                 }
             ]
         },
         rmaFeeDecision: {
             type: String,
-            default: "RMA Fee exempted"
+            default: "exempted"
         },
         paymentHistory: {
             type: [
@@ -87,10 +95,6 @@ const lithiumSchema = new mongoose.Schema(
             ],
             default: []
         },
-        visible: {
-            type: Boolean,
-            default: true
-        }
     },
     {
         timestamps: true,

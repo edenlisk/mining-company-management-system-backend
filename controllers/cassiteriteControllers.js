@@ -223,6 +223,14 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
                 if (lot.treatmentCharges) existingLot.treatmentCharges = lot.treatmentCharges;
                 if (lot.londonMetalExchange) existingLot.londonMetalExchange = lot.londonMetalExchange;
+                if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
+                if (lot.nonSellAgreement?.weight > 0) {
+                    existingLot.status = "non-sell agreement"
+                    existingLot.nonSellAgreement.date = new Date();
+                } else {
+                    existingLot.status = "in stock"
+                    existingLot.nonSellAgreement.date = null;
+                }
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
                 if (existingLot.weightOut && rmaFeeCassiterite) {

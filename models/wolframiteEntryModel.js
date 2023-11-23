@@ -55,6 +55,16 @@ const wolframiteSchema = new mongoose.Schema(
                     unpaid: Number,
                     settled: Boolean,
                     pricePerUnit: Number,
+                    nonSellAgreement: {
+                        weight: {
+                            type: Number,
+                            default: 0
+                        },
+                        date:  {
+                            type: Date,
+                            default: null
+                        }
+                    },
                     gradeImg: {
                         filename: String,
                         createdAt: Date,
@@ -68,9 +78,7 @@ const wolframiteSchema = new mongoose.Schema(
                                 weight: Number,
                                 date: {
                                     type: Date,
-                                    default: () => {
-                                        return (new Date()).toDateString();
-                                    }
+                                    default: null
                                 }
                             }
                         ]
@@ -133,8 +141,8 @@ wolframiteSchema.pre('save', async function(next) {
     // if (this.isModified(["grade", "netQuantity"]) && !this.isNew) {
     //     // TODO 7: CALCULATE THE TOTAL PRICE OF WOLFRAMITE
     // }
-    if (this.output) {
-        handlePaidSpecific(this.output);
+    if (this.isModified('output') && !this.isNew) {
+        if (this.output) handlePaidSpecific(this.output);
     }
     next();
 })
