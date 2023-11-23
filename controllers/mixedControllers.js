@@ -56,6 +56,31 @@ exports.createMixedEntry = catchAsync(async (req, res, next) => {
             entry.weightIn = req.body.weightIn;
             entry.supplyDate = req.body.supplyDate;
             entry.time = req.body.time;
+            if (req.body.cassiteriteOutput) {
+                for (const lot of req.body.cassiteriteOutput) {
+                    entry.output.push(
+                        {
+                            lotNumber: lot.lotNumber,
+                            weightOut: lot.weightOut,
+                            exportedAmount: 0,
+                            cumulativeAmount: lot.weightOut,
+                            rmaFee: null,
+                            USDRate: null,
+                            rmaFeeUSD: null,
+                            rmaFeeDecision: "pending",
+                            paid: 0,
+                            mineralGrade: null,
+                            mineralPrice: null,
+                            pricePerUnit: null,
+                            unpaid: null,
+                            settled: false,
+                            londonMetalExchange: null,
+                            treatmentCharges: null,
+                            status: "in stock"
+                        }
+                    )
+                }
+            }
             await entry.save({validateModifiedOnly: true});
         } else if (mineral === "coltan") {
             let entry;
@@ -104,6 +129,30 @@ exports.createMixedEntry = catchAsync(async (req, res, next) => {
             entry.weightIn = req.body.weightIn;
             entry.supplyDate = req.body.supplyDate;
             entry.time = req.body.time;
+            if (req.body.coltanOutput) {
+                for (const lot of req.body.coltanOutput) {
+                    entry.output.push(
+                        {
+                            lotNumber: lot.lotNumber,
+                            weightOut: lot.weightOut,
+                            exportedAmount: 0,
+                            cumulativeAmount: lot.weightOut,
+                            rmaFee: null,
+                            USDRate: null,
+                            rmaFeeUSD: null,
+                            rmaFeeDecision: "pending",
+                            paid: 0,
+                            mineralGrade: null,
+                            mineralPrice: null,
+                            pricePerUnit: null,
+                            unpaid: null,
+                            settled: false,
+                            tantalum: null,
+                            status: "in stock"
+                        }
+                    )
+                }
+            }
             await entry.save({validateModifiedOnly: true});
         }
     }
