@@ -1,26 +1,30 @@
-const {getModel} = require('../utils/helperFunctions');
+const {getModel, getModelAcronym} = require('../utils/helperFunctions');
 const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const {v4: uuidv4} = require('uuid');
 const AppError = require('../utils/appError');
+const ExcelJS = require('exceljs');
 
 exports.detailedStock = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     const detailedStock = [];
     if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
         // TODO 16: CHANGE STATUS
-        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}});
+        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}}).sort("supplyDate");
         for (const entry of entries) {
             for (const lot of entry.output) {
                 if (lot.cumulativeAmount === 0 || lot.status === "sold out") continue;
+                if (lot.status === "non-sell agreement") continue;
                 detailedStock.push(
                     {
                         _id: entry._id,
                         supplierName: entry.companyName,
                         beneficiary: entry.beneficiary,
                         supplyDate: entry.supplyDate,
+                        mineralType: getModelAcronym(entry.mineralType),
                         lotNumber: lot.lotNumber,
+                        weightIn: entry.weightIn,
                         weightOut: lot.weightOut,
                         mineralGrade: lot.mineralGrade,
                         mineralPrice: lot.mineralPrice,
@@ -33,7 +37,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
             }
         }
     } else if (req.params.model === "lithium" || req.params.model === "beryllium") {
-        const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}, visible: true});
+        const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}});
         for (const entry of entries) {
             detailedStock.push(
                 {
@@ -73,9 +77,6 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     const cassiteriteStock = await Cassiterite.aggregate(
         [
             {
-                $match: {visible: true}
-            },
-            {
                 $unwind: "$output"
             },
             {
@@ -88,9 +89,6 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     );
     const coltanStock = await Coltan.aggregate(
         [
-            {
-                $match: {visible: true}
-            },
             {
                 $unwind: "$output"
             },
@@ -105,9 +103,6 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     const wolframiteStock = await Wolframite.aggregate(
         [
             {
-                $match: {visible: true}
-            },
-            {
                 $unwind: "$output"
             },
             {
@@ -121,9 +116,6 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     const berylliumStock = await Beryllium.aggregate(
         [
             {
-                $match: {visible: true}
-            },
-            {
                 $group: {
                     _id: null,
                     totalCumulativeAmount: {$sum: "$cumulativeAmount"}
@@ -133,9 +125,6 @@ exports.currentStock = catchAsync(async (req, res, next) => {
     )
     const lithumStock = await Lithium.aggregate(
         [
-            {
-                $match: {visible: true}
-            },
             {
                 $group: {
                     _id: null,
@@ -383,6 +372,72 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                 data: {
                     lots
                 }
+            }
+        )
+    ;
+})
+
+exports.generateReconciliationExcelTable = catchAsync(async (req, res, next) => {
+    const startDate = req.body.startDate;
+    const endDate = req.body.endDate || new Date();
+    const model = req.params.model;
+    const Entry = getModel(model);
+    const entries = await Entry.find({supplyDate: {$gte: startDate, $lte: endDate}}).populate('negociantTags').sort('supplyDate');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`STOCK ${getModelAcronym(model)}`);
+    worksheet.columns = [
+        { header: 'Date', key: 'supplyDate', width: 15, alignment: "left" },
+        { header: 'Company\nRepresentative', key: 'beneficiary', width: 15, style: {alignment: "left"} },
+        { header: 'Company Name (by Tags)', key: 'companyName', width: 15, style: {alignment: "left"} },
+        { header: 'Type of Minerals', key: 'mineralType', width: 15, style: {alignment: "left"} },
+        { header: 'Gross weight in per delivery (kg)', key: "weightIn", width: 15, style: {alignment: "left"} },
+        { header: 'Gross weight out (kg)', key: "totalWeightOut", width: 15, style: {alignment: "left"} },
+        { header: 'Number of Lot / dispatch', key: "lotNumber", width: 15, style: {alignment: "left"} },
+        { header: 'Weight per lot (kg) / dispatch', key: "weightOut", width: 15, style: {alignment: "left"} },
+        { header: `Cumulative stock purchased from ${startDate}`, key: "cumulativeStock", width: 15, style: {alignment: "left"} },
+        { header: 'Negociant Tags', key: "negociantTags", width: 15, style: {alignment: "left"} },
+        { header: 'Date of export/ stock out with non-sell agreement', key: "stockOutDate", width: 15, style: {alignment: "left"} },
+        { header: 'Quantity Exported (stock out)', key: "exportedAmount", width: 15, style: {alignment: "left"} },
+        { header: 'Stock out with non-sell agreement', key: "nonSellAgreementWeight", width: 15, style: {alignment: "left"} },
+        { header: 'Balance', key: "balance", width: 15, style: {alignment: "left"} },
+        { header: 'Cumulative Balance After Export', key: "stockAfterExport", width: 15, style: {alignment: "left"} },
+    ];
+
+    for (const entry of entries) {
+        for (const lot of entry.output) {
+            const row = {
+                supplyDate: entry.supplyDate,
+                beneficiary: entry.beneficiary,
+                companyName: entry.companyName,
+                mineralType: entry.mineralType,
+                weightIn: entry.weightIn,
+                totalWeightOut: entry.output.reduce((accumulator, currentObject) => {
+                    return accumulator + currentObject.weightOut;
+                }, 0),
+                lotNumber: lot.lotNumber,
+                weightOut: lot.weightOut,
+                cumulativeStock: entries.map((record, index, array) => {
+                    return array
+                        .slice(0, index + 1)
+                        .reduce((accumulator, currentRecord) => accumulator + currentRecord.weightIn, 0);
+                })[entries.indexOf(entry)],
+                negociantTags: entry.negociantTags?.map(tag => tag.tagNumber).join('\n'),
+                stockOutDate: lot.nonSellAgreement?.weight > 0 ? lot.nonSellAgreement?.date?.toISOString().split('T')[0] : lot.shipments?[0].date?.toISOString().split('T')[0] : null,
+                exportedAmount: lot.shipments?[0].weight : null,
+                nonSellAgreementWeight: lot.nonSellAgreement?.weight,
+                balance: lot.cumulativeAmount,
+                stockAfterExport: lot.weightOut - lot.shipments?[0].weight : null,
+            }
+            worksheet.addRow(row);
+        }
+    }
+    worksheet.getRow(1).font = {bold: true};
+    await workbook.xlsx.writeFile(`All KANZAMIN RECONCILIATION FOR ${getModelAcronym(model)}.xlsx`);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success"
             }
         )
     ;

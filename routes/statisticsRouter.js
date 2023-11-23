@@ -4,7 +4,8 @@ const {
     paymentHistory,
     stockSummary,
     lastCreatedEntries,
-    topSuppliers, unsettledLots
+    topSuppliers,
+    unsettledLots, generateReconciliationExcelTable
 } = require('../controllers/statisticsControllers');
 const router = Router();
 
@@ -25,5 +26,8 @@ router.route('/top-suppliers')
 
 router.route('/unpaid-lots/:supplierId')
     .get(unsettledLots)
+
+router.route('/reconciliations/:model')
+    .post(generateReconciliationExcelTable)
 
 module.exports = router;

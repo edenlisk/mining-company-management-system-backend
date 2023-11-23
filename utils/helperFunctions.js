@@ -109,6 +109,7 @@ exports.handlePaidSpecific = output => {
     for (const item of output) {
         if (item.unpaid) {
             if (item.unpaid <= 0) item.settled = true;
+            if (item.cumulativeAmount <= 0 && item.status !== "non-sell agreement") item.status = "sold out";
         }
     }
 }
@@ -694,4 +695,13 @@ exports.updateNegociantTags = async (negociantTags, entry) => {
             await existingTag.save({validateModifiedOnly: true});
         }
     }
+}
+
+exports.getModelAcronym = (model) => {
+    if (model.toLowerCase() === "cassiterite") return "SNO2";
+    if (model.toLowerCase() === "coltan") return "TA2O5";
+    if (model.toLowerCase() === "wolframite") return "WO3";
+    if (model.toLowerCase() === "mixed") return "MIXED";
+    if (model.toLowerCase() === "lithium") return "LITHIUM";
+    if (model.toLowerCase() === "beryllium") return "BERYLLIUM";
 }
