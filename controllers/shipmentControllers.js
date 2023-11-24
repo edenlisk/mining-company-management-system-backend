@@ -1,6 +1,7 @@
 const multer = require('multer');
 const PdfPrinter = require('pdfmake');
 const path = require('path');
+const mongoose = require('mongoose');
 const Shipment = require("../models/shipmentModel");
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -8,11 +9,12 @@ const {getModel, fonts, getModelAcronym} = require('../utils/helperFunctions');
 const fs = require('fs');
 const imagekit = require('../utils/imagekit');
 const ExcelJS = require('exceljs');
+const {v4: uuidv4} = require('uuid');
 // const { multerFilter, multerStorage } = require('../utils/helperFunctions');
 
 
 exports.getAllshipments = catchAsync(async (req, res, next) => {
-    const shipments = await Shipment.find();
+    const shipments = await Shipment.find().sort("-createdAt");
     res
         .status(200)
         .json(
@@ -59,13 +61,40 @@ exports.downloadCertificate = catchAsync(async (req, res, next) => {
 exports.getOneShipment = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("The selected shipment no longer exists", 400));
+    const Entry = getModel(shipment.model);
+    const shipmentLots = [];
+    if (["coltan", "cassiterite", "wolframite"].includes(shipment.model)) {
+        for (const item of shipment.entries) {
+            const entry = await Entry.findById(item.entryId);
+            if (!entry) continue;
+            const lot = entry.output.find(lt => lt.lotNumber === item.lotNumber);
+            const lotInfo = {
+                entryId: entry._id,
+                supplyDate: entry.supplyDate,
+                companyName: entry.companyName,
+                beneficiary: entry.beneficiary,
+                mineralType: getModelAcronym(entry.mineralType),
+                weightIn: entry.weightIn,
+                weightOut: lot.weightOut,
+                lotNumber: lot.lotNumber,
+                exportedAmount: lot.exportedAmount,
+                balance: lot.cumulativeAmount,
+                mineralGrade: lot.mineralGrade,
+                mineralPrice: lot.mineralPrice,
+                [shipment.shipmentNumber]: item.quantity,
+                index: uuidv4(),
+            }
+            shipmentLots.push(lotInfo);
+        }
+    }
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    shipment
+                    shipment,
+                    shipmentLots
                 }
             }
         )
@@ -99,7 +128,56 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
             })
         }
     }
-    if (req.body.entries) shipment.entries = req.body.entries;
+    if (req.body.entries) {
+        const Entry = getModel(shipment.model);
+        if (["cassiterite", "coltan", "wolframite"].includes(shipment.model)) {
+            for (const item of req.body.entries) {
+                const entry = await Entry.findById(item.entryId);
+                if (!entry) continue;
+                const lot = entry.output?.find(value => value.lotNumber === item.lotNumber);
+                if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
+                const lotShipment = lot.shipments?.find(value => value.shipmentNumber === shipment.shipmentNumber);
+                if (lotShipment) {
+                    if (item[shipment.shipmentNumber] === 0) {
+                        lot.shipments = lot.shipments.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
+                        lot.exportedAmount = item.exportedAmount;
+                        lot.cumulativeAmount = item.balance;
+                        shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (value.lotNumber !== item.lotNumber));
+                    } else {
+                        const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber));
+                        shipmentEntry.quantity = item[shipment.shipmentNumber];
+                        lotShipment.weight = item[shipment.shipmentNumber];
+                        lot.exportedAmount = item.exportedAmount;
+                        lot.cumulativeAmount = item.balance;
+                    }
+                } else {
+                    if (item[shipment.shipmentNumber] === 0) continue;
+                    lot.shipments.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
+                    lot.exportedAmount = item.exportedAmount;
+                    lot.cumulativeAmount = item.balance;
+                    shipment.entries.push({entryId: item.entryId, lotNumber: item.lotNumber, quantity: item[shipment.shipmentNumber]});
+                }
+                await entry.save({validateModifiedOnly: true});
+            }
+        } else if (["lithium", "beryllium"].includes(shipment.model)) {
+            // TODO 23: Implement shipment update for lithium and beryllium
+            for (const item of this.entries) {
+                const entry = await Entry.findById(item.entryId);
+                const lotShipment = entry.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
+                if (lotShipment) {
+                    item.quantity += lotShipment.weight;
+                    lotShipment.weight += item.quantity;
+                    entry.exportedAmount += item.quantity;
+                    entry.cumulativeAmount -= item.quantity;
+                } else {
+                    entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
+                    entry.exportedAmount += item.quantity;
+                    entry.cumulativeAmount -= item.quantity;
+                }
+                await entry.save({validateModifiedOnly: true});
+            }
+        }
+    }
     if (req.body.buyerId) shipment.buyerId = req.body.buyerId;
     if (req.body.shipmentGrade) shipment.shipmentGrade = req.body.shipmentGrade;
     if (req.body.shipmentPrice) shipment.shipmentPrice = req.body.shipmentPrice;

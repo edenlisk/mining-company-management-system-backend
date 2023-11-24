@@ -9,7 +9,7 @@ const ExcelJS = require('exceljs');
 exports.detailedStock = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     const detailedStock = [];
-    if (req.params.model === "coltan" || req.params.model === "cassiterite" || req.params.model === "wolframite") {
+    if (["coltan", "cassiterite", "wolframite"].includes(req.params.model)) {
         // TODO 16: CHANGE STATUS
         const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}}).sort("supplyDate");
         for (const entry of entries) {

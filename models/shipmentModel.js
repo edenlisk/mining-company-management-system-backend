@@ -163,42 +163,6 @@ shipmentSchema.pre('save', async function (next) {
                 await entry.save({validateModifiedOnly: true});
             }
         }
-    } else if (this.isModified("entries") && !this.isNew) {
-        if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                const lot = entry?.output.find(value => value.lotNumber === item.lotNumber);
-                if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
-                const shipment = lot.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
-                if (shipment) {
-                    item.quantity += shipment.weight;
-                    shipment.weight += item.quantity;
-                    lot.exportedAmount += item.quantity;
-                    lot.cumulativeAmount -= item.quantity;
-                } else {
-                    lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                    lot.exportedAmount += item.quantity;
-                    lot.cumulativeAmount -= item.quantity;
-                }
-                await entry.save({validateModifiedOnly: true});
-            }
-        } else if (this.model === "lithium" || this.model === "beryllium") {
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                const shipment = entry.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
-                if (shipment) {
-                    item.quantity += shipment.weight;
-                    shipment.weight += item.quantity;
-                    entry.exportedAmount += item.quantity;
-                    entry.cumulativeAmount -= item.quantity;
-                } else {
-                    entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                    entry.exportedAmount += item.quantity;
-                    entry.cumulativeAmount -= item.quantity;
-                }
-                await entry.save({validateModifiedOnly: true});
-            }
-        }
     }
     next();
 })
