@@ -9,6 +9,7 @@ const {
     getOneShipment,
     tagList,
     generateTagList,
+    generateNegociantTagList,
     shipmentQuarterReport
 } = require('../controllers/shipmentControllers');
 
@@ -25,7 +26,7 @@ router.route('/quarter-report')
 
 router.route('/tags/:shipmentId')
     .get(tagList)
-    .post(generateTagList)
+    .post(generateNegociantTagList)
 
 router.route('/:shipmentId')
     .get(getOneShipment)

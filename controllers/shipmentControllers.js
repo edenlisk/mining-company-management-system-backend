@@ -635,6 +635,114 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     ;
 })
 
+exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
+    const shipment = await Shipment.findById(req.params.shipmentId);
+    if (!shipment) return next(new AppError('Unable to get shipment', 400));
+    const Entry = getModel(shipment.model);
+    const entryIds = shipment.entries.map(entry => entry.entryId);
+    const entries = await Entry.find({_id: {$in: entryIds}}).populate('negociantTags');
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('Tags');
+    const logImageId = workbook.addImage({
+        buffer: fs.readFileSync(`kanzamin-logo.PNG`),
+        extension: 'png',
+    });
+    worksheet.addImage(
+        logImageId,
+        {
+            tl: { col: 0.5, row: 0.5 },
+            ext: { width: 500, height: 60 },
+        }
+    );
+    worksheet.columns = [
+        { header: 'NO', key: 'index', width: 15 },
+        { header: 'DATE', key: 'date', width: 15 },
+        { header: 'NAME OF COMPANIES', key: 'companyName', width: 30 },
+        { header: 'WEIGHT IN', key: 'weightIn', width: 15 },
+        { header: 'QUANTITY', key: 'quantity', width: 15 },
+        { header: 'NEGOCIANT TAG \n NUMBER', key: 'negociantTagNumber', width: 30 },
+        { header: 'PRICE', key: 'price', width: 15 },
+        { header: 'CONC.', key: 'mineralGrade', width: 15 },
+    ];
+    worksheet.spliceRows(1, 0,
+        [`MATERIAL: ${shipment.shipmentMinerals?.toUpperCase()}`],
+        [`BUYER: ${shipment.buyerName?.toUpperCase()}`],
+        [`${shipment.shipmentNumber}`],
+        [`iTSCi SHIPMENT NUMBER: ${shipment.shipmentNumber}`],
+        [`DATE: ${shipment.shipmentContainerLoadingDate?.toISOString().split('T')[0]}`]
+    );
+    worksheet.spliceRows(1, 0, [], [], [], [], []);
+
+
+
+    let index = 0;
+    let totalTagWeight = 0;
+    let totalQuantity = 0;
+    for (const entry of entries) {
+        if (!entry.negociantTags) continue;
+        const negociantTags = entry.negociantTags.filter(tag => tag.status === 'out of store');
+        if (negociantTags.length === 0) continue;
+        index++;
+        totalTagWeight += negociantTags.reduce((acc, tag) => acc + tag.weight, 0);
+        totalQuantity += entry.weightIn;
+        negociantTags.map(tag => (
+            worksheet.addRow({
+                index: index,
+                date: entry.supplyDate,
+                companyName: entry.companyName,
+                weightIn: entry.weightIn,
+                quantity: tag.weight,
+                negociantTagNumber: tag.tagNumber,
+                price: entry.output[0].pricePerUnit,
+                mineralGrade: entry.output[0].mineralGrade,
+            })
+        ));
+    }
+    worksheet.addRow({companyName: 'TOTAL', weightIn: totalTagWeight, quantity: totalQuantity});
+    worksheet.eachRow({ includeEmpty: true }, function (row, rowNumber) {
+        row.eachCell({ includeEmpty: true }, function (cell, colNumber) {
+            if (colNumber <= 8) {
+                cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
+                cell.alignment = { vertical: 'middle', horizontal: 'center' };
+                cell.border = {
+                    bottom: { style: 'thin' },
+                    left: { style: 'thin' },
+                    right: { style: 'thin' },
+                    top: { style: 'thin' },
+                };
+            }
+            // if (rowNumber === 6 && colNumber === 1) {
+            //     cell.merge(row.getCell(3));
+            //     worksheet.getCell('A6').value = `MATERIAL: ${shipment.shipmentMinerals?.toUpperCase()}`;
+            // }
+            // if (rowNumber === 7) {
+            //     cell.merge(row.getCell(3));
+            //     worksheet.getCell('A7').value = `BUYER: ${shipment.buyerName?.toUpperCase()}`;
+            // }
+            // if (rowNumber === 8) {
+            //     cell.merge(row.getCell(3));
+            //     worksheet.getCell(8, 1).value = `${shipment.shipmentNumber}`;
+            // }
+            // if (rowNumber === 9) {
+            //     cell.merge(row.getCell(3));
+            //     worksheet.getCell(9, 1).value = `iTSCi SHIPMENT NUMBER: ${shipment.shipmentNumber}`;
+            // }
+            // if (rowNumber === 10) {
+            //     cell.merge(row.getCell(3));
+            //     worksheet.getCell(10, 1).value = `DATE: ${shipment.shipmentContainerLoadingDate?.toISOString().split('T')[0]}`;
+            // }
+        });
+    });
+    await workbook.xlsx.writeFile(`${__dirname}/../public/data/shipment/${shipment.shipmentNumber}negociant-Tags.xlsx`);
+    res
+        .status(204)
+        .json (
+            {
+                status: "success"
+            }
+        )
+    ;
+})
 
 const multerStorage = multer.diskStorage(
     {
