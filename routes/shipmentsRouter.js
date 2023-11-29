@@ -10,6 +10,7 @@ const {
     tagList,
     generateTagList,
     generateNegociantTagList,
+    generateICGLRPackingList,
     shipmentQuarterReport
 } = require('../controllers/shipmentControllers');
 
@@ -26,7 +27,13 @@ router.route('/quarter-report')
 
 router.route('/tags/:shipmentId')
     .get(tagList)
+    .post(generateTagList)
+
+router.route('/negociant-tags/:shipmentId')
     .post(generateNegociantTagList)
+
+router.route('/packing-list/:shipmentId')
+    .post(generateICGLRPackingList)
 
 router.route('/:shipmentId')
     .get(getOneShipment)

@@ -35,7 +35,7 @@ const settingsSchema = new mongoose.Schema(
         nameOfCompany: {
             type: String,
             default: () => {
-                return "Kanzamin"
+                return "Kanzamin limited"
             }
         },
         representative: {

@@ -6,6 +6,7 @@ const advancePaymentSchema = new mongoose.Schema(
     {
         supplierId: {
             type: mongoose.Schema.Types.ObjectId,
+            default: null
         },
         companyName: {
             type: String,

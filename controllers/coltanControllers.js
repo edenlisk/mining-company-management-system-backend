@@ -237,13 +237,25 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
-                // if (existingLot.tantalum && existingLot.mineralGrade) {
-                //     existingLot.pricePerUnit = (existingLot.tantalum * existingLot.mineralGrade/100).toFixed(3);
-                //     existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
-                //     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
-                //         existingLot.unpaid = existingLot.mineralPrice;
-                //     }
-                // }
+                if (existingLot.mineralPrice) {
+                    // existingLot.pricePerUnit = (existingLot.tantalum * existingLot.mineralGrade/100).toFixed(3);
+                    // existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
+                    if (!existingLot.unpaid && existingLot.unpaid !== 0) {
+                        if (existingLot.rmaFeeUSD) {
+                            existingLot.unpaid = existingLot.mineralPrice - existingLot.rmaFeeUSD;
+                        }
+                    } else if (lot.mineralPrice > existingLot.mineralPrice) {
+                        existingLot.unpaid += lot.mineralPrice - existingLot.mineralPrice;
+                        if (Boolean(parseFloat(existingLot.paid))) {
+                            existingLot.paid -= lot.mineralPrice - existingLot.mineralPrice;
+                        }
+                    } else if (lot.mineralPrice < existingLot.mineralPrice) {
+                        existingLot.unpaid -= existingLot.mineralPrice - lot.mineralPrice;
+                        if (Boolean(parseFloat(existingLot.paid))) {
+                            existingLot.paid += existingLot.mineralPrice - lot.mineralPrice;
+                        }
+                    }
+                }
             } else {
                 entry.output.push(
                     {
@@ -268,7 +280,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
             }
         }
     }
-    await entry.save({validateModifiedOnly: true});
+    // await entry.save({validateModifiedOnly: true});
     // if (!result) {
     //     logs.status = "failed";
     // }

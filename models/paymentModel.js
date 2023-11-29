@@ -93,7 +93,7 @@ const paymentSchema = new mongoose.Schema(
 paymentSchema.pre('save', async function (next) {
     const { getModel } = require('../utils/helperFunctions');
     const Entry = getModel(this.model);
-    if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
+    if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
         const entry = await Entry.findOne({_id: this.entryId});
         const lot = entry.output.find(lot => lot.lotNumber === this.lotNumber);
         if (lot.settled === true) return next(new AppError("This lot is already paid", 400));
@@ -101,18 +101,24 @@ paymentSchema.pre('save', async function (next) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
             if (!payment.consumed) {
                 if (payment.remainingAmount >= lot.mineralPrice) {
-                    lot.paid += (lot.mineralPrice - lot.rmaFeeUSD);
+                    lot.paid += (lot.mineralPrice - lot?.rmaFeeUSD);
                     lot.unpaid = 0;
                     lot.settled = true;
                     lot.rmaFeeDecision = "pending";
                     payment.remainingAmount -= lot.mineralPrice;
                     // TODO 12: FIND APPROPRIATE COMMENT.
-                    // payment.consumptionDetails.push(
-                    //     {
-                    //         date: (new Date()).toDateString(),
-                    //         comment: `Deducted ${lot.mineralPrice - lot.rmaFeeUSD} for paying`
-                    //     }
-                    // )
+                    payment.consumptionDetails.push(
+                        {
+                            date: (new Date()).toDateString(),
+                            comment: `Deducted ${lot.rmaFeeUSD} for paying Rwanda Mining Association fee.`
+                        }
+                    )
+                    payment.consumptionDetails.push(
+                        {
+                            date: (new Date()).toDateString(),
+                            comment: `Deducted ${lot.mineralPrice} for paying mineral price of ${this.lotNumber} of minerals supplied on ${entry.supplyDate}.`
+                        }
+                    )
                     // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
                     const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
                     lot.paymentHistory.push(
@@ -124,7 +130,7 @@ paymentSchema.pre('save', async function (next) {
                             location,
                             paymentAmount: payment.paymentAmount - payment.remainingAmount,
                             email,
-                            paymentDate: this.paymentDate,
+                            paymentDate: new Date(),
                             currency
                         }
                     );
@@ -145,7 +151,7 @@ paymentSchema.pre('save', async function (next) {
                                 location,
                                 paymentAmount: payment.remainingAmount,
                                 email,
-                                paymentDate: this.paymentDate,
+                                paymentDate: new Date(),
                                 currency
                             }
                         );
@@ -173,7 +179,7 @@ paymentSchema.pre('save', async function (next) {
             );
         }
         await entry.save({validateModifiedOnly: true});
-    } else if (this.model === "lithium" || this.model === "beryllium") {
+    } else if (["lithium", "beryllium"].includes(this.model)) {
         const entry = await Entry.findOne({_id: this.entryId});
         if (entry.settled) return next(new AppError("This lot is already paid", 400));
         if (this.paymentInAdvanceId) {
@@ -194,7 +200,7 @@ paymentSchema.pre('save', async function (next) {
                             location,
                             email,
                             currency,
-                            paymentDate: this.paymentDate,
+                            paymentDate: new Date(),
                             paymentAmount: payment.paymentAmount - payment.remainingAmount
                         }
                     )

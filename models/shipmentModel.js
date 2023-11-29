@@ -62,7 +62,7 @@ const shipmentSchema = new mongoose.Schema(
             type: String,
             default: null
         },
-        totalShipmentQuantity: {
+        netWeight: {
             type: Number,
             default: null
         },
@@ -89,7 +89,14 @@ const shipmentSchema = new mongoose.Schema(
             type: String,
         },
         rmbIcglrCertificate: {
-            type: String,
+            fileId: {
+                type: String,
+                default: null
+            },
+            url: {
+                type: String,
+                default: null
+            }
         },
         model: String,
         tagListFile: {
@@ -102,11 +109,48 @@ const shipmentSchema = new mongoose.Schema(
                 default: null
             }
         },
+        negociantTagListFile: {
+            fileId: {
+                type: String,
+                default: null
+            },
+            url: {
+                type: String,
+                default: null
+            }
+        },
+        packingListFile: {
+            fileId: {
+                type: String,
+                default: null
+            },
+            url: {
+                type: String,
+                default: null
+            }
+        },
+        iTSCiShipmentNumber: {
+            type: String,
+            default: null
+        },
+        sampleWeight: {
+            type: Number,
+            default: null
+        },
+        dustWeight: {
+            type: Number,
+            default: null
+        },
+        shipmentDate: {
+            type: Date,
+            default: null
+        },
     },
     {timestamps: true}
 )
 
-// average price =
+// TODO 24: REPLACE TOTAL SHIPMENT QUANTITY WITH NET WEIGHT -----> DONE
+
 
 // TODO 8: PRE `SAVE` FOR SHIPMENT
 
@@ -124,6 +168,7 @@ shipmentSchema.pre('save', async function (next) {
         const buyer = await Buyer.findById(this.buyerId).select({name: 1});
         this.buyerName = buyer.name;
     }
+    
     next();
 })
 
@@ -142,7 +187,7 @@ shipmentSchema.pre('save', async function (next) {
             }
         )
         this.shipmentMinerals = this.model.charAt(0).toUpperCase() + this.model.slice(1);
-        if (this.model === "cassiterite" || this.model === "coltan" || this.model === "wolframite") {
+        if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
                 if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
@@ -153,7 +198,7 @@ shipmentSchema.pre('save', async function (next) {
                 lot.cumulativeAmount -= item.quantity;
                 await entry.save({validateModifiedOnly: true});
             }
-        } else if (this.model === "lithium" || this.model === "beryllium") {
+        } else if (["lithium", "beryllium"].includes(this.model)) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
                 if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
