@@ -37,53 +37,19 @@ exports.getAllCassiteriteEntries = catchAsync(async (req, res, next) => {
 })
 
 exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
-    // const logs = [];
-    const supplier = await Supplier.findById(req.body.supplierId);
-    if (!supplier) return next(new AppError("This supplier no longer exists!", 400));
-    let entry;
-    if (req.body.isSupplierBeneficiary) {
-        entry = await Cassiterite.create(
-            {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: supplier.licenseNumber,
-                companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
-                beneficiary: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.companyRepresentative,
-                TINNumber: supplier.TINNumber,
-                email: supplier.email ? supplier.email : req.body.email,
-                representativeId: supplier.representativeId ? supplier.representativeId : req.body.representativeId,
-                representativePhoneNumber: supplier.representativePhoneNumber ? supplier.representativePhoneNumber : req.body.representativePhoneNumber,
-            }
-        )
-    } else if (supplier.companyName.toLowerCase() === "kanzamin") {
-        entry = await Cassiterite.create(
-            {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: "kanzamin license",
-                beneficiary: req.body.beneficiary,
-                TINNumber: "Kanzamin TIN",
-                email: "kanzamin@gmail.com",
-                representativeId: "Kanzamin representative",
-                representativePhoneNumber: "+250780000000",
-                companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.representativeId
-            }
-        )
-    } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
-        entry = await Cassiterite.create(
-            {
-                supplierId: supplier._id,
-                companyName: supplier.companyName,
-                licenseNumber: supplier.licenseNumber,
-                beneficiary: req.body.beneficiary,
-                TINNumber: supplier.TINNumber,
-                email: supplier.email,
-                representativeId: req.body.representativeId,
-                representativePhoneNumber: req.body.representativePhoneNumber,
-                companyRepresentative: supplier.companyRepresentative ? supplier.companyRepresentative : req.body.representativeId
-            }
-        )
-    }
+    const entry = await Cassiterite.create(
+        {
+            supplierId: req.body.supplierId,
+            companyName: req.body.companyName,
+            licenseNumber: req.body.licenseNumber,
+            companyRepresentative: req.body.companyRepresentative,
+            beneficiary: req.body.companyRepresentative,
+            TINNumber: req.body.TINNumber,
+            email: req.body.email,
+            representativeId: req.body.representativeId,
+            representativePhoneNumber: req.body.representativePhoneNumber,
+        }
+    );
     entry.mineralType = req.body.mineralType;
     entry.numberOfTags = req.body.numberOfTags;
     entry.weightIn = req.body.weightIn;
