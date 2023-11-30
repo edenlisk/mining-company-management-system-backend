@@ -85,6 +85,16 @@ const invoiceSchema = new mongoose.Schema(
         },
         paymentId: {
             type: mongoose.Schema.Types.ObjectId
+        },
+        invoiceFile: {
+            fileId: {
+                type: String,
+                default: null
+            },
+            url: {
+                type: String,
+                default: null
+            }
         }
     },
     {

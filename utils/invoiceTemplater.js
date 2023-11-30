@@ -2,6 +2,7 @@ const PdfPrinter = require('pdfmake');
 const fs = require('fs');
 const path = require('path');
 const { fonts, getMonthWords } = require('../utils/helperFunctions');
+const imagekit = require('../utils/imagekit');
 
 class Invoice {
     constructor(processor, supplier, invoiceInfo) {
@@ -343,36 +344,61 @@ class Invoice {
 
     }
 
-    saveDownload(download= false, res) {
+    async saveDownload(res) {
+        const InvoiceModel = require('../models/invoiceModel');
         const printer = new PdfPrinter(fonts);
         const pdfDoc = printer.createPdfKitDocument(this.dd);
-        const year = (new Date()).getFullYear();
-        const month = getMonthWords((new Date()).getMonth());
-        const filePath = `${__dirname}/../public/data/Invoices/${this.supplier.companyName}/${year}/${month}`;
-        if (!fs.existsSync(filePath)) {
-            fs.mkdir(filePath, {recursive: true}, err => {
-                if (err) {
-                    console.log(err);
-                }
-            });
-        }
-        pdfDoc.pipe(fs.createWriteStream(path.resolve(filePath, this.filename)));
-        pdfDoc.end();
-        if (download) {
-            const pdfStream = printer.createPdfKitDocument(this.dd);
-            pdfStream.pipe(res);
-            pdfStream.end();
-
-        } else {
-            res
-                .status(201)
-                .json(
-                    {
-                        status: "Success"
+        // const year = (new Date()).getFullYear();
+        // const month = getMonthWords((new Date()).getMonth());
+        const invoiceDoc = await InvoiceModel.findById(this.invoiceInfo.invoiceId);
+        if (invoiceDoc) {
+            if (invoiceDoc.invoiceFile?.fileId) {
+                await imagekit.deleteFile(invoiceDoc.invoiceFile.fileId, err => {
+                    if (err) {
+                        console.log(err);
                     }
-                )
-            ;
+                });
+            }
         }
+        pdfDoc.pipe(fs.createWriteStream(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`));
+        pdfDoc.end();
+        const response = await imagekit.upload({
+            file: fs.createReadStream(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`),
+            fileName: `${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`,
+            folder: `invoices/${this.supplier.companyName}`,
+        })
+        if (response) {
+            invoiceDoc.invoiceFile.fileId = response.fileId;
+            invoiceDoc.invoiceFile.url = response.url;
+            fs.unlink(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`, err => {
+              if (err) {
+                  console.log(err);
+              } else {
+                  console.log('File deleted successfully');
+              }
+            })
+        }
+        // const filePath = `${__dirname}/../public/data/Invoices/${this.supplier.companyName}/${year}/${month}`;
+        // if (!fs.existsSync(filePath)) {
+        //     fs.mkdir(filePath, {recursive: true}, err => {
+        //         if (err) {
+        //             console.log(err);
+        //         }
+        //     });
+        // }
+        // pdfDoc.pipe(fs.createWriteStream(path.resolve(filePath, this.filename)));
+        // pdfDoc.end();
+        res
+            .status(201)
+            .json(
+                {
+                    status: "Success",
+                    data: {
+                        invoiceFile: invoiceDoc.invoiceFile.url
+                    }
+                }
+            )
+        ;
     }
 }
 

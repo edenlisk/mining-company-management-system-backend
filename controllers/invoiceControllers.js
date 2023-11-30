@@ -223,6 +223,7 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
             }
         }
         const invoiceInfo = {
+            invoiceId: invoicedoc._id,
             invoiceNo: invoicedoc.invoiceNo,
             mineralsSupplied: invoicedoc.mineralsSupplied.join(', '),
             dateOfIssue: req.body.dateOfIssue,
@@ -234,9 +235,9 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
         }
         const invoice = new INVOICE(processor, supplier, invoiceInfo);
         invoice.populateDoc();
-        invoice.saveDownload(true, res);
+        await invoice.saveDownload(res);
     } else {
-        return next(new AppError("weeeeee"))
+        return next(new AppError("Unable to generate invoice!", 400));
     }
     // res
     //     .status(200)
@@ -250,7 +251,6 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
 
 exports.getSuppliersInvoice = catchAsync(async (req, res, next) => {
     const invoices = await Invoice.find({supplierId: req.params.supplierId});
-
     res
         .status(200)
         .json(
