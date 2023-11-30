@@ -12,6 +12,10 @@ const tagsSchema = new mongoose.Schema(
             type: String,
             enum: ["mine", "negociant"],
         },
+        sheetNumber: {
+            type: String,
+            default: null
+        },
         entryId: {
             type: mongoose.Schema.Types.ObjectId,
             ref: "Coltan" || "Wolframite" || "Cassiterite"
