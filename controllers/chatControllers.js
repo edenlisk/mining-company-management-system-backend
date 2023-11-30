@@ -14,7 +14,10 @@ exports.createChat = catchAsync(async (req, res, next) => {
         .status(202)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                data: {
+                    newChat
+                }
             }
         )
     ;
