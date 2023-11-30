@@ -191,95 +191,215 @@ const storekeeper = {
         view: true,
         create: true,
         edit: true,
-        delete: false
+        delete: true
     },
     suppliers: {
         view: true,
         create: true,
         edit: true,
-        delete: false
+        delete: true
     },
-    // buyers: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
-    // payments: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
+    payments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
     shipments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    mineralGrade: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+        add: true,
+        edit: true
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    settings: {
         view: false,
-        create: false,
-        edit: false,
+        edit: false
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    users: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: true,
         delete: false
     },
-    // contracts: {
-    //     view: false,
-    //     create: false,
-    //     delete: false
-    // },
-    // settings: {
-    //     view: false,
-    //     edit: false
-    // },
-    // users: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
+    }
 }
 
 const traceabilityOfficer = {
     entry: {
         view: true,
-        create: false,
+        create: true,
         edit: true,
-        delete: false
+        delete: true
     },
     suppliers: {
         view: true,
         create: true,
         edit: true,
-        delete: false
+        delete: true
     },
-    // buyers: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
-    // payments: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
+    payments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
     shipments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    mineralGrade: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+        add: true,
+        edit: true
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    settings: {
         view: false,
-        create: false,
-        edit: false,
+        edit: false
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    users: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: true,
         delete: false
     },
-    // contracts: {
-    //     view: false,
-    //     create: false,
-    //     delete: false
-    // },
-    // settings: {
-    //     view: false,
-    //     edit: false
-    // },
-    // users: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
+    }
 }
 
 const managingDirector = {
@@ -401,12 +521,6 @@ const ceo = {
         edit: true,
         delete: true
     },
-    buyers: {
-        view: true,
-        create: true,
-        edit: true,
-        delete: true
-    },
     payments: {
         view: true,
         create: true,
@@ -419,68 +533,194 @@ const ceo = {
         edit: true,
         delete: true
     },
-    contracts: {
+    mineralGrade: {
         view: true,
         create: true,
-        delete: true
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+        add: true,
+        edit: true
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
     },
     settings: {
+        view: false,
+        edit: false
+    },
+    buyers: {
         view: true,
-        edit: true
+        create: true,
+        edit: true,
+        delete: true
     },
     users: {
         view: true,
         create: true,
         edit: true,
         delete: true
+    },
+    contracts: {
+        view: true,
+        create: true,
+        delete: false
+    },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
     }
 }
 
 const operationsManager = {
     entry: {
         view: true,
-        create: false,
+        create: true,
         edit: true,
-        delete: false
+        delete: true
     },
     suppliers: {
         view: true,
-        create: false,
+        create: true,
         edit: true,
-        delete: false
-    },
-    buyers: {
-        view: true,
-        create: false,
-        edit: false,
-        delete: false
+        delete: true
     },
     payments: {
         view: true,
-        create: false,
-        edit: false,
-        delete: false
+        create: true,
+        edit: true,
+        delete: true
     },
     shipments: {
         view: true,
         create: true,
         edit: true,
-        delete: false
+        delete: true
     },
-    contracts: {
-        view: false,
-        create: false,
-        delete: false
+    mineralGrade: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+        add: true,
+        edit: true
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
     },
     settings: {
         view: false,
         edit: false
     },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
     users: {
-        view: false,
-        create: false,
-        edit: false,
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: true,
         delete: false
+    },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
     }
 }
 
@@ -493,15 +733,9 @@ const accountant = {
     },
     suppliers: {
         view: true,
-        create: false,
-        edit: false,
-        delete: false
-    },
-    buyers: {
-        view: true,
         create: true,
         edit: true,
-        delete: false
+        delete: true
     },
     payments: {
         view: true,
@@ -511,24 +745,90 @@ const accountant = {
     },
     shipments: {
         view: true,
-        create: false,
-        edit: false,
-        delete: false
+        create: true,
+        edit: true,
+        delete: true
     },
-    contracts: {
+    mineralGrade: {
         view: true,
-        create: false,
-        delete: false
+        create: true,
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    gradeImg: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+        add: true,
+        edit: true
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
     },
     settings: {
         view: false,
         edit: false
     },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
     users: {
-        view: false,
-        create: false,
-        edit: false,
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: true,
         delete: false
+    },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
     }
 }
 
@@ -537,78 +837,107 @@ const labTechnician = {
         view: true,
         create: true,
         edit: true,
-        delete: false
+        delete: true
     },
-    // suppliers: {
-    //     view: true,
-    //     create: true,
-    //     edit: true,
-    //     delete: false
-    // },
-    // buyers: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
-    // payments: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
+    suppliers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    payments: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
     shipments: {
-        view: false,
-        create: false,
-        edit: false,
-        delete: false
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
     },
-    // contracts: {
-    //     view: false,
-    //     create: false,
-    //     delete: false
-    // },
-    settings: {
-        view: false,
-        edit: false
-    },
-    // users: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    //     delete: false
-    // },
     mineralGrade: {
         view: true,
         create: true,
-        edit: false,
+        edit: true,
+    },
+    pricePerUnit: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    mineralPrice: {
+        view: true,
+        create: true,
+        edit: true,
     },
     gradeImg: {
         view: true,
         create: true,
-        edit: false,
+        edit: true,
     },
-    // tantal: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    // },
-    // londonMetalExchange: {
-    //     view: false,
-    //     create: false,
-    //     edit: false,
-    // },
-    // treatmentCharges: {
-    //     view: false,
-    //     create: false,
-    //     edit: false
-    // },
-    // paymentHistory: {
-    //     view: false,
-    //     create: false,
-    //     edit: false
-    // }
-
+    tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    londonMetalExchange: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    treatmentCharges: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    USDRate: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    rmaFee:{
+        view: true,
+        add: true,
+        edit: true
+    },
+    paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    settings: {
+        view: false,
+        edit: false
+    },
+    buyers: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    users: {
+        view: true,
+        create: true,
+        edit: true,
+        delete: true
+    },
+    contracts: {
+        view: true,
+        create: true,
+        delete: false
+    },
+    editRequests: {
+        view: true,
+        authorize: true,
+        reject: true
+    },
 }
 
 exports.permissions = {
@@ -645,27 +974,26 @@ exports.toInitialCase = str => {
 }
 
 exports.updateMineTags = async (mineTags, entry) => {
-    console.log(mineTags);
     for (const tag of mineTags) {
         const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine", entryId: entry._id});
-        console.log("before check");
         if (!existingTag) {
-            console.log("no tag found");
             const newTag = await Tag.create(
                 {
                     tagNumber: tag.tagNumber,
                     tagType: "mine",
                     weight: Number(tag.weight),
+                    sheetNumber: tag.sheetNumber,
                     // status: tag.status,
                     entryId: entry._id,
                 }
             )
-            console.log(newTag);
-            entry.mineTags.push(newTag._id);
+            if (newTag) {
+                entry.mineTags.push(newTag._id);
+            }
         } else {
-            console.log("tag found");
             if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
             if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
+            if (existingTag.sheetNumber !== tag.sheetNumber) existingTag.sheetNumber = tag.sheetNumber;
             // if (existingTag.status !== tag.status) existingTag.status = tag.status;
             await existingTag.save({validateModifiedOnly: true});
         }
@@ -673,7 +1001,6 @@ exports.updateMineTags = async (mineTags, entry) => {
 }
 
 exports.updateNegociantTags = async (negociantTags, entry) => {
-    console.log(negociantTags);
     for (const tag of negociantTags) {
         if (tag.tagNumber === '') continue;
         const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "negociant", entryId: entry._id});
@@ -683,14 +1010,16 @@ exports.updateNegociantTags = async (negociantTags, entry) => {
                     tagNumber: tag.tagNumber,
                     tagType: "negociant",
                     weight: tag.weight,
+                    sheetNumber: tag.sheetNumber,
                     // status: tag.status,
                     entryId: entry._id,
                 }
             )
-            entry.negociantTags.push(newTag._id);
+            if (newTag) entry.negociantTags.push(newTag._id);
         } else {
             if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
             if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
+            if (existingTag.sheetNumber !== tag.sheetNumber) existingTag.sheetNumber = tag.sheetNumber;
             // if (existingTag.status !== tag.status) existingTag.status = tag.status;
             await existingTag.save({validateModifiedOnly: true});
         }

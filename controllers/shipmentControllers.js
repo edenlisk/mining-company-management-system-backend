@@ -506,6 +506,7 @@ exports.tagList = catchAsync(async (req, res, next) => {
     const Entry = getModel(shipment.model);
     const entryIds = shipment.entries.map(entry => entry.entryId);
     const entries = await Entry.find({_id: {$in: entryIds}}).populate('mineTags negociantTags');
+    console.log(entries);
 
     res
         .status(200)
@@ -704,18 +705,18 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
             newRow.getCell(columnMapping.negociantTagNumber).value = tag.tagNumber;
             newRow.getCell(columnMapping.price).value = entry.output[0].pricePerUnit;
             newRow.getCell(columnMapping.mineralGrade).value = totalWeightOutMineralGrade / totalWeightOut;
-            newRow.eachCell({includeEmpty: true}, function (cell, colNumber) {
-                if (colNumber <= 8) {
-                    cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
-                    cell.alignment = { vertical: 'middle', horizontal: 'center' };
-                    cell.border = {
-                        bottom: { style: 'thin' },
-                        left: { style: 'thin' },
-                        right: { style: 'thin' },
-                        top: { style: 'thin' },
-                    };
-                }
-            })
+            // newRow.eachCell({includeEmpty: true}, function (cell, colNumber) {
+            //     if (colNumber <= 8) {
+            //         cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
+            //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
+            //         cell.border = {
+            //             bottom: { style: 'thin' },
+            //             left: { style: 'thin' },
+            //             right: { style: 'thin' },
+            //             top: { style: 'thin' },
+            //         };
+            //     }
+            // })
             currentRow++;
             index++;
         }
@@ -724,18 +725,18 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
     totalRow.getCell(columnMapping.companyName).value = 'TOTAL';
     totalRow.getCell(columnMapping.weightIn).value = totalWeightIn;
     totalRow.getCell(columnMapping.quantity).value = totalTagWeight;
-    totalRow.eachCell({includeEmpty: true}, function (cell, colNumber) {
-        if (colNumber <= 8) {
-            cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
-            cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            cell.border = {
-                bottom: { style: 'thin' },
-                left: { style: 'thin' },
-                right: { style: 'thin' },
-                top: { style: 'thin' },
-            };
-        }
-    })
+    // totalRow.eachCell({includeEmpty: true}, function (cell, colNumber) {
+    //     if (colNumber <= 8) {
+    //         cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
+    //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
+    //         cell.border = {
+    //             bottom: { style: 'thin' },
+    //             left: { style: 'thin' },
+    //             right: { style: 'thin' },
+    //             top: { style: 'thin' },
+    //         };
+    //     }
+    // })
     worksheet.getRow(currentRow + 1).getCell(columnMapping.companyName).value = `NET WEIGHT: ${shipment.netWeight}`;
     worksheet.getRow(currentRow + 2).getCell(columnMapping.companyName).value = `SAMPLE: ${shipment.sampleWeight}`;
     worksheet.getRow(currentRow + 3).getCell(columnMapping.companyName).value = `DUST: ${shipment.dustWeight}`;
@@ -801,6 +802,18 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         weightOut: 10,
         mineralGrade: 11,
         negociantTagNumber: 12,
+        mixedWeightOut: {
+            cassiterite: 13,
+            coltan: 14,
+        },
+        mixedNegociantTagNumber: {
+          cassiterite: 15,
+          coltan: 16
+        },
+        mixedMineralGrade: {
+            cassiterite: 17,
+            coltan: 18
+        },
         mineSiteStatus: 19,
         mineSiteTick: 20,
         grandTotalForExport: 21
@@ -853,11 +866,18 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
                 newRow.getCell(columnMapping.tagWeight).value = tag.weight;
             }
         })
+
         negociantTags?.map((tag, index) => {
             const newRow = worksheet.getRow(currentRow + mineTags.length - negociantTags.length + index);
-            newRow.getCell(columnMapping.weightOut).value = tag.weight;
-            newRow.getCell(columnMapping.mineralGrade).value = averageMineralGrade;
-            newRow.getCell(columnMapping.negociantTagNumber).value = tag.tagNumber;
+            if (entry.mineralType === 'mixed') {
+                newRow.getCell(columnMapping.mixedWeightOut[shipment.model]).value = tag.weight;
+                newRow.getCell(columnMapping.mixedNegociantTagNumber[shipment.model]).value = tag.tagNumber;
+                newRow.getCell(columnMapping.mixedMineralGrade[shipment.model]).value = averageMineralGrade;
+            } else {
+                newRow.getCell(columnMapping.weightOut).value = tag.weight;
+                newRow.getCell(columnMapping.mineralGrade).value = averageMineralGrade;
+                newRow.getCell(columnMapping.negociantTagNumber).value = tag.tagNumber;
+            }
             newRow.getCell(columnMapping.mineSiteStatus).value = "GREEN";
             newRow.getCell(columnMapping.mineSiteTick).value = "YES";
             newRow.getCell(columnMapping.grandTotalForExport).value = exportedWeight;
@@ -874,7 +894,7 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         currentRow += mineTags.length + 1;
     }
     if (shipment.packingListFile?.fileId) {
-        imagekit.deleteFile(shipment.packingListFile?.fileId, (err) => {
+        imagekit.deleteFile(shipment.packingListFile.fileId, (err) => {
             if (err) {
                 console.log(err);
             } else {

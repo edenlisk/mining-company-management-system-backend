@@ -335,7 +335,7 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                     $project: {
                         _id: 1, // Exclude the default _id field
                         // Include other fields from the output array as needed
-                        newId: uuidv4(6),
+                        // newId: uuidv4(6),
                         companyName: 1,
                         beneficiary: 1,
                         lotNumber: '$output.lotNumber',
@@ -364,13 +364,20 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
         )
         lots = [...lots, ...entries];
     }
+    const finalLots = []
+    for (const item of lots) {
+        const newItem = {...item};
+        newItem.index = uuidv4();
+        finalLots.push(newItem);
+    }
+
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    lots
+                    lots: finalLots
                 }
             }
         )

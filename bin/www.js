@@ -48,7 +48,6 @@ io.on('connection', (socket) => {
           }
       )
     }
-    console.log(activeUsers);
     io.emit('get-users', activeUsers);
   })
 
@@ -62,8 +61,6 @@ io.on('connection', (socket) => {
   })
 
   socket.on('current-typing', data => {
-    console.log('event received');
-    console.log(data);
     const { receiverId } = data;
     const activeUser = activeUsers.find(user => user.userId === receiverId);
     if (activeUser) {
@@ -87,11 +84,8 @@ io.on('connection', (socket) => {
   })
 
   socket.on("request-decision", ({decision, userName}) => {
-    console.log("request decision received");
     const user = activeUsers.find(user => user.username === userName);
     if (user) {
-      console.log("request decision sent");
-      console.log(userName)
       io.to(user.socketId).emit(decision === true ? "request-authorized" : "request-rejected");
     }
   })
