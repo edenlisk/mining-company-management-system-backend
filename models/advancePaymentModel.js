@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const AppError = require('../utils/appError');
+const { handleConvertToUSD } = require('../utils/helperFunctions');
 
 const advancePaymentSchema = new mongoose.Schema(
     {
@@ -51,9 +52,10 @@ const advancePaymentSchema = new mongoose.Schema(
         },
         remainingAmount: {
             type: Number,
-            default: function () {
-                return this.paymentAmount;
-            }
+        },
+        USDRate: {
+            type: Number,
+            default: null
         },
         contractName: String,
         consumed: {
@@ -91,6 +93,14 @@ advancePaymentSchema.pre('save', async function (next) {
     }
     if (this.comment) {
         this.comment = undefined;
+    }
+    if (this.isNew) {
+        if (this.currency === "RWF") {
+            this.paymentAmount = handleConvertToUSD(this.paymentAmount, this.USDRate);
+            this.remainingAmount = this.paymentAmount;
+        } else {
+            this.remainingAmount = this.paymentAmount;
+        }
     }
     next();
 })

@@ -33,6 +33,7 @@ exports.addAdvancePayment = catchAsync(async (req, res, next) => {
             currency: req.body.currency,
             location: req.body.location,
             paymentDate: req.body.paymentDate,
+            USDRate: req.body.USDRate,
             // contractName: req.file.filename,
             // message: req.body.message,
         }
