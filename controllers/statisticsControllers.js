@@ -39,6 +39,8 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
     } else if (req.params.model === "lithium" || req.params.model === "beryllium") {
         const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}});
         for (const entry of entries) {
+            if (entry.cumulativeAmount === 0 || entry.status === "sold out") continue;
+            if (entry.status === "non-sell agreement") continue;
             detailedStock.push(
                 {
                     _id: entry._id,
@@ -47,6 +49,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                     weightOut: entry.weightOut,
                     mineralGrade: entry.mineralGrade,
                     mineralPrice: entry.mineralPrice,
+                    mineralType: getModelAcronym(entry.mineralType),
                     exportedAmount: entry.exportedAmount,
                     cumulativeAmount: entry.cumulativeAmount,
                     pricePerUnit: entry.pricePerUnit,
