@@ -7,6 +7,8 @@ const {
     updateBerylliumEntry,
     trashEntries
 } = require('../controllers/berylliumControllers');
+const { deleteGradeImg } = require('../controllers/coltanControllers');
+
 const router = express.Router();
 
 router.route('/')
@@ -20,6 +22,9 @@ router.route('/:entryId')
     .get(getOneBerylliumEntry)
     .patch(updateBerylliumEntry)
     .delete(deleteBerylliumEntry)
+
+router.route('/delete-grade-img/:model/:entryId')
+    .delete(deleteGradeImg)
 
 
 

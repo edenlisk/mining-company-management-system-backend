@@ -10,8 +10,22 @@ const lithiumSchema = new mongoose.Schema(
         time: {
             type: String
         },
+        mineralType: {
+            type: String,
+            default: "lithium",
+        },
         weightIn: Number,
-        weightOut: Number,
+        weightOut: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightIn) {
+                        return val <= this.weightIn;
+                    }
+                },
+                message: "Weight out must be less than or equal to weight in."
+            }
+        },
         mineralPrice: {
             type: Number
         },
@@ -21,8 +35,28 @@ const lithiumSchema = new mongoose.Schema(
             immutable: true
         },
         mineralGrade: Number,
-        exportedAmount: Number,
-        cumulativeAmount: Number,
+        exportedAmount: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightOut) {
+                        return val <= this.weightOut;
+                    }
+                },
+                message: "Exported amount must be less than or equal to weight out."
+            }
+        },
+        cumulativeAmount: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightOut) {
+                        return val <= this.weightOut;
+                    }
+                },
+                message: "Balance amount must be less than or equal to weight out."
+            }
+        },
         paid: Number,
         unpaid: Number,
         status: String,
@@ -42,6 +76,12 @@ const lithiumSchema = new mongoose.Schema(
             type: Number,
             default: 0,
             immutable: true
+        },
+        gradeImg: {
+            filename: String,
+            createdAt: Date,
+            filePath: String,
+            fileId: String
         },
         shipments: {
             type: [

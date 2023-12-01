@@ -10,8 +10,22 @@ const berylliumSchema = new mongoose.Schema(
         time: {
             type: String
         },
+        mineralType: {
+            type: String,
+            default: "beryllium",
+        },
         weightIn: Number,
-        weightOut: Number,
+        weightOut: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightIn) {
+                        return val <= this.weightIn;
+                    }
+                },
+                message: "Weight out must be less than or equal to weight in."
+            }
+        },
         mineralPrice: {
             type: Number
         },
@@ -23,12 +37,24 @@ const berylliumSchema = new mongoose.Schema(
         mineralGrade: Number,
         exportedAmount: {
             type: Number,
-            default: 0
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightOut) {
+                        return val <= this.weightOut;
+                    }
+                },
+                message: "Exported amount must be less than or equal to weight out."
+            }
         },
         cumulativeAmount: {
             type: Number,
-            default: function () {
-                return this.weightOut;
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightOut) {
+                        return val <= this.weightOut;
+                    }
+                },
+                message: "Balance amount must be less than or equal to weight out."
             }
         },
         paid: Number,
@@ -46,6 +72,17 @@ const berylliumSchema = new mongoose.Schema(
                 default: null
             }
         },
+        rmaFee: {
+            type: Number,
+            default: 0,
+            immutable: true
+        },
+        gradeImg: {
+            filename: String,
+            createdAt: Date,
+            filePath: String,
+            fileId: String
+        },
         shipments: {
             type: [
                 {
@@ -57,11 +94,6 @@ const berylliumSchema = new mongoose.Schema(
                     }
                 }
             ]
-        },
-        rmaFee: {
-            type: Number,
-            default: 0,
-            immutable: true
         },
         rmaFeeDecision: {
             type: String,

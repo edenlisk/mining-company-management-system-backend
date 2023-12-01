@@ -7,6 +7,8 @@ const {
     deleteLithiumEntry,
     trashEntries
 } = require('../controllers/lithiumControllers');
+
+const { deleteGradeImg } = require('../controllers/coltanControllers');
 const router = express.Router();
 
 router.route('/')
@@ -20,6 +22,9 @@ router.route('/:entryId')
     .get(getOneLithiumEntry)
     .patch(updateLithiumEntry)
     .delete(deleteLithiumEntry)
+
+router.route('/delete-grade-img/:model/:entryId')
+    .delete(deleteGradeImg)
 
 
 module.exports = router;
