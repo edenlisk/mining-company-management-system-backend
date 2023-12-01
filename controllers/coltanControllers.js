@@ -204,9 +204,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
-                if (existingLot.mineralPrice) {
-                    // existingLot.pricePerUnit = (existingLot.tantalum * existingLot.mineralGrade/100).toFixed(3);
-                    // existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
+                if (existingLot.mineralPrice && lot.mineralPrice) {
                     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
                         if (existingLot.rmaFeeUSD) {
                             existingLot.unpaid = existingLot.mineralPrice - existingLot.rmaFeeUSD;
@@ -286,14 +284,18 @@ exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
 
 exports.deleteGradeImg = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
-    if (!Entry) return next(new AppError("Invalid model!", 400));
     const entry = await Entry.findById(req.params.entryId);
     if (!entry) return next(new AppError("Unable to delete gradeImg!", 400));
-    const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
-    // await imagekit.deleteFile(lot.gradeImg.fileId);
-    lot.gradeImg = undefined;
+    if (["lithium", "beryllium"].includes(req.params.model)) {
+        entry.gradeImg = undefined;
+        await entry.save({validateModifiedOnly: true});
+    } else {
+        const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+        // await imagekit.deleteFile(lot.gradeImg.fileId);
+        lot.gradeImg = undefined;
+        await entry.save({validateModifiedOnly: true});
+    }
 
-    await entry.save({validateModifiedOnly: true});
     res
         .status(204)
         .json(

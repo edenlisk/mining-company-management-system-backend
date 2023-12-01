@@ -54,6 +54,118 @@ exports.entry = {
     // }
 }
 
+exports.lotSchema = new mongoose.Schema(
+    {
+        lotNumber: Number,
+        weightOut: Number,
+        mineralGrade: Number,
+        mineralPrice: Number,
+        exportedAmount: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightOut) {
+                        return val <= this.weightOut;
+                    }
+                },
+                message: "Exported amount must be less than or equal to weight out."
+            }
+        },
+        cumulativeAmount: {
+            type: Number,
+            validate: {
+                validator: function (val) {
+                    if (val && this.weightOut) {
+                        return val <= this.weightOut;
+                    }
+                },
+                message: "Balance amount must be less than or equal to weight out."
+            }
+        },
+        rmaFee: Number,
+        USDRate: Number,
+        rmaFeeUSD: Number,
+        rmaFeeDecision: {
+            type: String,
+            default: "pending"
+        },
+        paid: Number,
+        unpaid: {
+            type: Number,
+        },
+        settled: Boolean,
+        pricePerUnit: Number,
+        nonSellAgreement: {
+            weight: {
+                type: Number,
+                default: 0
+            },
+            date:  {
+                type: Date,
+                default: null
+            }
+        },
+        gradeImg: {
+            filename: String,
+            createdAt: Date,
+            filePath: String,
+            fileId: String
+        },
+        shipments: {
+            type: [
+                {
+                    shipmentNumber: String,
+                    weight: Number,
+                    date: {
+                        type: Date,
+                        default: null
+                    }
+                }
+            ]
+        },
+        status: {
+            type: String,
+            default: "in stock"
+        },
+        paymentHistory: {
+            type: [
+                {
+                    paymentId: mongoose.Schema.Types.ObjectId,
+                    beneficiary: {
+                        type: String,
+                        default: null
+                    },
+                    nationalId: {
+                        type: String,
+                        default: null
+                    },
+                    phoneNumber:  {
+                        type: String,
+                        default: null
+                    },
+                    location: {
+                        type: Object,
+                        default: null
+                    },
+                    currency:  {
+                        type: String,
+                        default: null
+                    },
+                    paymentDate: {
+                        type: Date,
+                        default: null
+                    },
+                    paymentAmount: {
+                        type: Number,
+                        default: null
+                    }
+                }
+            ],
+            default: []
+        }
+    }
+)
+
 
 // const entrySchema = new mongoose.Schema(
 //     {

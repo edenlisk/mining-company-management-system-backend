@@ -123,7 +123,6 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     // req.user.userId = entry._id;
     // const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
-        console.log("files found");
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
             // const exifData = await exifreader.load(file.path);
@@ -205,9 +204,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
-                if (existingLot.mineralPrice) {
-                    // existingLot.pricePerUnit = (existingLot.tantalum * existingLot.mineralGrade/100).toFixed(3);
-                    // existingLot.mineralPrice = (existingLot.pricePerUnit * existingLot.weightOut).toFixed(3);
+                if (existingLot.mineralPrice && lot.mineralPrice) {
                     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
                         if (existingLot.rmaFeeUSD) {
                             existingLot.unpaid = existingLot.mineralPrice - existingLot.rmaFeeUSD;
