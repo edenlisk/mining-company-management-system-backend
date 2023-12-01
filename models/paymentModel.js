@@ -181,7 +181,7 @@ paymentSchema.pre('save', async function (next) {
         await entry.save({validateModifiedOnly: true});
     } else if (["lithium", "beryllium"].includes(this.model)) {
         const entry = await Entry.findOne({_id: this.entryId});
-        if (entry.settled) return next(new AppError("This lot is already paid", 400));
+        if (entry.settled) return next(new AppError("This entry is already paid", 400));
         if (this.paymentInAdvanceId) {
             const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
             if (!payment.consumed) {
@@ -190,6 +190,12 @@ paymentSchema.pre('save', async function (next) {
                     entry.unpaid -= entry.mineralPrice;
                     entry.settled = true;
                     payment.remainingAmount -= entry.mineralPrice;
+                    payment.consumptionDetails.push(
+                        {
+                            date: (new Date()).toDateString(),
+                            comment: `Deducted ${entry.mineralPrice} for paying mineral price of ${this.entryId} of minerals supplied on ${entry.supplyDate}.`
+                        }
+                    )
                     const { beneficiary, nationalId, phoneNumber, location, email, currency } = payment;
                     entry.paymentHistory.push(
                         {
@@ -221,7 +227,7 @@ paymentSchema.pre('save', async function (next) {
                     location,
                     email,
                     currency,
-                    paymentDate: this.paymentDate,
+                    paymentDate: new Date(),
                     paymentAmount: this.paymentAmount
                 }
             );
