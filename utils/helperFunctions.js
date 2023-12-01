@@ -505,6 +505,10 @@ const managingDirector = {
         view: true,
         authorize: true,
         reject: true
+    },
+    nonSellAgreementWeight: {
+        view: true,
+        edit: true
     }
 }
 
@@ -829,6 +833,10 @@ const accountant = {
         view: true,
         authorize: true,
         reject: true
+    },
+    nonSellAgreementWeight: {
+        view: true,
+        edit: true
     }
 }
 
