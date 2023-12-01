@@ -87,6 +87,28 @@ exports.getOneShipment = catchAsync(async (req, res, next) => {
             }
             shipmentLots.push(lotInfo);
         }
+    } else if (["lithium", "beryllium"].includes(shipment.model)) {
+        for (const item of shipment.entries) {
+            const entry = await Entry.findById(item.entryId);
+            if (!entry) continue;
+            const lotInfo = {
+                entryId: entry._id,
+                supplyDate: entry.supplyDate,
+                companyName: entry.companyName,
+                beneficiary: entry.beneficiary,
+                mineralType: getModelAcronym(entry.mineralType),
+                weightIn: entry.weightIn,
+                weightOut: entry.weightOut,
+                // lotNumber: lot.lotNumber,
+                exportedAmount: entry.exportedAmount,
+                balance: entry.cumulativeAmount,
+                mineralGrade: entry.mineralGrade,
+                mineralPrice: entry.mineralPrice,
+                [shipment.shipmentNumber]: item.quantity,
+                index: uuidv4(),
+            }
+            shipmentLots.push(lotInfo);
+        }
     }
     res
         .status(200)
@@ -145,8 +167,13 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                         lot.cumulativeAmount = item.balance;
                         shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (value.lotNumber !== item.lotNumber));
                     } else {
-                        const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber));
-                        shipmentEntry.quantity = item[shipment.shipmentNumber];
+                        // const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber));
+                        shipment.entries.map(value => {
+                            if ((value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber)) {
+                                value.quantity = item[shipment.shipmentNumber];
+                            }
+                        })
+                        // shipmentEntry.quantity = item[shipment.shipmentNumber];
                         lotShipment.weight = item[shipment.shipmentNumber];
                         lot.exportedAmount = item.exportedAmount;
                         lot.cumulativeAmount = item.balance;
@@ -161,19 +188,37 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                 await entry.save({validateModifiedOnly: true});
             }
         } else if (["lithium", "beryllium"].includes(shipment.model)) {
-            // TODO 23: Implement shipment update for lithium and beryllium
+            // TODO 23: Implement shipment update for lithium and beryllium => done
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
-                const lotShipment = entry.shipments.find(value => value.shipmentNumber === this.shipmentNumber);
+                const lotShipment = entry.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
                 if (lotShipment) {
-                    item.quantity += lotShipment.weight;
-                    lotShipment.weight += item.quantity;
-                    entry.exportedAmount += item.quantity;
-                    entry.cumulativeAmount -= item.quantity;
+                    if (item[shipment.shipmentNumber] === 0) {
+                        entry.shipments = entry.shipments.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
+                        entry.exportedAmount = item.exportedAmount;
+                        entry.cumulativeAmount = item.balance;
+                        shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)));
+                    } else {
+                        // const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)));
+                        shipment.entries.map(value => {
+                            if ((value.entryId.equals(item.entryId))) {
+                                value.quantity = item[shipment.shipmentNumber];
+                            }
+                        })
+                        // shipmentEntry.quantity = item[shipment.shipmentNumber];
+                        lotShipment.weight = item[shipment.shipmentNumber];
+                        entry.exportedAmount = item.exportedAmount;
+                        entry.cumulativeAmount = item.balance;
+                    }
                 } else {
-                    entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                    entry.exportedAmount += item.quantity;
-                    entry.cumulativeAmount -= item.quantity;
+                    if (item[shipment.shipmentNumber] === 0) continue;
+                    entry.shipments.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
+                    entry.exportedAmount = item.exportedAmount;
+                    entry.cumulativeAmount = item.balance;
+                    shipment.entries.push({entryId: item.entryId, quantity: item[shipment.shipmentNumber]});
+                    // entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
+                    // entry.exportedAmount += item.quantity;
+                    // entry.cumulativeAmount -= item.quantity;
                 }
                 await entry.save({validateModifiedOnly: true});
             }
