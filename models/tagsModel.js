@@ -37,7 +37,8 @@ const tagsSchema = new mongoose.Schema(
         }
     },
     {
-        timestamps: true
+        timestamps: true,
+        indexes: [{unique: true, fields: ['tagNumber']}]
     }
 )
 
