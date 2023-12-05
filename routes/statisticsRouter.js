@@ -19,8 +19,8 @@ router.route('/payment-history/:model/:entryId/:lotNumber')
 router.route('/stock-summary')
     .get(stockSummary)
 
-router.route('/current-stock')
-    .get(currentStock)
+router.route('/current-stock/:year')
+    .post(currentStock)
 
 router.route('/last-created')
     .get(lastCreatedEntries)
