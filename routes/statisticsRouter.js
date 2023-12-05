@@ -4,6 +4,7 @@ const {
     paymentHistory,
     stockSummary,
     lastCreatedEntries,
+    currentStock,
     topSuppliers,
     unsettledLots, generateReconciliationExcelTable
 } = require('../controllers/statisticsControllers');
@@ -17,6 +18,9 @@ router.route('/payment-history/:model/:entryId/:lotNumber')
 
 router.route('/stock-summary')
     .get(stockSummary)
+
+router.route('/current-stock')
+    .get(currentStock)
 
 router.route('/last-created')
     .get(lastCreatedEntries)

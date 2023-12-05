@@ -47,7 +47,8 @@ exports.createLithiumEntry = catchAsync(async (req, res, next) => {
             pricePerUnit: null,
             unpaid: null,
             settled: false,
-            status: "in stock"
+            status: "in stock",
+            comment: req.body.comment,
         }
     );
     res
@@ -124,6 +125,7 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
 
         }
     }
+    if (req.body.weightIn) entry.weightIn = req.body.weightIn;
     if (req.body.weightOut) entry.weightOut = req.body.weightOut;
     if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
     if (req.body.pricePerUnit) entry.pricePerUnit = req.body.pricePerUnit;
@@ -153,6 +155,7 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
     }
     if (req.body.exportedAmount) entry.exportedAmount = req.body.exportedAmount;
     if (req.body.status) entry.status = req.body.status;
+    if (req.body.comment) entry.comment = req.body.comment;
     await entry.save({validateModifiedOnly: true});
     res
         .status(202)

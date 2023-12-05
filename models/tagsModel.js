@@ -16,9 +16,14 @@ const tagsSchema = new mongoose.Schema(
             type: String,
             default: null
         },
+        supplierId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "Supplier",
+        },
         entryId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Coltan" || "Wolframite" || "Cassiterite"
+            ref: "Coltan" || "Wolframite" || "Cassiterite",
+            default: null
         },
         status: {
             type: String,

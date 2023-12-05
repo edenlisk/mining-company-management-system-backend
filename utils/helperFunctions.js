@@ -10,6 +10,7 @@ const Beryllium = require('../models/berylliumEntryModel');
 const Lithium = require('../models/lithiumEntryModel');
 const Tag = require('../models/tagsModel');
 const AppError = require('./appError');
+const mongoose = require('mongoose');
 const catchAsync = require('./catchAsync');
 
 
@@ -509,6 +510,16 @@ const managingDirector = {
     nonSellAgreementWeight: {
         view: true,
         edit: true
+    },
+    tags: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    comment: {
+        view: true,
+        create: true,
+        edit: true,
     }
 }
 
@@ -983,7 +994,8 @@ exports.toInitialCase = str => {
 
 exports.updateMineTags = async (mineTags, entry) => {
     for (const tag of mineTags) {
-        const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine", entryId: entry._id});
+        if (tag.tagNumber === "") continue;
+        const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine"});
         if (!existingTag) {
             const newTag = await Tag.create(
                 {
@@ -991,6 +1003,7 @@ exports.updateMineTags = async (mineTags, entry) => {
                     tagType: "mine",
                     weight: Number(tag.weight),
                     sheetNumber: tag.sheetNumber,
+                    supplierId: entry.supplierId,
                     // status: tag.status,
                     entryId: entry._id,
                 }
@@ -1002,6 +1015,11 @@ exports.updateMineTags = async (mineTags, entry) => {
             if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
             if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
             if (existingTag.sheetNumber !== tag.sheetNumber) existingTag.sheetNumber = tag.sheetNumber;
+            if (existingTag.supplierId !== entry.supplierId) existingTag.supplierId = entry.supplierId;
+            if (existingTag.entryId !== entry._id) existingTag.entryId = entry._id;
+            if (!entry.mineTags.includes(new mongoose.Types.ObjectId(existingTag._id))) {
+                entry.mineTags.push(existingTag._id);
+            }
             // if (existingTag.status !== tag.status) existingTag.status = tag.status;
             await existingTag.save({validateModifiedOnly: true});
         }
@@ -1028,6 +1046,11 @@ exports.updateNegociantTags = async (negociantTags, entry) => {
             if (existingTag.tagNumber !== tag.tagNumber) existingTag.tagNumber = tag.tagNumber;
             if (existingTag.weight !== tag.weight) existingTag.weight = tag.weight;
             if (existingTag.sheetNumber !== tag.sheetNumber) existingTag.sheetNumber = tag.sheetNumber;
+            if (existingTag.entryId !== entry._id) existingTag.entryId = entry._id;
+
+            if (!entry.negociantTags.includes(new mongoose.Types.ObjectId(existingTag._id))) {
+                entry.negociantTags.push(existingTag._id);
+            }
             // if (existingTag.status !== tag.status) existingTag.status = tag.status;
             await existingTag.save({validateModifiedOnly: true});
         }
@@ -1041,4 +1064,23 @@ exports.getModelAcronym = (model) => {
     if (model.toLowerCase() === "mixed") return "MIXED";
     if (model.toLowerCase() === "lithium") return "LITHIUM";
     if (model.toLowerCase() === "beryllium") return "BERYLLIUM";
+}
+
+exports.completeYearStock = (unCompleteStock, currentStock, model) => {
+    const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+
+    const dataMap = new Map(unCompleteStock.map(item => [item._id, item]));
+
+    const result = allMonths.map(month => ({
+        _id: month,
+        totalWeightOut: dataMap.has(month) ? dataMap.get(month).totalWeightOut : 0
+    }));
+
+    result.map(value => {
+        if (!currentStock[model])  {
+            currentStock[model] = [value.totalWeightOut];
+        } else {
+            currentStock[model].push(value.totalWeightOut);
+        }
+    })
 }

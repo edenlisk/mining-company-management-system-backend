@@ -42,6 +42,10 @@ exports.entry = {
     time: {
         type: String
     },
+    comment: {
+        type: String,
+        default: null
+    }
     // visible: {
     //     type: Boolean,
     //     default: true
@@ -162,6 +166,10 @@ exports.lotSchema = new mongoose.Schema(
                 }
             ],
             default: []
+        },
+        comment: {
+            type: String,
+            default: null
         }
     }
 )

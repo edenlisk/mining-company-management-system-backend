@@ -41,11 +41,12 @@ exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
             exportedAmount: 0,
             paid: 0,
             mineralPrice: null,
-            mineralGrade: null,
+            mineralGrade: req.body.body,
             pricePerUnit: null,
             unpaid: null,
             settled: false,
-            status: "in stock"
+            status: "in stock",
+            comment: req.body.comment,
         }
     );
     res
@@ -122,6 +123,7 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
         }
     }
     if (req.body.weightOut) entry.weightOut = req.body.weightOut;
+    if (req.body.weightIn) entry.weightIn = req.body.weightIn;
     if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
     if (req.body.pricePerUnit) entry.pricePerUnit = req.body.pricePerUnit;
     if (req.body.nonSellAgreement?.weight) entry.nonSellAgreement.weight = req.body.nonSellAgreement?.weight;
@@ -149,6 +151,7 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
         }
     }
     if (req.body.exportedAmount) entry.exportedAmount = req.body.exportedAmount;
+    if (req.body.comment) entry.comment = req.body.comment;
     if (req.body.status) entry.status = req.body.status;
     await entry.save({validateModifiedOnly: true});
     res

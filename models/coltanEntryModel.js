@@ -4,7 +4,21 @@ const Supplier = require('./supplierModel');
 const AppError = require('../utils/appError');
 
 const coltanLotSchema = lotSchema.clone();
-coltanLotSchema.add({tantalum: Number});
+coltanLotSchema.add(
+    {
+        tantalum: {
+            type: Number
+        },
+        niobium: {
+            type: Number,
+            default: null
+        },
+        iron: {
+            type: Number,
+            default: null
+        }
+    }
+);
 
 
 const coltanSchema = new mongoose.Schema(

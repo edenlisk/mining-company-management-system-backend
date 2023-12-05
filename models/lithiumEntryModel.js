@@ -135,6 +135,10 @@ const lithiumSchema = new mongoose.Schema(
             ],
             default: []
         },
+        comment: {
+            type: String,
+            default: null
+        }
     },
     {
         timestamps: true,

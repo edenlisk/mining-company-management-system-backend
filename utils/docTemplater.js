@@ -335,6 +335,43 @@ exports.generate = catchAsync(async (req, res, next) => {
     ;
 })
 
+exports.generateLabReport = async (entry, user) => {
+
+    const content = fs.readFileSync(
+        path.resolve(`${__dirname}/../`, "dd template.docx"),
+        "binary"
+    );
+    const zip = new PizZip(content);
+
+    const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+    });
+
+    const reportInfo = {
+        mineralGrade: "",
+        supplierName: "",
+        supplyDate: "",
+        dateOfReceipt: "",
+        mineralType: "",
+        coltanContent: "",
+        cassiteriteContent: "",
+        nobeliumContent: "",
+        wolframiteContent: "",
+        ironContent: "",
+        mainMaterial: "",
+        mainMaterialContent: "",
+        generatedBy: "",
+        nameOfCompany: "",
+    }
+
+    const buffer = doc.render({
+        ...reportInfo,
+    }).getZip().generate({type: "nodebuffer", compression: "DEFLATE",})
+
+    fs.writeFileSync(path.resolve(__dirname, "output.docx"), buffer);
+}
+
 
 
 // const document = {

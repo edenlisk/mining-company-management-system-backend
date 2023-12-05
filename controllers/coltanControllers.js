@@ -12,6 +12,7 @@ const Settings = require('../models/settingsModel');
 const { handleConvertToUSD } = require('../utils/helperFunctions');
 const imagekit = require('../utils/imagekit');
 const { getModel, updateMineTags, updateNegociantTags } = require('../utils/helperFunctions');
+const { generateLabReport } = require('../utils/docTemplater');
 const { trackUpdateModifications,
     trackDeleteOperations,
     trackCreateOperations } = require('./activityLogsControllers');
@@ -56,6 +57,7 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
     );
     if (req.body.mineralType) entry.mineralType = req.body.mineralType;
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
+    if (req.body.comment) entry.comment = req.body.comment;
     entry.weightIn = req.body.weightIn;
     entry.supplyDate = req.body.supplyDate;
     entry.time = req.body.time;
@@ -179,6 +181,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     if (req.body.mineTags?.length > 0) await updateMineTags(req.body.mineTags, entry);
     if (req.body.negociantTags?.length > 0) await updateNegociantTags(req.body.negociantTags, entry);
     const { rmaFeeColtan } = await Settings.findOne();
+    if (req.body.comment) entry.comment = req.body.comment;
     if (req.body.output) {
         for (const lot of req.body.output) {
             const existingLot = entry.output.find(value => value.lotNumber === lot.lotNumber);
@@ -221,6 +224,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                         }
                     }
                 }
+                if (lot.comment) existingLot.comment = lot.comment;
             } else {
                 entry.output.push(
                     {
@@ -239,7 +243,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                         unpaid: null,
                         settled: false,
                         tantalum: null,
-                        status: "in stock"
+                        status: "in stock",
                     }
                 )
             }
@@ -301,6 +305,25 @@ exports.deleteGradeImg = catchAsync(async (req, res, next) => {
         .json(
             {
                 status: "Success"
+            }
+        )
+    ;
+})
+
+exports.generateLabReport = catchAsync(async (req, res, next) => {
+    const Entry = getModel(req.params.model);
+    const entry = await Entry.findById(req.params.entryId);
+    const lot = entry.output?.find(item => item.lotNumber === parseInt(req.params.lotNumber));
+    if (!entry) return next(new AppError("Unable to generate lab report!", 400));
+    const labReport = await generateLabReport(entry, lot);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    labReport
+                }
             }
         )
     ;

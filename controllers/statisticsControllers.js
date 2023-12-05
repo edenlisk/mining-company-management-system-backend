@@ -1,4 +1,4 @@
-const {getModel, getModelAcronym} = require('../utils/helperFunctions');
+const { getModel, getModelAcronym, completeYearStock } = require('../utils/helperFunctions');
 const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
@@ -72,83 +72,93 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
 })
 
 exports.currentStock = catchAsync(async (req, res, next) => {
-    const Cassiterite = getModel('cassiterite');
-    const Coltan = getModel('coltan');
-    const Wolframite = getModel('wolframite');
-    const Lithium = getModel('lithium');
-    const Beryllium = getModel('beryllium');
-    const cassiteriteStock = await Cassiterite.aggregate(
-        [
-            {
-                $unwind: "$output"
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalCumulativeAmount: {$sum: "$output.cumulativeAmount"}
+    const models = ["coltan", "cassiterite", "wolframite"];
+    const generalModels = ["lithium", "beryllium"];
+    const currentStock = {};
+    for (const model of models) {
+        const Entry = getModel(model);
+        const yearStock = await Entry.aggregate(
+            [
+                {
+                    $match: {
+                        "supplyDate": { $gte: new Date(new Date().getFullYear(), 0, 1) }
+                    }
+                },
+                {
+                    $unwind: "$output"
+                },
+                {
+                    $project: {
+                        month: { $month: "$supplyDate" },
+                        totalWeightOut: "$output.weightOut",
+                    }
+                },
+                {
+                    $group: {
+                        _id: { month: "$month" },
+                        totalWeightOut: { $sum: "$totalWeightOut" },
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$_id.month",
+                        totalWeightOut: { $sum: "$totalWeightOut" },
+                    }
+                },
+                {
+                    $sort: {
+                        _id: 1
+                    }
                 }
-            }
-        ]
-    );
-    const coltanStock = await Coltan.aggregate(
-        [
-            {
-                $unwind: "$output"
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalCumulativeAmount: {$sum: "$output.cumulativeAmount"}
+            ]
+        )
+        if (!yearStock) continue;
+        completeYearStock(yearStock, currentStock, model);
+    }
+    for (const model of generalModels) {
+        const Entry = getModel(model);
+        const yearStock = await Entry.aggregate(
+            [
+                {
+                    $match: {
+                        "supplyDate": { $gte: new Date(new Date().getFullYear(), 0, 1) }
+                    }
+                },
+                {
+                    $project: {
+                        month: { $month: "$supplyDate" },
+                        totalWeightOut: { $sum: "$weightOut" },
+                    }
+                },
+                {
+                    $group: {
+                        _id: { month: "$month" },
+                        totalWeightOut: { $first: "$totalWeightOut" },
+                    }
+                },
+                {
+                    $group: {
+                        _id: "$_id.month",
+                        totalWeightOut: { $sum: "$totalWeightOut" },
+                    }
+                },
+                {
+                    $sort: {
+                        _id: 1
+                    }
                 }
-            }
-        ]
-    )
-    const wolframiteStock = await Wolframite.aggregate(
-        [
-            {
-                $unwind: "$output"
-            },
-            {
-                $group: {
-                    _id: null,
-                    totalCumulativeAmount: {$sum: "$output.cumulativeAmount"}
-                }
-            }
-        ]
-    )
-    const berylliumStock = await Beryllium.aggregate(
-        [
-            {
-                $group: {
-                    _id: null,
-                    totalCumulativeAmount: {$sum: "$cumulativeAmount"}
-                }
-            }
-        ]
-    )
-    const lithumStock = await Lithium.aggregate(
-        [
-            {
-                $group: {
-                    _id: null,
-                    totalCumulativeAmount: {$sum: "$cumulativeAmount"}
-                }
-            }
-        ]
-    )
+            ]
+        )
+        if (!yearStock) continue;
+        completeYearStock(yearStock, currentStock, model);
+    }
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    stock: {
-                        coltanStock,
-                        cassiteriteStock,
-                        wolframiteStock,
-                        lithumStock,
-                        berylliumStock
-                    }
+                    currentStock
                 }
             }
         )
@@ -184,14 +194,11 @@ exports.paymentHistory = catchAsync(async (req, res, next) => {
 exports.stockSummary = catchAsync(async (req, res, next) => {
     const models = ["cassiterite", "coltan", "wolframite"];
     const specificModels = ["lithium", "beryllium"];
-    const stock = {};
+    const stock = [];
     for (const specificModel of specificModels) {
         const Entry = getModel(specificModel);
         const entry = await Entry.aggregate(
             [
-                {
-                    $match: {visible: true}
-                },
                 {
                     $group: {
                         _id: null, // Group all documents into a single group
@@ -206,7 +213,8 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 }
             ]
         )
-        stock[specificModel] = entry[0].balance;
+        stock.push({[specificModel]: entry[0].balance, name: specificModel});
+
     }
     for (const model of models) {
         const Entry = getModel(model);
@@ -229,7 +237,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 }
             ]
         );
-        stock[model] = entry[0].balance;
+        stock.push({[model]: entry[0].balance, name: model});
     }
 
     res

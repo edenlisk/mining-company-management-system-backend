@@ -53,6 +53,7 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
     entry.mineralType = req.body.mineralType;
     entry.numberOfTags = req.body.numberOfTags;
     entry.weightIn = req.body.weightIn;
+    if (req.body.comment) entry.comment = req.body.comment;
     entry.supplyDate = req.body.supplyDate;
     entry.time = req.body.time;
     if (req.body.output) {
@@ -172,6 +173,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;
     if (req.body.companyName) entry.companyName = req.body.companyName;
     if (req.body.beneficiary) entry.beneficiary = req.body.beneficiary;
+    if (req.body.comment) entry.comment = req.body.comment;
     if (req.body.TINNumber) entry.TINNumber = req.body.TINNumber;
     if (req.body.mineTags) await updateMineTags(req.body.mineTags, entry);
     if (req.body.negociantTags) await updateNegociantTags(req.body.negociantTags, entry);
@@ -217,6 +219,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                         }
                     }
                 }
+                if (lot.comment) existingLot.comment = lot.comment;
             }
         }
     }
