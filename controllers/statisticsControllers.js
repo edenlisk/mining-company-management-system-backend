@@ -213,7 +213,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 }
             ]
         )
-        stock.push({[specificModel]: entry[0].balance, name: specificModel});
+        stock.push({value: entry[0].balance, name: specificModel});
 
     }
     for (const model of models) {
@@ -237,7 +237,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 }
             ]
         );
-        stock.push({[model]: entry[0].balance, name: model});
+        stock.push({value: entry[0].balance, name: model});
     }
 
     res
