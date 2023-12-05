@@ -1067,15 +1067,13 @@ exports.getModelAcronym = (model) => {
 }
 
 exports.completeYearStock = (unCompleteStock, currentStock, model) => {
+    // explain code
     const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
-
     const dataMap = new Map(unCompleteStock.map(item => [item._id, item]));
-
     const result = allMonths.map(month => ({
         _id: month,
         totalWeightOut: dataMap.has(month) ? dataMap.get(month).totalWeightOut : 0
     }));
-
     result.map(value => {
         if (!currentStock[model])  {
             currentStock[model] = [value.totalWeightOut];
