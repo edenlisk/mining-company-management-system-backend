@@ -361,7 +361,7 @@ exports.generate = catchAsync(async (req, res, next) => {
     }
 
     if (fileUrl) {
-        await convertDocx2Html(fileUrl, res);
+        await convertDocx2Html(fileUrl, res, next);
     }
 
     // imagekit.createFolder({

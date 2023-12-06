@@ -1,6 +1,7 @@
 const docx2html = require('docx2html');
 const fs = require('fs');
-exports.convertDocx2Html = async (url, res) => {
+const AppError = require('../utils/appError');
+exports.convertDocx2Html = async (url, res, next) => {
     const response = await fetch(url);
     if (response.ok) {
         const buffer = await response.arrayBuffer();
@@ -27,6 +28,8 @@ exports.convertDocx2Html = async (url, res) => {
                 }
             )
         ;
+    } else {
+        return next(new AppError("Error in converting docx to html, please try again", 400));
     }
 }
 
