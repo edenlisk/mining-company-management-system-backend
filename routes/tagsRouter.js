@@ -1,17 +1,17 @@
 const { Router } = require('express');
-
 const { updateTag, getAllTags, createTag, getSupplierTags } = require('../controllers/tagsControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 
 const router = Router();
 
 router.route('/')
-    .get(getAllTags)
-    .post(createTag)
+    .get(protect, getAllTags)
+    .post(protect, createTag)
 
 router.route('/:tagNumber')
-    .patch(updateTag)
+    .patch(protect, updateTag)
 
 router.route('/supplier/:supplierId')
-    .get(getSupplierTags)
+    .get(protect, getSupplierTags)
 
 module.exports = router;

@@ -8,23 +8,21 @@ const {
     uploadGradeImg,
     trashEntries
 } = require('../controllers/wolframiteControllers');
-const { deleteGradeImg } = require('../controllers/coltanControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 
 const router = express.Router();
 
 router.route('/')
-    .get(getAllWolframiteEntries)
-    .post(createWolframiteEntry)
+    .get(protect, getAllWolframiteEntries)
+    .post(protect, createWolframiteEntry)
 
 router.route('/trash')
     .get(trashEntries)
 
 router.route('/:entryId')
-    .get(getOneWolframiteEntry)
-    .patch(uploadGradeImg.any(), updateWolframiteEntry)
-    .delete(deleteWolframiteEntry)
+    .get(protect, getOneWolframiteEntry)
+    .patch(protect, uploadGradeImg.any(), updateWolframiteEntry)
+    .delete(protect, deleteWolframiteEntry)
 
-router.route('/delete-grade-img/:model/:entryId')
-    .delete(deleteGradeImg)
 
 module.exports = router;

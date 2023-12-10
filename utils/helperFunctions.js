@@ -1,6 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const multer = require('multer');
+const axios = require("axios");
+const FormData = require('form-data');
 const imagekit = require('./imagekit');
 const Supplier = require('../models/supplierModel');
 const Coltan = require('../models/coltanEntryModel');
@@ -1081,4 +1083,31 @@ exports.completeYearStock = (unCompleteStock, currentStock, model) => {
             currentStock[model].push(value.totalWeightOut);
         }
     })
+}
+
+exports.getSFDT = async (buffer, res, next, options={}) => {
+    const formData = new FormData();
+    formData.append('file', buffer, {
+        filename: 'file.docx', // Specify the desired file name
+        contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // Set the content type for DOCX
+    });
+    axios.post('https://services.syncfusion.com/react/production/api/documenteditor/Import', formData, {
+        headers: formData.getHeaders() // Set the appropriate headers for FormData
+    })
+        .then((response) => {
+            res
+                .status(200)
+                .json(
+                    {
+                        status: "Success",
+                        sfdt: response.data,
+                        ...options
+                    }
+                )
+            ;
+        })
+        .catch((error) => {
+            return next(new AppError(error.message, 400));
+            // console.error('Error:', error.message); // Handle any errors
+        });
 }

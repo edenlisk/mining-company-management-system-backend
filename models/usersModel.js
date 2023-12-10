@@ -50,7 +50,7 @@ const userSchema = new mongoose.Schema(
         role: {
             type: String,
             required: [true, "Please provide user role"],
-            enum: ["managingDirector", "operationsManager", "accountant", "traceabilityOfficer", "storekeeper", "ceo"],
+            enum: ["managingDirector", "operationsManager", "accountant", "traceabilityOfficer", "storekeeper", "ceo", "laboratoryOfficer"],
             default: () => {
                 return "storekeeper"
             }
@@ -82,6 +82,16 @@ const userSchema = new mongoose.Schema(
                 },
                 message: "Password does not match"
             },
+        },
+        profilePicture: {
+            fileId: {
+                type: String,
+                default: null,
+            },
+            url: {
+                type: String,
+                default: "https://ik.imagekit.io/mqrq0nywc/users/default-avatar.jpg",
+            }
         },
         active: {
             type: Boolean,

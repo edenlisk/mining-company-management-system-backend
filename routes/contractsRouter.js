@@ -7,20 +7,21 @@ const {
     deleteContract,
     downloadContract,
     getBuyerContracts } = require('../controllers/contractControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 const router = express.Router();
 
 router.route('/')
-    .get(getAllContracts)
-    .post(uploadContract, createContract)
+    .get(protect, getAllContracts)
+    .post(uploadContract.single('contract'), createContract)
 
 
 router.route('/:buyerId')
-    .get(getBuyerContracts)
+    .get(protect, getBuyerContracts)
 
 router.route('/:contractId')
-    .post(downloadContract)
-    .patch(uploadContract, updateContract)
-    .delete(deleteContract)
+    .post(protect, downloadContract)
+    .patch(protect, uploadContract.single('contract'), updateContract)
+    .delete(protect, deleteContract)
 
 
 module.exports = router;

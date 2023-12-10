@@ -1,16 +1,17 @@
 const express = require('express');
 const { addMessage, getMessages, getLastMessage } = require('../controllers/messageControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 const router = express.Router();
 
 
 
 router.route('/')
-    .post(addMessage)
+    .post(protect, addMessage)
 
 router.route('/:chatId')
-    .get(getMessages)
+    .get(protect, getMessages)
 
 router.route('/last/:chatId')
-    .get(getLastMessage)
+    .get(protect, getLastMessage)
 
 module.exports = router;

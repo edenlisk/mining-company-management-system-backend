@@ -5,14 +5,15 @@ const {
     getOneAdvancePayment,
     uploadContract
 } = require('../controllers/advancePaymentControllers');
+const {protect, restrictTo} = require('../controllers/authControllers');
 const router = Router();
 
 router.route('/')
-    .get(getAllAdvancePayments)
-    .post(uploadContract.single("advancePaymentContract"), addAdvancePayment)
+    .get(protect, getAllAdvancePayments)
+    .post(protect, uploadContract.single("advancePaymentContract"), addAdvancePayment)
 
 router.route('/paymentId')
-    .get(getOneAdvancePayment)
+    .get(protect, getOneAdvancePayment)
 
 
 module.exports = router;

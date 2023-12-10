@@ -6,6 +6,7 @@ const { getAllDueDiligenceDocuments,
     deleteDiligence,
     downloadDueDiligenceDocument,
     updateDiligence } = require('../controllers/dueDiligenceControllers');
+// const { protect, restrictTo } = require('../controllers/authControllers');
 
 router.route('/')
     .get(getAllDueDiligenceDocuments)

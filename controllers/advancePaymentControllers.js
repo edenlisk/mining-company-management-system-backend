@@ -3,7 +3,7 @@ const multer = require("multer");
 const AdvancePayment = require('../models/advancePaymentModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-
+const { trackUpdateModifications, trackCreateOperations } = require('../controllers/activityLogsControllers');
 
 exports.getAllAdvancePayments = catchAsync(async (req, res, next) => {
     const payments = await AdvancePayment.find();
@@ -21,7 +21,8 @@ exports.getAllAdvancePayments = catchAsync(async (req, res, next) => {
 })
 
 exports.addAdvancePayment = catchAsync(async (req, res, next) => {
-    await AdvancePayment.create(
+    const log = trackCreateOperations("payment", req);
+    const payment = await AdvancePayment.create(
         {
             companyName: req.body.companyName,
             supplierId: req.body.supplierId ? req.body.supplierId : null,
@@ -38,6 +39,10 @@ exports.addAdvancePayment = catchAsync(async (req, res, next) => {
             // message: req.body.message,
         }
     )
+    if (!payment) {
+        log.status = "failed";
+    }
+    await log.save({validateBeforeSave: false});
     res
         .status(202)
         .json(
@@ -99,7 +104,7 @@ const multerStorage = multer.diskStorage(
 
 const multerFilter = (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);
-    const allowExtension = ['.doc', '.docx', '.pdf'];
+    const allowExtension = ['.doc', '.docx', '.pdf', '.png', '.jpg', '.jpeg'];
     if (allowExtension.includes(fileExtension.toLowerCase())) {
         cb(null, true);
     } else {

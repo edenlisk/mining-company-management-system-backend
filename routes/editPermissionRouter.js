@@ -1,14 +1,15 @@
 const { Router } = require('express');
 const { getAllEditRequests, getOneEditRequest, createEditRequest, updateEditRequest } = require('../controllers/editPermissionControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 const router = Router();
 
 router.route('/')
-    .get(getAllEditRequests)
-    .post(createEditRequest)
+    .get(protect, getAllEditRequests)
+    .post(protect, createEditRequest)
 
 router.route('/:requestId')
-    .get(getOneEditRequest)
-    .patch(updateEditRequest)
+    .get(protect, getOneEditRequest)
+    .patch(protect, updateEditRequest)
 
 
 module.exports = router;

@@ -6,11 +6,12 @@ const Shipment = require("../models/shipmentModel");
 const Settings = require('../models/settingsModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const {getModel, fonts, getModelAcronym} = require('../utils/helperFunctions');
+const {getModel, fonts, getModelAcronym, getSFDT} = require('../utils/helperFunctions');
 const fs = require('fs');
 const imagekit = require('../utils/imagekit');
 const ExcelJS = require('exceljs');
 const {v4: uuidv4} = require('uuid');
+const { generateForwardNote } = require('../utils/docTemplater');
 // const { multerFilter, multerStorage } = require('../utils/helperFunctions');
 
 
@@ -981,6 +982,20 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
             }
         )
     ;
+})
+
+exports.generateForwardNote = catchAsync(async (req, res, next) => {
+    const shipment = await Shipment.findById(req.params.shipmentId);
+    if (!shipment) return next(new AppError("Unable to generate Forward Note, Please try again!", 401));
+    const {buffer, response} = await generateForwardNote(shipment);
+    if (buffer) {
+        await getSFDT(
+            Buffer.from(buffer),
+            res,
+            next,
+            {url: response?.url, fileId: response?.fileId, filePath: response?.filePath}
+        );
+    }
 })
 
 const multerStorage = multer.diskStorage(

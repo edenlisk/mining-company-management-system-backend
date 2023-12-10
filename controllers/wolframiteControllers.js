@@ -81,12 +81,13 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
             )
         }
     }
-    // const log = trackCreateOperations(entry?._id, "wolframite", req);
-    await entry.save({validateModifiedOnly: true});
-    // if (!result) {
-    //     log.status = "failed";
-    // }
-    // await log.save({validateBeforeSave: false});
+    const log = trackCreateOperations("wolframite", req);
+    log.logSummary = `${req.user?.username} created new wolframite entry for ${entry.companyName} - ${entry.beneficiary}`;
+    const result = await entry.save({validateModifiedOnly: true});
+    if (!result) {
+        log.status = "failed";
+    }
+    await log?.save({validateBeforeSave: false});
     // io.emit('operation-update', {message: "New Coltan Entry was record"});
     res
         .status(204)
@@ -119,7 +120,7 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     const entry = await Wolframite.findById(req.params.entryId);
     // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
-    // const logs = trackUpdateModifications(req.body, entry, req);
+    const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
@@ -143,13 +144,15 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                         const imageDate = tags['CreateDate'];
                         const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
                         lot.gradeImg.filename = response.name;
-                        // logs.modifications.push(
-                        //     {
-                        //         fieldName: "gradeImg",
-                        //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
-                        //         newValue: `${response.url}--${imageDate ? imageDate.description : "No date"}`,
-                        //     }
-                        // )
+                        if (logs && logs.modifications) {
+                            logs.modifications.push(
+                                {
+                                    fieldName: "gradeImg",
+                                    initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
+                                    newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
+                                }
+                            )
+                        }
                         lot.gradeImg.filePath = response.url;
                         lot.gradeImg.fileId = response.fileId;
                         if (imageDate) {
@@ -188,13 +191,21 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                 if (lot.pricePerUnit) existingLot.pricePerUnit = lot.pricePerUnit;
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
-                if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
-                if (lot.nonSellAgreement?.weight > 0) {
-                    existingLot.status = "non-sell agreement"
-                    existingLot.nonSellAgreement.date = new Date();
-                } else {
-                    existingLot.status = "in stock"
-                    existingLot.nonSellAgreement.date = null;
+                // if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
+                if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
+                    if (lot.nonSellAgreement?.weight > 0) {
+                        existingLot.cumulativeAmount = 0;
+                        existingLot.nonSellAgreement.weight = existingLot.weightOut;
+                        existingLot.status = "non-sell agreement"
+                        existingLot.nonSellAgreement.date = new Date();
+                    } else {
+                        if (lot.nonSellAgreement?.weight === 0) {
+                            existingLot.cumulativeAmount = existingLot.weightOut;
+                            existingLot.nonSellAgreement.weight = 0;
+                            existingLot.status = "in stock"
+                            existingLot.nonSellAgreement.date = null;
+                        }
+                    }
                 }
                 if (existingLot.weightOut && rmaFeeWolframite) {
                     existingLot.rmaFee = rmaFeeWolframite * existingLot.weightOut;
@@ -223,11 +234,11 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
             }
         }
     }
-    await entry.save({validateModifiedOnly: true});
-    // if (!result) {
-    //     logs.status = "failed";
-    // }
-    // await logs.save({validateBeforeSave: false});
+    const result = await entry.save({validateModifiedOnly: true});
+    if (!result) {
+        logs.status = "failed";
+    }
+    await logs?.save({validateBeforeSave: false});
     res
         .status(202)
         .json(
@@ -239,8 +250,16 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteWolframiteEntry = catchAsync(async (req, res, next) => {
+    const log = trackDeleteOperations(req.params?.entryId, "wolframite", req);
     const entry = await Wolframite.findByIdAndUpdate(req.params.entryId, {visible: false});
-    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
+    if (!entry) {
+        log.status = "failed";
+        log.link = `/wolframite`;
+        await log?.save({validateBeforeSave: false});
+        return next(new AppError("The selected entry no longer exists!", 400));
+    } else {
+        await log?.save({validateBeforeSave: false});
+    }
     res
         .status(204)
         .json(

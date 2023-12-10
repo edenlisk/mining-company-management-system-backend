@@ -8,24 +8,29 @@ const {
     deleteGradeImg,
     uploadGradeImg,
     trashEntries,
+    generateLabReport,
 } = require('../controllers/coltanControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 
 const router = express.Router();
 
 router.route('/')
-    .get(getAllColtanEntries)
-    .post(createColtanEntry)
+    .get(protect, getAllColtanEntries)
+    .post(protect, createColtanEntry)
 
 router.route('/trash')
     .get(trashEntries)
 
 router.route('/:entryId')
-    .get(getOneColtanEntry)
-    .patch(uploadGradeImg.any(), updateColtanEntry)
-    .delete(deleteColtanEntry)
+    .get(protect, getOneColtanEntry)
+    .patch(protect, uploadGradeImg.any(), updateColtanEntry)
+    .delete(protect, deleteColtanEntry)
 
 router.route('/delete-grade-img/:model/:entryId')
-    .delete(deleteGradeImg)
+    .delete(protect, deleteGradeImg)
+
+router.route('/lab-report/:model')
+    .post(protect, generateLabReport)
 
 
 module.exports = router;

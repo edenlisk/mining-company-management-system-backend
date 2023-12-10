@@ -7,21 +7,22 @@ const {
     deleteLithiumEntry,
     trashEntries
 } = require('../controllers/lithiumControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 
 const { deleteGradeImg } = require('../controllers/coltanControllers');
 const router = express.Router();
 
 router.route('/')
-    .get(getAllLithiumEntries)
-    .post(createLithiumEntry)
+    .get(protect, getAllLithiumEntries)
+    .post(protect, createLithiumEntry)
 
 router.route('/')
     .get(trashEntries)
 
 router.route('/:entryId')
-    .get(getOneLithiumEntry)
-    .patch(updateLithiumEntry)
-    .delete(deleteLithiumEntry)
+    .get(protect, getOneLithiumEntry)
+    .patch(protect, updateLithiumEntry)
+    .delete(protect, deleteLithiumEntry)
 
 router.route('/delete-grade-img/:model/:entryId')
     .delete(deleteGradeImg)

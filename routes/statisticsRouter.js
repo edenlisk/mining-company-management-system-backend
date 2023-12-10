@@ -8,28 +8,29 @@ const {
     topSuppliers,
     unsettledLots, generateReconciliationExcelTable
 } = require('../controllers/statisticsControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 const router = Router();
 
 router.route('/details/:model')
-    .get(detailedStock)
+    .get(protect, detailedStock)
 
 router.route('/payment-history/:model/:entryId/:lotNumber')
-    .get(paymentHistory)
+    .get(protect, paymentHistory)
 
 router.route('/stock-summary')
-    .get(stockSummary)
+    .get(protect, stockSummary)
 
 router.route('/current-stock/:year?')
-    .get(currentStock)
+    .get(protect, currentStock)
 
 router.route('/last-created')
-    .get(lastCreatedEntries)
+    .get(protect, lastCreatedEntries)
 
 router.route('/top-suppliers')
-    .get(topSuppliers)
+    .get(protect, topSuppliers)
 
 router.route('/unpaid-lots/:supplierId')
-    .get(unsettledLots)
+    .get(protect, unsettledLots)
 
 router.route('/reconciliations/:model')
     .post(generateReconciliationExcelTable)

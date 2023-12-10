@@ -1,9 +1,10 @@
 const Settings = require('../models/settingsModel');
 const catchAsync = require('../utils/catchAsync');
+const AppError = require('../utils/appError');
 
 exports.getSettings = catchAsync(async (req, res, next) => {
-    const settings = await Settings.findOne();
-    if (!settings) return next(new AppError("Settings are currenly unavailable", 400));
+    const settings = await Settings.findOne().limit(1);
+    if (!settings) return next(new AppError("Settings are currently unavailable", 400));
     res
         .status(200)
         .json(
@@ -42,6 +43,8 @@ exports.updateSettings = catchAsync(async (req, res, next) => {
     if (req.body.rmaFeeColtan) settings.rmaFeeColtan = req.body.rmaFeeColtan;
     if (req.body.rmaFeeCassiterite) settings.rmaFeeCassiterite = req.body.rmaFeeCassiterite;
     if (req.body.rmaFeeWolframite) settings.rmaFeeWolframite = req.body.rmaFeeWolframite;
+    if (req.body.address) settings.address = req.body.address;
+    if (req.representative) settings.representative = req.body.representative;
     if (req.body.nameOfCompany) settings.nameOfCompany = req.body.nameOfCompany;
     if (req.body.editExpiresIn) settings.editExpiresIn = req.body.editExpiresIn;
     if (req.body.logsLifeTime) settings.logsLifeTime = req.body.logsLifeTime;

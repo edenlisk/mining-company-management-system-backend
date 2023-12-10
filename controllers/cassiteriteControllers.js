@@ -81,12 +81,12 @@ exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
             )
         }
     }
-    // const log = trackCreateOperations(entry?._id, "cassiterite", req);
-    await entry.save({validateModifiedOnly: true});
-    // if (!result) {
-    //     log.status = "failed";
-    // }
-    // await log.save({validateBeforeSave: false});
+    const log = trackCreateOperations("cassiterite", req);
+    const result = await entry.save({validateModifiedOnly: true});
+    if (!result) {
+        log.status = "failed";
+    }
+    await log?.save({validateBeforeSave: false});
 
     res
         .status(204)
@@ -122,7 +122,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     // req.user = {};
     // req.user.username = "admin";
     // req.user.userId = entry._id;
-    // const logs = trackUpdateModifications(req.body, entry, req);
+    const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
@@ -146,13 +146,15 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                         const imageDate = tags['CreateDate'];
                         const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
                         lot.gradeImg.filename = response.name;
-                        // logs.modifications.push(
-                        //     {
-                        //         fieldName: "gradeImg",
-                        //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
-                        //         newValue: `${response.url}--${imageDate ? imageDate.description : "No date"}`,
-                        //     }
-                        // )
+                        if (logs && logs.modifications) {
+                            logs.modifications.push(
+                                {
+                                    fieldName: "gradeImg",
+                                    initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
+                                    newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
+                                }
+                            )
+                        }
                         lot.gradeImg.filePath = response.url;
                         lot.gradeImg.fileId = response.fileId;
                         if (imageDate) {
@@ -190,13 +192,23 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
                 if (lot.treatmentCharges) existingLot.treatmentCharges = lot.treatmentCharges;
                 if (lot.londonMetalExchange) existingLot.londonMetalExchange = lot.londonMetalExchange;
-                if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
-                if (lot.nonSellAgreement?.weight > 0) {
-                    existingLot.status = "non-sell agreement"
-                    existingLot.nonSellAgreement.date = new Date();
-                } else {
-                    existingLot.status = "in stock"
-                    existingLot.nonSellAgreement.date = null;
+                // if (lot.nonSellAgreement?.weight) {
+                //     existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
+                // }
+                if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
+                    if (lot.nonSellAgreement?.weight > 0) {
+                        existingLot.cumulativeAmount = 0;
+                        existingLot.nonSellAgreement.weight = existingLot.weightOut;
+                        existingLot.status = "non-sell agreement"
+                        existingLot.nonSellAgreement.date = new Date();
+                    } else {
+                        if (lot.nonSellAgreement?.weight === 0) {
+                            existingLot.cumulativeAmount = existingLot.weightOut;
+                            existingLot.nonSellAgreement.weight = 0;
+                            existingLot.status = "in stock"
+                            existingLot.nonSellAgreement.date = null;
+                        }
+                    }
                 }
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
@@ -227,11 +239,11 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
             }
         }
     }
-    entry.save({validateModifiedOnly: true});
-    // if (!result) {
-    //     logs.status = "failed";
-    // }
-    // await logs.save({validateBeforeSave: false});
+    const result = entry.save({validateModifiedOnly: true});
+    if (!result) {
+        logs.status = "failed";
+    }
+    await logs?.save({validateBeforeSave: false});
     res
         .status(201)
         .json(
@@ -243,17 +255,16 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteCassiteriteEntry = catchAsync(async (req, res, next) => {
-    // const log = trackDeleteOperations(req.params.entryId, "cassiterite", req);
+    const log = trackDeleteOperations(req.params.entryId, "cassiterite", req);
     const entry = await Cassiterite.findByIdAndUpdate(req.params.entryId, {visible: false});
     if (!entry) {
-        // log.status = "failed";
-        // log.link = `/complete/cassiterite/${req.params.entryId}`;
-        // await log.save({validateBeforeSave: false});
+        log.status = "failed";
+        log.link = `/cassiterite`;
+        await log?.save({validateBeforeSave: false});
         return next(new AppError("The selected entry no longer exists!", 400));
+    } else {
+        await log?.save({validateBeforeSave: false});
     }
-    // else {
-    //     await log.save({validateBeforeSave: false});
-    // }
 
     // logs.push(`${req.user.username} deleted this cassiterite entry supplied by: ${entry.companyName} on ${entry.supplyDate}`);
     // const preparedLogs = prepareLog(logs, `/complete/cassiterite/${entry?._id}`,{userId: req.user._id, username: req.user.username});

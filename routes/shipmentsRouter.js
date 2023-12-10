@@ -11,36 +11,41 @@ const {
     generateTagList,
     generateNegociantTagList,
     generateICGLRPackingList,
-    shipmentQuarterReport
+    shipmentQuarterReport,
+    generateForwardNote,
 } = require('../controllers/shipmentControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 
 
 router.route('/')
-    .get(getAllshipments)
-    .post(createShipment)
+    .get(protect, getAllshipments)
+    .post(protect, createShipment)
 
 router.route('/report/:shipmentId')
-    .post(shipmentReport)
+    .post(protect, shipmentReport)
 
 router.route('/quarter-report')
-    .post(shipmentQuarterReport)
+    .post(protect, shipmentQuarterReport)
 
 router.route('/tags/:shipmentId')
-    .get(tagList)
-    .post(generateTagList)
+    .get(protect, tagList)
+    .post(protect, generateTagList)
 
 router.route('/negociant-tags/:shipmentId')
-    .post(generateNegociantTagList)
+    .post(protect, generateNegociantTagList)
 
 router.route('/packing-list/:shipmentId')
-    .post(generateICGLRPackingList)
+    .post(protect, generateICGLRPackingList)
 
 router.route('/:shipmentId')
-    .get(getOneShipment)
-    .patch(
+    .get(protect, getOneShipment)
+    .patch(protect,
         uploadCertificates.any(),
         updateShipment
     );
+
+router.route('/forward-note/:shipmentId')
+    .post(generateForwardNote)
 
 
 module.exports = router;

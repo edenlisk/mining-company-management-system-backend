@@ -102,6 +102,14 @@ exports.lotSchema = new mongoose.Schema(
         nonSellAgreement: {
             weight: {
                 type: Number,
+                validate: {
+                    validator: function (val) {
+                        if (val && this.weightOut) {
+                            return val <= this.weightOut;
+                        }
+                    },
+                    message: "Non sell agreement must be less than or equal to weight out."
+                },
                 default: 0
             },
             date:  {

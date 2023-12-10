@@ -9,7 +9,7 @@ const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
-const { handleConvertToUSD } = require('../utils/helperFunctions');
+const { handleConvertToUSD, getSFDT } = require('../utils/helperFunctions');
 const imagekit = require('../utils/imagekit');
 const { getModel, updateMineTags, updateNegociantTags } = require('../utils/helperFunctions');
 const { generateLabReport } = require('../utils/docTemplater');
@@ -85,12 +85,13 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
             )
         }
     }
-    // const log = trackCreateOperations(entry?._id, "coltan", req);
-    await entry.save({validateModifiedOnly: true});
-    // if (!result) {
-    //     log.status = "failed";
-    // }
-    // await log.save({validateBeforeSave: false});
+    const log = trackCreateOperations("coltan", req);
+    log.logSummary = `${req.user?.username} created a new coltan entry for ${entry.companyName} - ${entry.beneficiary}`;
+    const result = await entry.save({validateModifiedOnly: true});
+    if (!result) {
+        log.status = "failed";
+    }
+    await log.save({validateBeforeSave: false});
     // io.emit('operation-update', {message: "New Coltan Entry was record"});
     res
         .status(204)
@@ -123,7 +124,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     const entry = await Coltan.findById(req.params.entryId);
     // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
-    // const logs = trackUpdateModifications(req.body, entry, req);
+    const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
@@ -147,13 +148,15 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                         const imageDate = tags['CreateDate'];
                         const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
                         lot.gradeImg.filename = response.name;
-                        // logs.modifications.push(
-                        //     {
-                        //         fieldName: "gradeImg",
-                        //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
-                        //         newValue: `${response.url}--${imageDate ? imageDate.description : "No date"}`,
-                        //     }
-                        // )
+                        if (logs && logs.modifications) {
+                            logs.modifications.push(
+                                {
+                                    fieldName: "gradeImg",
+                                    initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
+                                    newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
+                                }
+                            )
+                        }
                         lot.gradeImg.filePath = response.url;
                         lot.gradeImg.fileId = response.fileId;
                         if (imageDate) {
@@ -192,13 +195,21 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (lot.weightOut) existingLot.weightOut = lot.weightOut;
                 if (lot.tantalum) existingLot.tantalum = lot.tantalum;
                 if (lot.USDRate) existingLot.USDRate = lot.USDRate;
-                if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
-                if (lot.nonSellAgreement?.weight > 0) {
-                    existingLot.status = "non-sell agreement"
-                    existingLot.nonSellAgreement.date = new Date();
-                } else {
-                    existingLot.status = "in stock"
-                    existingLot.nonSellAgreement.date = null;
+                // if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
+                if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
+                    if (lot.nonSellAgreement?.weight > 0) {
+                        existingLot.cumulativeAmount = 0;
+                        existingLot.nonSellAgreement.weight = existingLot.weightOut;
+                        existingLot.status = "non-sell agreement"
+                        existingLot.nonSellAgreement.date = new Date();
+                    } else {
+                        if (lot.nonSellAgreement?.weight === 0) {
+                            existingLot.cumulativeAmount = existingLot.weightOut;
+                            existingLot.nonSellAgreement.weight = 0;
+                            existingLot.status = "in stock"
+                            existingLot.nonSellAgreement.date = null;
+                        }
+                    }
                 }
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
                 if (existingLot.weightOut && rmaFeeColtan) {
@@ -249,11 +260,11 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
             }
         }
     }
-    await entry.save({validateModifiedOnly: true});
-    // if (!result) {
-    //     logs.status = "failed";
-    // }
-    // await logs.save({validateBeforeSave: false});
+    const result = await entry.save({validateModifiedOnly: true});
+    if (!result) {
+        logs.status = "failed";
+    }
+    await logs?.save({validateBeforeSave: false});
     res
         .status(202)
         .json(
@@ -265,17 +276,16 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
-    // const log = trackDeleteOperations(req.params?.entryId, "coltan", req);
+    const log = trackDeleteOperations(req.params?.entryId, "coltan", req);
     const entry = await Coltan.findByIdAndUpdate(req.params.entryId, {visible: false});
     if (!entry) {
-        // log.status = "failed";
-        // log.link = `/complete/coltan/${req.params.entryId}`;
-        // await log.save({validateBeforeSave: false});
+        log.status = "failed";
+        log.link = `/coltan`;
+        await log.save({validateBeforeSave: false});
         return next(new AppError("The selected entry no longer exists!", 400));
+    } else {
+        await log.save({validateBeforeSave: false});
     }
-    // else {
-    //     await log.save({validateBeforeSave: false});
-    // }
     res
         .status(204)
         .json(
@@ -287,17 +297,27 @@ exports.deleteColtanEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.deleteGradeImg = catchAsync(async (req, res, next) => {
+    const log = trackDeleteOperations(req.params?.entryId, req.params?.model, req);
     const Entry = getModel(req.params.model);
     const entry = await Entry.findById(req.params.entryId);
     if (!entry) return next(new AppError("Unable to delete gradeImg!", 400));
     if (["lithium", "beryllium"].includes(req.params.model)) {
+        if (log) {
+            log.modifications = [{fieldName: "gradeImg", initialValue: entry.gradeImg?.filePath, newValue: ""}];
+        }
         entry.gradeImg = undefined;
         await entry.save({validateModifiedOnly: true});
     } else {
         const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
         // await imagekit.deleteFile(lot.gradeImg.fileId);
+        if (log) {
+            log.modifications = [{fieldName: "gradeImg", initialValue: lot.gradeImg?.filePath, newValue: ""}];
+        }
         lot.gradeImg = undefined;
         await entry.save({validateModifiedOnly: true});
+    }
+    if (log) {
+        await log.save({validateBeforeSave: false});
     }
 
     res
@@ -311,22 +331,21 @@ exports.deleteGradeImg = catchAsync(async (req, res, next) => {
 })
 
 exports.generateLabReport = catchAsync(async (req, res, next) => {
+    const log = trackCreateOperations("lab report", req);
     const Entry = getModel(req.params.model);
-    const entry = await Entry.findById(req.params.entryId);
-    const lot = entry.output?.find(item => item.lotNumber === parseInt(req.params.lotNumber));
-    if (!entry) return next(new AppError("Unable to generate lab report!", 400));
-    const labReport = await generateLabReport(entry, lot);
-    res
-        .status(200)
-        .json(
-            {
-                status: "Success",
-                data: {
-                    labReport
-                }
-            }
-        )
-    ;
+    const entry = await Entry.findById(req.body.entryId);
+    if (!entry) return next(new AppError("Unable to generate lab report, please try again!", 400));
+    const lot = entry.output?.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+    // TODO 27: USE CORRECT USER OBJECT
+    const buffer = await generateLabReport(entry, lot, req?.user);
+    if (log) log.logSummary = `${req.user?.username} generated lab report for ${entry.beneficiary} - ${lot?.lotNumber}`;
+    if (buffer) {
+        await log.save({validateBeforeSave: false});
+        await getSFDT(Buffer.from(buffer), res, next);
+    } else {
+        if (log) log.status = "failed";
+        await log.save({validateBeforeSave: false});
+    }
 })
 
 exports.trashEntries = catchAsync(async (req, res, next) => {

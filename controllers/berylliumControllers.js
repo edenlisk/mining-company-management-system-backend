@@ -5,6 +5,9 @@ const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const imagekit = require('../utils/imagekit');
+const { trackUpdateModifications,
+    trackCreateOperations,
+    trackDeleteOperations } = require('../controllers/activityLogsControllers');
 
 exports.getAllBerylliumEntries = catchAsync(async (req, res, next) => {
     const result = new APIFeatures(Beryllium.find(), req.query)
@@ -28,7 +31,8 @@ exports.getAllBerylliumEntries = catchAsync(async (req, res, next) => {
 })
 
 exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
-    await Beryllium.create(
+    const log = trackCreateOperations("Beryllium", req);
+    const beryllium = await Beryllium.create(
         {
             supplierName: req.body.supplierName,
             phoneNumber: req.body.phoneNumber,
@@ -49,6 +53,10 @@ exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
             comment: req.body.comment,
         }
     );
+    if (!beryllium) {
+        log.status = "failed";
+    }
+    await log.save({ validateBeforeSave: false});
     res
         .status(204)
         .json(
@@ -80,7 +88,7 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
     // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     // if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    // const logs = trackUpdateModifications(req.body, entry, req);
+    const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
         for (const file of req.files) {
             const fileData = fs.readFileSync(file.path);
@@ -98,13 +106,15 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
                         const tags = exifreader.load(data);
                         const imageDate = tags['CreateDate'];
                         entry.gradeImg.filename = response.name;
-                        // logs.modifications.push(
-                        //     {
-                        //         fieldName: "gradeImg",
-                        //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
-                        //         newValue: `${response.url}--${imageDate ? imageDate.description : "No date"}`,
-                        //     }
-                        // )
+                        if (logs && logs.modifications) {
+                            logs.modifications.push(
+                                {
+                                    fieldName: "gradeImg",
+                                    initialValue: `${entry.gradeImg?.filePath}--${entry.gradeImg?.createdAt}`,
+                                    newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
+                                }
+                            )
+                        }
                         entry.gradeImg.filePath = response.url;
                         entry.gradeImg.fileId = response.fileId;
                         if (imageDate) {
@@ -126,13 +136,21 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
     if (req.body.weightIn) entry.weightIn = req.body.weightIn;
     if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
     if (req.body.pricePerUnit) entry.pricePerUnit = req.body.pricePerUnit;
-    if (req.body.nonSellAgreement?.weight) entry.nonSellAgreement.weight = req.body.nonSellAgreement?.weight;
-    if (req.body.nonSellAgreement?.weight > 0) {
-        entry.status = "non-sell agreement"
-        entry.nonSellAgreement.date = new Date();
-    } else {
-        entry.status = "in stock"
-        entry.nonSellAgreement.date = null;
+    // if (req.body.nonSellAgreement?.weight) entry.nonSellAgreement.weight = req.body.nonSellAgreement?.weight;
+    if (req.body.nonSellAgreement?.weight !== entry.nonSellAgreement?.weight) {
+        if (req.nonSellAgreement?.weight > 0) {
+            entry.cumulativeAmount = 0;
+            entry.nonSellAgreement.weight = entry.weightOut;
+            entry.status = "non-sell agreement"
+            entry.nonSellAgreement.date = new Date();
+        } else {
+            if (req.nonSellAgreement?.weight === 0) {
+                entry.cumulativeAmount = entry.weightOut;
+                entry.nonSellAgreement.weight = 0;
+                entry.status = "in stock"
+                entry.nonSellAgreement.date = null;
+            }
+        }
     }
     if (req.body.mineralPrice) entry.mineralPrice = req.body.mineralPrice;
     if (entry.mineralPrice && req.body.mineralPrice) {
@@ -153,7 +171,11 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
     if (req.body.exportedAmount) entry.exportedAmount = req.body.exportedAmount;
     if (req.body.comment) entry.comment = req.body.comment;
     if (req.body.status) entry.status = req.body.status;
-    await entry.save({validateModifiedOnly: true});
+    const result = await entry.save({validateModifiedOnly: true});
+    if (!result) {
+        logs.status = "failed";
+    }
+    await logs?.save({ validateBeforeSave: false});
     res
         .status(202)
         .json(
@@ -166,7 +188,13 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
 
 exports.deleteBerylliumEntry = catchAsync(async (req, res, next) => {
     const entry = await Beryllium.findByIdAndUpdate(req.params.entryId, {visible: false});
-    if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
+    const log = trackDeleteOperations(req.params.entryId,"beryllium", req);
+    if (!entry) {
+        log.status = "failed";
+        await log?.save({ validateBeforeSave: false});
+        return next(new AppError("The selected entry no longer exists!", 400));
+    }
+    await log?.save({ validateBeforeSave: false});
     res
         .status(204)
         .json(

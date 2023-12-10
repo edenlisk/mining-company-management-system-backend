@@ -6,18 +6,19 @@ const {
     getInvoice,
     updateInvoice
 } = require('../controllers/invoiceControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 const router = express.Router();
 
 router.route('/')
-    .get(getAllInvoices)
-    .post(generateInvoice)
+    .get(protect, getAllInvoices)
+    .post(protect, generateInvoice)
 
 router.route('/supplier/:supplierId')
-    .get(getSuppliersInvoice)
+    .get(protect, getSuppliersInvoice)
 
 router.route('/:invoiceId')
-    .get(getInvoice)
-    .patch(updateInvoice)
+    .get(protect, getInvoice)
+    .patch(protect, updateInvoice)
 
 
 module.exports = router;

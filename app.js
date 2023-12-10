@@ -50,15 +50,15 @@ app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'jade');
 
 app.use(logger('dev'));
-app.use(express.json());
+app.use(express.json({limit: "50mb"}));
 app.use(mongoSanitize());
 app.use(xss());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 const corsOptions ={
     origin:'*',
-    credentials:true,
+    credentials: true,
     optionSuccessStatus:200,
 }
 app.use(cors(corsOptions));

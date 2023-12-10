@@ -8,20 +8,20 @@ const {
     trashEntries
 } = require('../controllers/berylliumControllers');
 const { deleteGradeImg } = require('../controllers/coltanControllers');
-
+const { protect, restrictTo } = require('../controllers/authControllers');
 const router = express.Router();
 
 router.route('/')
-    .get(getAllBerylliumEntries)
-    .post(createBerylliumEntry)
+    .get(protect, getAllBerylliumEntries)
+    .post(protect, createBerylliumEntry)
 
 router.route('/trash')
     .get(trashEntries)
 
 router.route('/:entryId')
-    .get(getOneBerylliumEntry)
-    .patch(updateBerylliumEntry)
-    .delete(deleteBerylliumEntry)
+    .get(protect, getOneBerylliumEntry)
+    .patch(protect, updateBerylliumEntry)
+    .delete(protect, deleteBerylliumEntry)
 
 router.route('/delete-grade-img/:model/:entryId')
     .delete(deleteGradeImg)

@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
 const { permissions } = require('../utils/helperFunctions');
 const { logger } = require('../utils/loggers');
+const { trackUpdateModifications, trackCreateOperations  } = require('../controllers/activityLogsControllers');
 // const Email = require('../utils/email');
 // const {recordLogs, prepareLog} = require('../utils/activityLogs');
 
@@ -36,6 +37,7 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
     // const logs = [];
+    const log = trackCreateOperations("users", req);
     const existingUser = await User.findOne({email: req.body.email.trim()});
     if (existingUser) return next(new AppError(`User with this ${req.body.email} email already exists`, 409));
     const user = await User.create(
@@ -51,9 +53,11 @@ exports.signup = catchAsync(async (req, res, next) => {
         }
     );
     logger.info(`create a user named: ${user.name}`);
-    // logs.push(`${req.user.username} created a user named: ${user.name}`);
-    // const preparedLogs = prepareLog(logs, `/users/${user._id}`, {userId: req.user._id, username: req.user.username});
-    // await recordLogs(preparedLogs);
+    log.logSummary = `${req.user.username} created a user named: ${user.name}`
+    if (!user) {
+        log.status = "failed";
+    }
+    await log.save({validateBeforeSave: false});
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')
@@ -82,7 +86,10 @@ exports.login = catchAsync(async (req, res, next) => {
     }
     user.password = undefined;
     // recordLogs(`${user.username} logged in`, {userId: user._id, username: user.username});
+    const log = trackCreateOperations("users", {user: {username: user.username, _id: user._id}});
     logger.info(`${user.name} logged in successfully.`);
+    log.logSummary = `${user.name} logged in successfully.`;
+    await log.save({validateBeforeSave: false});
     // logs.push(`${user.username} logged in successfully`);
     // const preparedLogs = prepareLog(logs, `/users`, {userId: user._id, username: user.username});
     // await recordLogs(preparedLogs);
@@ -91,6 +98,9 @@ exports.login = catchAsync(async (req, res, next) => {
 
 exports.logout = catchAsync(async (req, res, next) => {
     res.cookie('jwt', '', {expires: new Date(Date.now() + 1000)});
+    const log = trackCreateOperations("users", {user: {username: req.body.username, _id: req.body._id}});
+    log.logSummary = `${req.body.username} logged out`;
+    await log.save({validateBeforeSave: false});
     // recordLogs(`${req.body.username} logged out`, {userId: req.body._id, username: req.body.username});
     res
         .status(204)

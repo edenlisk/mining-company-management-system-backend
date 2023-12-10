@@ -8,18 +8,19 @@ const {
     deleteSupplier,
     getOneSupplier,
     supplierProductionHistory } = require('../controllers/supplierControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
 
 router.route('/')
-    .get(getAllSuppliers)
-    .post(addSupplier)
+    .get(protect, getAllSuppliers)
+    .post(protect, addSupplier)
 
 router.route("/generate/:supplierId")
-    .post(generate)
+    .post(protect, generate)
 
 router.route('/:supplierId')
-    .get(getOneSupplier)
-    .patch(updateSupplier)
-    .delete(deleteSupplier)
+    .get(protect, getOneSupplier)
+    .patch(protect, updateSupplier)
+    .delete(protect, deleteSupplier)
 
 router.route('/history/:supplierId')
     .post(supplierProductionHistory)

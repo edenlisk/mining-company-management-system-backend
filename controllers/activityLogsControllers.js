@@ -44,11 +44,16 @@ exports.getUserLogs = catchAsync(async (req, res, next) => {
     ;
 })
 
+const checkObject = (obj) => {
+    return (obj !== null && typeof obj === "object");
+}
+
 exports.trackUpdateModifications = (body, entry, req) => {
     const modifications = [];
+    // const exemptedFields = ["_id", "createdAt", "updatedAt", "shipments", "paymentHistory",];
     for (const key in body) {
         if (body.hasOwnProperty(key)) {
-            if (`${key}` !== "output" && body[key] !== entry[key]) {
+            if (`${key}` !== "output" && (parseFloat(body[key]) !== parseFloat(entry[key])) && !checkObject(body[key])) {
                 modifications.push(
                     {
                         fieldName: `${toInitialCase(key)}`,
@@ -61,15 +66,36 @@ exports.trackUpdateModifications = (body, entry, req) => {
                     for (const lot of body.output) {
                         for (const key in lot) {
                             if (lot.hasOwnProperty(key)) {
-                                if (lot[key] !== entry.output[body.output.indexOf(lot)][key]) {
-                                    modifications.push(
-                                        {
-                                            fieldName: `${toInitialCase(key)}`,
-                                            initialValue: entry.output[body.output.indexOf(lot)][key],
-                                            newValue: lot[key]
+                                if (!checkObject(lot[key])) {
+                                    if (parseFloat(lot[key]) !== parseFloat(entry.output[body.output.indexOf(lot)][key])) {
+                                        modifications.push(
+                                            {
+                                                fieldName: `${toInitialCase(key)}`,
+                                                initialValue: entry.output[body.output.indexOf(lot)][key],
+                                                newValue: lot[key]
+                                            }
+                                        );
+                                    }
+                                } else {
+                                    if (typeof lot[key] === "object") {
+                                        for (const subKey in lot[key]) {
+                                            if (lot[key].hasOwnProperty(subKey)) {
+                                                if (!checkObject(lot[key][subKey])) {
+                                                    if (parseFloat(lot[key][subKey]) !== parseFloat(entry.output[body.output.indexOf(lot)][key][subKey])) {
+                                                        modifications.push(
+                                                            {
+                                                                fieldName: `${toInitialCase(subKey)}`,
+                                                                initialValue: entry.output[body.output.indexOf(lot)][key][subKey],
+                                                                newValue: lot[key][subKey]
+                                                            }
+                                                        );
+                                                    }
+                                                }
+                                            }
                                         }
-                                    );
+                                    }
                                 }
+
                             }
                         }
                     }
@@ -80,10 +106,10 @@ exports.trackUpdateModifications = (body, entry, req) => {
     if (modifications.length > 0) {
         return new ActivityLogs(
             {
-                logSummary: `${req.user.username} modified/added cassiterite entry`,
+                logSummary: `${req.user.username} modified/added ${entry.mineralType} entry`,
                 username: req.user.username,
                 userId: req.user._id,
-                link: `/complete/${entry.mineralType}/${entry._id}`,
+                // link: `/complete/${entry.mineralType}/${entry._id}`,
                 modifications
             }
         )
@@ -104,13 +130,13 @@ exports.trackDeleteOperations = (entryId, model, req) => {
 
 }
 
-exports.trackCreateOperations = (entryId, model, req) => {
+exports.trackCreateOperations = (model, req) => {
     return new ActivityLogs(
         {
             logSummary: `${req.user.username} created ${model} entry`,
             username: req.user.username,
             userId: req.user._id,
-            link: `/complete/${model}/${entryId}`,
+            // link: `/complete/${model}/${entryId}`,
             modifications: null
         }
     )

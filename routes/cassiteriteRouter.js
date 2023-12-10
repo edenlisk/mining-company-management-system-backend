@@ -8,19 +8,21 @@ const {
     uploadGradeImg,
     trashEntries
 } = require('../controllers/cassiteriteControllers');
+const { protect, restrictTo } = require('../controllers/authControllers');
+
 const router = express.Router();
 
 router.route('/')
-    .get(getAllCassiteriteEntries)
-    .post(createCassiteriteEntry)
+    .get(protect, getAllCassiteriteEntries)
+    .post(protect, createCassiteriteEntry)
 
 router.route('/trash')
     .get(trashEntries)
 
 router.route('/:entryId')
-    .get(getOneCassiteriteEntry)
-    .patch(uploadGradeImg.any(), updateCassiteriteEntry)
-    .delete(deleteCassiteriteEntry)
+    .get(protect, getOneCassiteriteEntry)
+    .patch(protect, uploadGradeImg.any(), updateCassiteriteEntry)
+    .delete(protect, deleteCassiteriteEntry)
 
 
 module.exports = router;

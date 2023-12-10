@@ -4,11 +4,12 @@ const Docxtemplater = require("docxtemplater");
 const fs = require("fs");
 const path = require("path");
 const Supplier = require('../models/supplierModel');
-const { getModel, getMonthWords, getSixMonthsAgo } = require('../utils/helperFunctions');
+const Settings = require('../models/settingsModel');
+const { getModel, getMonthWords, getSixMonthsAgo, getSFDT } = require('../utils/helperFunctions');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const imagekit = require('./imagekit');
-const { convertDocx2Html } = require('../utils/convertDocxToHtml');
+// const { convertDocx2Html } = require('../utils/convertDocxToHtml');
 
 const populateSitesCoordinates = (minesites) => {
     let sites_coordinates = "";
@@ -85,6 +86,48 @@ const getProduction = async (model, supplierId, endMonth) => {
     }));
 }
 
+const createFolderImageKit = async (folderName, parentFolderPath) => {
+    const response = await imagekit.createFolder(
+        {
+            folderName: folderName,
+            parentFolderPath: parentFolderPath
+        }
+    );
+    return !!response;
+}
+// folder: `/dd_reports/${year}/${month}`,
+const uploadFileImageKit = async (file, fileName, folder) => {
+    const response = imagekit.upload(
+        {
+            file,
+            fileName,
+            folder
+        }
+    );
+    if (response) {
+        return response;
+    }
+}
+
+const listFilesImageKit = async (path, includeFolder = true) => {
+    const response = await imagekit.listFiles(
+        {
+            path,
+            includeFolder
+        }
+    )
+    if (response) {
+        return response;
+    }
+}
+
+const deleteFileImageKit = async (fileId) => {
+    const response = await imagekit.deleteFile(fileId);
+    if (response) {
+        return !!response;
+    }
+}
+
 exports.generate = catchAsync(async (req, res, next) => {
     // Load the docx file as binary content
     const content = fs.readFileSync(
@@ -107,7 +150,7 @@ exports.generate = catchAsync(async (req, res, next) => {
     }
     const sampleObject = {};
     for (const model of models) {
-        const mineralProduction = await getProduction(model, req.body.supplierId);
+        const mineralProduction = await getProduction(model, req.params.supplierId);
         for (const production of mineralProduction) {
             sampleObject[`month_${mineralProduction.indexOf(production) + 1}`] = getMonthWords(production._id.month);
             sampleObject[`mineral_type${models.indexOf(model) + 1}`] = mineralTypes[`mineral_type${models.indexOf(model) + 1}`];
@@ -195,42 +238,10 @@ exports.generate = catchAsync(async (req, res, next) => {
     //
     // }
 
-    const createFolderImageKit = async (folderName, parentFolderPath) => {
-        const response = await imagekit.createFolder(
-            {
-                folderName: `${month}`,
-                parentFolderPath: `/dd_reports/${year}`
-            }
-        );
-        return !!response;
-    }
-    // folder: `/dd_reports/${year}/${month}`,
-    const uploadFileImageKit = async (file, fileName, folder) => {
-        const response = imagekit.upload(
-            {
-                file,
-                fileName,
-                folder
-            }
-        );
-        if (response) {
-            return response;
-        }
-    }
-
-    const listFilesImageKit = async (path, includeFolder = true) => {
-        const response = await imagekit.listFiles(
-            {
-                path,
-                includeFolder
-            }
-        )
-        if (response) {
-            return response;
-        }
-    }
 
     let fileUrl = "";
+    let filePath = "";
+    let fileId = "";
 
     // imagekit.listFiles(
     //     {
@@ -344,6 +355,8 @@ exports.generate = catchAsync(async (req, res, next) => {
                     const response2 = await uploadFileImageKit(buffer, fileName, `/dd_reports/${year}/${month}`);
                     if (response2) {
                         fileUrl = response2.url;
+                        fileId = response2.fileId
+                        filePath = response2.filePath
                     }
                 }
             } else {
@@ -353,6 +366,8 @@ exports.generate = catchAsync(async (req, res, next) => {
                     const response2 = await uploadFileImageKit(buffer, fileName, `/dd_reports/${year}/${month}`);
                     if (response2) {
                         fileUrl = response2.url;
+                        fileId = response2.fileId
+                        filePath = response2.filePath
                     }
                 }
 
@@ -360,9 +375,24 @@ exports.generate = catchAsync(async (req, res, next) => {
         }
     }
 
-    if (fileUrl) {
-        await convertDocx2Html(fileUrl, res, next);
-    }
+    if (!fileUrl) return next(new AppError("Something went wrong while generating dd report", 400));
+    await getSFDT(buffer, res, next);
+    // const htmlString = await convertDocx2Html(fileUrl, res, next);
+    // res
+    //     .status(202)
+    //     .json(
+    //         {
+    //             status: "Success",
+    //             data: {
+    //                 htmlString,
+    //                 fileId,
+    //                 filePath
+    //             }
+    //         }
+    //     )
+    // ;
+
+
 
     // imagekit.createFolder({
     //     folderName: `${year}`,
@@ -410,8 +440,7 @@ exports.generate = catchAsync(async (req, res, next) => {
     // ;
 })
 
-exports.generateLabReport = async (entry, user) => {
-
+exports.generateLabReport = async (entry, lot, user) => {
     const content = fs.readFileSync(
         path.resolve(`${__dirname}/../public/data/templates`, "lab report.docx"),
         "binary"
@@ -422,32 +451,70 @@ exports.generateLabReport = async (entry, user) => {
         paragraphLoop: true,
         linebreaks: true,
     });
+    // tantalum
+    // niobium
+    // iron
 
+    const settings = await Settings.findOne();
     const reportInfo = {
-        mineralGrade: "",
-        supplierName: "",
-        supplyDate: "",
-        dateOfReceipt: "",
-        mineralType: "",
-        coltanContent: "",
-        cassiteriteContent: "",
-        nobeliumContent: "",
-        wolframiteContent: "",
-        ironContent: "",
-        mainMaterial: "",
-        mainMaterialContent: "",
-        generatedBy: "",
-        nameOfCompany: "",
+        weightOut: lot?.weightOut,
+        supplierName: entry?.companyName,
+        supplyDate: entry?.supplyDate?.toISOString().split('T')[0],
+        dateOfReceipt: entry?.supplyDate?.toISOString().split('T')[0],
+        mineralType: entry?.mineralType?.toUpperCase(),
+        coltanContent: entry?.mineralType !== "coltan" ? "0.0" : lot?.mineralGrade ,
+        cassiteriteContent: entry?.mineralType !== "cassiterite" ? "0.0" : lot?.mineralGrade,
+        niobiumContent: entry?.mineralType !== "coltan" ? "0.0" : lot?.niobium,
+        wolframiteContent: entry?.mineralType !== "wolframite" ? "0.0" : lot?.mineralGrade,
+        ironContent: entry?.mineralType !== "coltan" ? "0.0" : lot?.iron,
+        mainMaterial: entry?.mineralType?.toUpperCase(),
+        mainMaterialContent: lot?.mineralGrade,
+        // TODO 25: REPLACE USER.USERNAME WITH ACTUAL DATA
+        generatedBy: user?.username,
+        nameOfCompany: settings?.nameOfCompany,
+    }
+    return doc.render({
+        ...reportInfo,
+    }).getZip().generate({type: "arraybuffer", compression: "DEFLATE",});
+    // fs.writeFileSync(path.resolve(__dirname, "output.docx"), buffer);
+}
+
+exports.generateForwardNote = async (shipment) => {
+    const content = fs.readFileSync(
+        path.resolve(`${__dirname}/../public/data/templates`, "forward-note.docx"),
+        "binary"
+    );
+    const zip = new PizZip(content);
+
+    const doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+    });
+    const settings = await Settings.findOne();
+    const forwardNoteInfo = {
+        shipment_number: shipment?.iTSCiShipmentNumber,
+        mineral_type: shipment?.model.toUpperCase(),
+        gross_weight: shipment?.netWeight + shipment?.dustWeight + shipment?.sampleWeight,
+        name_of_buyer: shipment?.buyerName,
+        address_of_processor: settings?.address.sector + ", " + settings?.address?.district + ", " + settings?.address?.province,
+        name_of_processor: settings?.nameOfCompany,
     }
 
     const buffer = doc.render({
-        ...reportInfo,
-    }).getZip().generate({type: "nodebuffer", compression: "DEFLATE",})
+        ...forwardNoteInfo,
+    }).getZip().generate({type: "arraybuffer", compression: "DEFLATE",});
 
-    fs.writeFileSync(path.resolve(__dirname, "output.docx"), buffer);
+    const response = await uploadFileImageKit(Buffer.from(buffer), `${shipment.shipmentNumber} - FORWARD NOTE.docx`, `/shipments/${shipment.shipmentNumber}`);
+    if (response) {
+        shipment.containerForwardNote.url = response.url;
+        shipment.containerForwardNote.fileId = response.fileId;
+        await shipment.save();
+        return {
+            response,
+            buffer
+        }
+    }
 }
-
-
 
 // const document = {
 //     "_id": "64c3db8965366b8b6d3cf3b1",

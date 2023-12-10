@@ -83,7 +83,14 @@ const shipmentSchema = new mongoose.Schema(
             type: String,
         },
         containerForwardNote: {
-            type: String,
+            fileId: {
+                type: String,
+                default: null,
+            },
+            url: {
+                type: String,
+                default: null,
+            }
         },
         certificateOfOrigin: {
             type: String,

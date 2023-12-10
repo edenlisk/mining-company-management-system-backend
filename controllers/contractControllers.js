@@ -196,4 +196,4 @@ const upload = multer(
     }
 )
 
-exports.uploadContract = upload.single('contract');
+exports.uploadContract = upload;

@@ -53,7 +53,7 @@ const settingsSchema = new mongoose.Schema(
             },
             sector: {
                 type: String,
-                default: ""
+                default: "Kicukiro"
             }
         },
         editExpiresIn: {
