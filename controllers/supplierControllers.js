@@ -25,6 +25,7 @@ exports.addSupplier = catchAsync(async (req, res, next) => {
             companyName: req.body.companyName,
             TINNumber: req.body.TINNumber,
             licenseNumber: req.body.licenseNumber,
+            companyRepresentative: req.body.companyRepresentative,
             email: req.body.email,
             nationalId: req.body.nationalId,
             phoneNumber: req.body.phoneNumber,
@@ -56,6 +57,7 @@ exports.updateSupplier = catchAsync(async (req, res, next) => {
     if (req.body.companyName) supplier.companyName = req.body.companyName;
     if (req.body.TINNumber) supplier.TINNumber = req.body.TINNumber;
     if (req.body.licenseNumber) supplier.licenseNumber = req.body.licenseNumber;
+    if (req.body.companyRepresentative) supplier.companyRepresentative = req.body.companyRepresentative;
     if (req.body.email) supplier.email = req.body.email;
     if (req.body.nationalId) supplier.nationalId = req.body.nationalId;
     if (req.body.address) supplier.address = req.body.address;

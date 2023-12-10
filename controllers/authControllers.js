@@ -121,7 +121,7 @@ exports.protect = catchAsync(async (req, res, next) => {
     }
     if (!token) return next(new AppError("You're not logged in, Please login", 400));
     const decode = await promisify(jwt.verify)(token, process.env.JWT_SECRET_KEY);
-    const user = await User.findById(decode.id);
+    const user = await User.findById(decode?.id);
     if (!user) return next(new AppError("Session has ended, Please login again", 401));
     if (user.changedPasswordAfter(decode.iat)) return next(new AppError("User recently changed password, Please login again", 401));
     if (user.active === false) return next(new AppError("Your account was suspended, Please contact admin to re-activate", 400));

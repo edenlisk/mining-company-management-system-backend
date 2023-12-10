@@ -14,6 +14,9 @@ const supplierSchema = new mongoose.Schema(
             type: String,
             unique: true
         },
+        companyRepresentative: {
+            type: String
+        },
         mineralTypes: [String],
         email: {
             type: String
@@ -48,7 +51,8 @@ const supplierSchema = new mongoose.Schema(
         },
         typeOfMining: {
             type: String,
-            enum: ['Underground', 'Open Pits', 'Both']
+            enum: ['Underground', 'Open Pits', 'Both'],
+            default: "Open Pits"
         },
         surfaceArea: {
             type: Number,

@@ -509,7 +509,7 @@ const managingDirector = {
         authorize: true,
         reject: true
     },
-    nonSellAgreementWeight: {
+    nonSellAgreement: {
         view: true,
         edit: true
     },
