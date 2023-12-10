@@ -63,6 +63,7 @@ exports.updateSupplier = catchAsync(async (req, res, next) => {
     if (req.body.address) supplier.address = req.body.address;
     if (req.body.equipmentList) supplier.equipmentList = req.body.equipmentList;
     if (req.body.typeOfMining) supplier.typeOfMining = req.body.typeOfMining;
+    if (req.body.typeOfMinerals) supplier.typeOfMinerals = req.body.typeOfMinerals;
     if (req.body.surfaceArea) supplier.surfaceArea = req.body.surfaceArea;
     if (req.body.categoryOfMine) supplier.categoryOfMine = req.body.categoryOfMine;
     if (req.body.numberOfDiggers) supplier.numberOfDiggers = req.body.numberOfDiggers;
