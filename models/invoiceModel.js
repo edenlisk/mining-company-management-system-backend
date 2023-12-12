@@ -21,11 +21,18 @@ const invoiceSchema = new mongoose.Schema(
                         type: String,
                         default: null
                     },
+                    entryId: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        default: null
+                    },
                     quantity: {
                         type: Number,
                         default: null
                     },
-                    rmaFee: {
+                    mineralType: {
+                        type: String,
+                    },
+                    rmaFeeUSD: {
                         type: Number
                     },
                     lotNumber: {

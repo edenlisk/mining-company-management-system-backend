@@ -4,6 +4,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 const INVOICE = require('../utils/invoiceTemplater');
+const { getModel } = require('../utils/helperFunctions');
 
 
 exports.getAllInvoices = catchAsync(async (req, res, next) => {
@@ -146,12 +147,62 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
         //     },
         // ],
     ]
+
+    const bigPaymentHistory = [];
+
     if (invoicedoc) {
         let paymentTotal = 0;
         let totalRMAFee = 0;
         for (const item of invoicedoc.items) {
+            const paymentHistory = [
+                [
+                    {
+                        text: "#",
+                        fillColor: '#eaf2f5',
+                        border: [false, true, false, true],
+                        margin: [0, 3, 0, 3],
+                    },
+                    {
+                        text: "Date",
+                        fillColor: '#eaf2f5',
+                        border: [false, true, false, true],
+                        margin: [0, 5, 0, 5],
+                    },
+                    {
+                        text: 'Company Name',
+                        fillColor: '#eaf2f5',
+                        border: [false, true, false, true],
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Beneficiary',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Phone Number',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                    {
+                        text: 'Amount($)',
+                        border: [false, true, false, true],
+                        alignment: 'right',
+                        fillColor: '#eaf2f5',
+                        margin: [0, 5, 0, 5],
+                        textTransform: 'uppercase',
+                    },
+                ],
+            ]
             paymentTotal += item.amount;
-            totalRMAFee += item.rmaFee;
+            totalRMAFee += item.rmaFeeUSD;
             invoiceDescription.push(
                 [
                     {
@@ -201,7 +252,7 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
                         margin: [0, 5, 0, 5],
                     },
                     {
-                        text: item.rmaFee,
+                        text: item.rmaFeeUSD,
                         border: [false, false, false, true],
                         fillColor: '#f5f5f5',
                         alignment: 'right',
@@ -209,7 +260,65 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
                     },
                 ],
             )
+            const Entry = getModel(item.mineralType);
+            const entry = await Entry.findById(item.entryId);
+            if (entry) {
+                const lot = entry.output.find(lot => lot.lotNumber === item.lotNumber);
+                if (lot) {
+                    if (lot.paymentHistory) {
+                        if (lot.paymentHistory.length === 0) continue;
+                        for (const payment of lot.paymentHistory) {
+                            paymentHistory.push(
+                                [
+                                    {
+                                        text: lot.paymentHistory.indexOf(payment) + 1,
+                                        border: [false, false, false, true],
+                                        margin: [0, 5, 0, 5],
+                                        alignment: 'left',
+                                    },
+                                    {
+                                        text: payment.paymentDate?.toISOString().split('T')[0],
+                                        border: [false, false, false, true],
+                                        margin: [0, 5, 0, 5],
+                                        alignment: 'left',
+                                    },
+                                    {
+                                        text: entry.companyName,
+                                        border: [false, false, false, true],
+                                        margin: [0, 5, 0, 5],
+                                        alignment: 'left',
+                                    },
+                                    {
+                                        text: payment.beneficiary,
+                                        border: [false, false, false, true],
+                                        fillColor: '#f5f5f5',
+                                        alignment: 'right',
+                                        margin: [0, 5, 0, 5],
+                                    },
+                                    {
+                                        text: payment.phoneNumber,
+                                        border: [false, false, false, true],
+                                        fillColor: '#f5f5f5',
+                                        alignment: 'right',
+                                        margin: [0, 5, 0, 5],
+                                    },
+                                    {
+                                        text: payment.paymentAmount,
+                                        border: [false, false, false, true],
+                                        fillColor: '#f5f5f5',
+                                        alignment: 'right',
+                                        margin: [0, 5, 0, 5],
+                                    },
+                                ],
+                            )
+                        }
+                    }
+                    if (paymentHistory.length > 1) bigPaymentHistory.push(paymentHistory);
+                }
+            }
         }
+
+
         const processor = {
             representative: settings.representative,
             companyName: settings.nameOfCompany,
@@ -231,7 +340,8 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
             extraNotes: invoicedoc.extraNotes,
             invoiceDescription,
             paymentTotal,
-            totalRMAFee
+            totalRMAFee,
+            paymentHistory: bigPaymentHistory,
         }
         const invoice = new INVOICE(processor, supplier, invoiceInfo);
         invoice.populateDoc();

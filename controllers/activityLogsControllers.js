@@ -50,10 +50,10 @@ const checkObject = (obj) => {
 
 exports.trackUpdateModifications = (body, entry, req) => {
     const modifications = [];
-    // const exemptedFields = ["_id", "createdAt", "updatedAt", "shipments", "paymentHistory",];
+    const exemptedFields = ["_id", "createdAt", "updatedAt", "shipments", "paymentHistory", "id"];
     for (const key in body) {
-        if (body.hasOwnProperty(key)) {
-            if (`${key}` !== "output" && (parseFloat(body[key]) !== parseFloat(entry[key])) && !checkObject(body[key])) {
+        if (body.hasOwnProperty(key) && !exemptedFields.includes(`${key}`)) {
+            if (`${key}` !== "output" && body[key] !== entry[key] && !checkObject(body[key]) && body[key] !== null) {
                 modifications.push(
                     {
                         fieldName: `${toInitialCase(key)}`,
@@ -65,9 +65,9 @@ exports.trackUpdateModifications = (body, entry, req) => {
                 if (`${key}` === "output") {
                     for (const lot of body.output) {
                         for (const key in lot) {
-                            if (lot.hasOwnProperty(key)) {
+                            if (lot.hasOwnProperty(key) && !exemptedFields.includes(`${key}`)) {
                                 if (!checkObject(lot[key])) {
-                                    if (parseFloat(lot[key]) !== parseFloat(entry.output[body.output.indexOf(lot)][key])) {
+                                    if (lot[key] !== entry.output[body.output.indexOf(lot)][key] && lot[key] !== null) {
                                         modifications.push(
                                             {
                                                 fieldName: `${toInitialCase(key)}`,
@@ -81,7 +81,7 @@ exports.trackUpdateModifications = (body, entry, req) => {
                                         for (const subKey in lot[key]) {
                                             if (lot[key].hasOwnProperty(subKey)) {
                                                 if (!checkObject(lot[key][subKey])) {
-                                                    if (parseFloat(lot[key][subKey]) !== parseFloat(entry.output[body.output.indexOf(lot)][key][subKey])) {
+                                                    if (lot[key][subKey] !== entry.output[body.output.indexOf(lot)][key][subKey] && lot[key][subKey] !== null) {
                                                         modifications.push(
                                                             {
                                                                 fieldName: `${toInitialCase(subKey)}`,

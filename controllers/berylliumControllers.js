@@ -132,10 +132,10 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
 
         }
     }
-    if (req.body.weightOut) entry.weightOut = req.body.weightOut;
-    if (req.body.weightIn) entry.weightIn = req.body.weightIn;
-    if (req.body.mineralGrade) entry.mineralGrade = req.body.mineralGrade;
-    if (req.body.pricePerUnit) entry.pricePerUnit = req.body.pricePerUnit;
+    if (req.body.weightOut) entry.weightOut = parseFloat(req.body.weightOut);
+    if (req.body.weightIn) entry.weightIn = parseFloat(req.body.weightIn);
+    if (req.body.mineralGrade) entry.mineralGrade = parseFloat(req.body.mineralGrade);
+    if (req.body.pricePerUnit) entry.pricePerUnit = parseFloat(req.body.pricePerUnit);
     // if (req.body.nonSellAgreement?.weight) entry.nonSellAgreement.weight = req.body.nonSellAgreement?.weight;
     if (req.body.nonSellAgreement?.weight !== entry.nonSellAgreement?.weight) {
         if (req.nonSellAgreement?.weight > 0) {
@@ -152,23 +152,23 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
             }
         }
     }
-    if (req.body.mineralPrice) entry.mineralPrice = req.body.mineralPrice;
-    if (entry.mineralPrice && req.body.mineralPrice) {
+    if (req.body.mineralPrice) entry.mineralPrice = parseFloat(req.body.mineralPrice);
+    if (entry.mineralPrice && parseFloat(req.body.mineralPrice)) {
         if (!entry.unpaid && entry.unpaid !== 0) {
             entry.unpaid = entry.mineralPrice;
-        } else if (req.body.mineralPrice > entry.mineralPrice) {
-            entry.unpaid += req.body.mineralPrice - entry.mineralPrice;
+        } else if (parseFloat(req.body.mineralPrice) > entry.mineralPrice) {
+            entry.unpaid += parseFloat(req.body.mineralPrice) - entry.mineralPrice;
             if (Boolean(parseFloat(entry.paid))) {
-                entry.paid -= req.body.mineralPrice - entry.mineralPrice;
+                entry.paid -= parseFloat(req.body.mineralPrice) - entry.mineralPrice;
             }
-        } else if (req.body.mineralPrice < entry.mineralPrice) {
-            entry.unpaid -= entry.mineralPrice - req.body.mineralPrice;
+        } else if (parseFloat(req.body.mineralPrice) < entry.mineralPrice) {
+            entry.unpaid -= entry.mineralPrice - parseFloat(req.body.mineralPrice);
             if (Boolean(parseFloat(entry.paid))) {
-                entry.paid += entry.mineralPrice - req.body.mineralPrice;
+                entry.paid += entry.mineralPrice - parseFloat(req.body.mineralPrice);
             }
         }
     }
-    if (req.body.exportedAmount) entry.exportedAmount = req.body.exportedAmount;
+    if (req.body.exportedAmount) entry.exportedAmount = parseFloat(req.body.exportedAmount);
     if (req.body.comment) entry.comment = req.body.comment;
     if (req.body.status) entry.status = req.body.status;
     const result = await entry.save({validateModifiedOnly: true});

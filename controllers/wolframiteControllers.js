@@ -183,14 +183,14 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     const { rmaFeeWolframite } = await Settings.findOne();
     if (req.body.output) {
         for (const lot of req.body.output) {
-            const existingLot = entry.output.find(value => value.lotNumber === lot.lotNumber);
+            const existingLot = entry.output.find(value => value.lotNumber === parseInt(lot.lotNumber));
             if (existingLot) {
-                if (lot.mineralGrade) existingLot.mineralGrade = lot.mineralGrade;
-                if (lot.mineralPrice) existingLot.mineralPrice = lot.mineralPrice;
-                if (lot.metricTonUnit) existingLot.metricTonUnit = lot.metricTonUnit;
-                if (lot.pricePerUnit) existingLot.pricePerUnit = lot.pricePerUnit;
-                if (lot.USDRate) existingLot.USDRate = lot.USDRate;
-                if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = lot.rmaFeeDecision;
+                if (lot.mineralGrade) existingLot.mineralGrade = parseFloat(lot.mineralGrade);
+                if (lot.mineralPrice) existingLot.mineralPrice = parseFloat(lot.mineralPrice);
+                if (lot.metricTonUnit) existingLot.metricTonUnit = parseFloat(lot.metricTonUnit);
+                if (lot.pricePerUnit) existingLot.pricePerUnit = parseFloat(lot.pricePerUnit);
+                if (lot.USDRate) existingLot.USDRate = parseFloat(lot.USDRate);
+                if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = parseFloat(lot.rmaFeeDecision);
                 // if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
                 if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
                     if (lot.nonSellAgreement?.weight > 0) {
@@ -213,20 +213,20 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                 if (existingLot.rmaFee && existingLot.USDRate) {
                     existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
                 }
-                if (existingLot.mineralPrice && lot.mineralPrice) {
+                if (existingLot.mineralPrice && parseFloat(lot.mineralPrice)) {
                     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
                         if (existingLot.rmaFeeUSD) {
                             existingLot.unpaid = existingLot.mineralPrice - existingLot.rmaFeeUSD;
                         }
-                    } else if (lot.mineralPrice > existingLot.mineralPrice) {
-                        existingLot.unpaid += lot.mineralPrice - existingLot.mineralPrice;
+                    } else if (parseFloat(lot.mineralPrice) > existingLot.mineralPrice) {
+                        existingLot.unpaid += parseFloat(lot.mineralPrice) - existingLot.mineralPrice;
                         if (Boolean(parseFloat(existingLot.paid))) {
-                            existingLot.paid -= lot.mineralPrice - existingLot.mineralPrice;
+                            existingLot.paid -= parseFloat(lot.mineralPrice) - existingLot.mineralPrice;
                         }
-                    } else if (lot.mineralPrice < existingLot.mineralPrice) {
-                        existingLot.unpaid -= existingLot.mineralPrice - lot.mineralPrice;
+                    } else if (parseFloat(lot.mineralPrice) < existingLot.mineralPrice) {
+                        existingLot.unpaid -= existingLot.mineralPrice - parseFloat(lot.mineralPrice);
                         if (Boolean(parseFloat(existingLot.paid))) {
-                            existingLot.paid += existingLot.mineralPrice - lot.mineralPrice;
+                            existingLot.paid += existingLot.mineralPrice - parseFloat(lot.mineralPrice);
                         }
                     }
                 }

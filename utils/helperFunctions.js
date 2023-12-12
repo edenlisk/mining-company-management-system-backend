@@ -112,7 +112,12 @@ exports.handlePaidSpecific = output => {
     for (const item of output) {
         if (item.unpaid) {
             if (item.unpaid <= 0) item.settled = true;
-            if (item.cumulativeAmount <= 0 && item.status !== "non-sell agreement") item.status = "sold out";
+            if (item.cumulativeAmount <= 0 && item.status !== "non-sell agreement") {
+                item.status = "sold out";
+            }
+            if (item.cumulativeAmount > 0 && item.status !== "non-sell agreement") {
+                item.status = "in stock"
+            }
         }
     }
 }

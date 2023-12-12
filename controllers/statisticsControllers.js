@@ -10,7 +10,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     const detailedStock = [];
     if (["coltan", "cassiterite", "wolframite"].includes(req.params.model)) {
-        // TODO 16: CHANGE STATUS
+        // TODO 16: CHANGE STATUS --> DONE
         const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}}).sort("supplyDate");
         for (const entry of entries) {
             for (const lot of entry.output) {
@@ -36,6 +36,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                 );
             }
         }
+        console.log(detailedStock);
     } else if (req.params.model === "lithium" || req.params.model === "beryllium") {
         const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}});
         for (const entry of entries) {
@@ -322,7 +323,7 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
 })
 
 exports.unsettledLots = catchAsync(async (req, res, next) => {
-    const models = ["cassiterite", "coltan", "wolframite", "lithium", "beryllium"];
+    const models = ["cassiterite", "coltan", "wolframite"];
     let lots = [];
     for (const model of models) {
         const Entry = getModel(model);
@@ -364,6 +365,8 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                         unpaid: '$output.unpaid',
                         settled: '$output.settled',
                         pricePerUnit: '$output.pricePerUnit',
+                        mineralType: 1,
+                        rmaFeeUSD: '$output.rmaFeeUSD',
                         // status: '$output.status',
                         // londonMetalExchange: '$output.londonMetalExchange',
                         // treatmentCharges: '$output.treatmentCharges',
@@ -375,7 +378,7 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
         )
         lots = [...lots, ...entries];
     }
-    const finalLots = []
+    const finalLots = [];
     for (const item of lots) {
         const newItem = {...item};
         newItem.index = uuidv4();

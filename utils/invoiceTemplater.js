@@ -342,6 +342,56 @@ class Invoice {
             },
         };
 
+        const formatPaymentHistory = this.invoiceInfo.paymentHistory.map(table => {
+            return {
+                layout: {
+                    defaultBorder: false,
+                    hLineWidth: function(i, node) {
+                        return 1;
+                    },
+                    vLineWidth: function(i, node) {
+                        return 1;
+                    },
+                    hLineColor: function(i, node) {
+                        if (i === 1 || i === 0) {
+                            return '#bfdde8';
+                        }
+                        return '#eaeaea';
+                    },
+                    vLineColor: function(i, node) {
+                        return '#eaeaea';
+                    },
+                    hLineStyle: function(i, node) {
+                        // if (i === 0 || i === node.table.body.length) {
+                        return null;
+                        //}
+                    },
+                    // vLineStyle: function (i, node) { return {dash: { length: 10, space: 4 }}; },
+                    paddingLeft: function(i, node) {
+                        return 10;
+                    },
+                    paddingRight: function(i, node) {
+                        return 10;
+                    },
+                    paddingTop: function(i, node) {
+                        return 2;
+                    },
+                    paddingBottom: function(i, node) {
+                        return 2;
+                    },
+                    fillColor: function(rowIndex, node, columnIndex) {
+                        return '#fff';
+                    },
+                },
+                table: {
+                    headerRows: 1,
+                    widths: [ '*', '*', '*', '*', '*', '*' ],
+                    body: table,
+                },
+            }
+        })
+
+        this.dd.content = this.dd.content.concat(formatPaymentHistory);
     }
 
     async saveDownload(res) {
@@ -360,24 +410,38 @@ class Invoice {
                 });
             }
         }
-        pdfDoc.pipe(fs.createWriteStream(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`));
-        pdfDoc.end();
+        const pdfBuffer = await new Promise((resolve) => {
+            const chunks = [];
+            pdfDoc.on('data', (chunk) => chunks.push(chunk));
+            pdfDoc.on('end', () => resolve(Buffer.concat(chunks)));
+            pdfDoc.end();
+        });
+
+
+
+        // pdfDoc.pipe(fs.createWriteStream(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`));
+        // pdfDoc.end();
+
         const response = await imagekit.upload({
-            file: fs.createReadStream(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`),
+            file: pdfBuffer,
             fileName: `${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`,
             folder: `invoices/${this.supplier.companyName}`,
         })
         if (response) {
             invoiceDoc.invoiceFile.fileId = response.fileId;
             invoiceDoc.invoiceFile.url = response.url;
-            fs.unlink(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`, err => {
-              if (err) {
-                  console.log(err);
-              } else {
-                  console.log('File deleted successfully');
-              }
-            })
+            await invoiceDoc.save();
+            // fs.unlink(`${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`, err => {
+            //   if (err) {
+            //       console.log(err);
+            //   } else {
+            //       console.log('File deleted successfully');
+            //   }
+            // })
         }
+
+
+
         // const filePath = `${__dirname}/../public/data/Invoices/${this.supplier.companyName}/${year}/${month}`;
         // if (!fs.existsSync(filePath)) {
         //     fs.mkdir(filePath, {recursive: true}, err => {
@@ -394,7 +458,8 @@ class Invoice {
                 {
                     status: "Success",
                     data: {
-                        invoiceFile: invoiceDoc.invoiceFile.url
+                        invoiceFile: invoiceDoc.invoiceFile.url,
+                        invoiceFileId: invoiceDoc.invoiceFile.fileId,
                     }
                 }
             )

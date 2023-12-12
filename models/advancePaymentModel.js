@@ -72,7 +72,11 @@ const advancePaymentSchema = new mongoose.Schema(
             default: []
         },
         message: String,
-        comment: String
+        comment: String,
+        sfdt: {
+            type: String,
+            default: null
+        }
     },
     {
         timestamps: true

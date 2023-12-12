@@ -638,7 +638,7 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
         newRow.getCell(columnMapping.weightOut).value = entry.weightOut;
         newRow.getCell(columnMapping.exportWeight).value = exportWeight;
         newRow.getCell(columnMapping.numberOfMineTags).value = mineTags ? mineTags.split('\n').length : 0;
-        newRow.getCell(columnMapping.firstTaglist).value = mineTags ? mineTags.split('\n') : null;
+        newRow.getCell(columnMapping.firstTaglist).value = mineTags ? mineTags : null;
         newRow.getCell(columnMapping.numberOfNegTags).value = negociantTags ? negociantTags.split('\n').length : 0;
         newRow.getCell(columnMapping.negTAgNumber).value = null;
     }
