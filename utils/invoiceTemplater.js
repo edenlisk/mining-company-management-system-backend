@@ -425,7 +425,7 @@ class Invoice {
         const response = await imagekit.upload({
             file: pdfBuffer,
             fileName: `${this.supplier.companyName} - ${this.invoiceInfo.invoiceNumber}.pdf`,
-            folder: `invoices/${this.supplier.companyName}`,
+            folder: `invoices`,
         })
         if (response) {
             invoiceDoc.invoiceFile.fileId = response.fileId;

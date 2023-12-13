@@ -648,7 +648,7 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     worksheet.getRow(currentRow).getCell(columnMapping.exportWeight).value = totalExportWeight;
     worksheet.getRow(currentRow).getCell(columnMapping.numberOfMineTags).value = totalMineTags;
     worksheet.getRow(entries.length + 2).font = {bold: true};
-    await workbook.xlsx.writeFile(`${shipment.shipmentNumber} MINE TAGS LIST.xlsx`);
+    await workbook.xlsx.writeFile(`MINE TAGS LIST.xlsx`);
     if (shipment.tagListFile?.fileId) {
         imagekit.deleteFile(shipment.tagListFile?.fileId, (err) => {
             if (err) {
@@ -662,7 +662,7 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     }
     let fileId = ""
     let url = ""
-    const data = fs.readFileSync(`${shipment.shipmentNumber} MINE TAGS LIST.xlsx`);
+    const data = fs.readFileSync(`MINE TAGS LIST.xlsx`);
     if (data) {
         const response = await imagekit.upload(
             {
@@ -798,8 +798,8 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
         shipment.negociantTagListFile.fileId = "";
         shipment.negociantTagListFile.url = "";
     }
-    await workbook.xlsx.writeFile(`${shipment.shipmentNumber} negociant-Tags.xlsx`);
-    const data = fs.readFileSync(`${shipment.shipmentNumber} negociant-Tags.xlsx`);
+    await workbook.xlsx.writeFile(`negociant-Tags.xlsx`);
+    const data = fs.readFileSync(`negociant-Tags.xlsx`);
     if (data) {
         const response = await imagekit.upload({
             file: data,
@@ -950,8 +950,8 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         shipment.packingListFile.fileId = "";
         shipment.packingListFile.url = "";
     }
-    await workbook.xlsx.writeFile(`${shipment.shipmentNumber} packing-list.xlsx`);
-    const data = fs.readFileSync(`${shipment.shipmentNumber} packing-list.xlsx`);
+    await workbook.xlsx.writeFile(`packing-list.xlsx`);
+    const data = fs.readFileSync(`packing-list.xlsx`);
     if (data) {
         const response = await imagekit.upload({
             file: data,
