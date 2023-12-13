@@ -150,7 +150,7 @@ exports.generate = catchAsync(async (req, res, next) => {
     }
     const sampleObject = {};
     for (const model of models) {
-        const mineralProduction = await getProduction(model, req.params.supplierId);
+        const mineralProduction = await getProduction(model, req.params.supplierId, req.body.endMonth);
         for (const production of mineralProduction) {
             sampleObject[`month_${mineralProduction.indexOf(production) + 1}`] = getMonthWords(production._id.month);
             sampleObject[`mineral_type${models.indexOf(model) + 1}`] = mineralTypes[`mineral_type${models.indexOf(model) + 1}`];
@@ -207,7 +207,7 @@ exports.generate = catchAsync(async (req, res, next) => {
         // number_of_persons_per_team_observations: this.docInfo.number_of_persons_per_team_observations,
         // number_of_washers_per_team_observations: this.docInfo.number_of_washers_per_team_observations,
         // number_of_transporters_per_team_observations: this.docInfo.number_of_transporters_per_team_observations,
-    }).getZip().generate({type: "nodebuffer", compression: "DEFLATE",})
+    }).getZip().generate({type: "arraybuffer", compression: "DEFLATE",})
 
 
 
@@ -376,7 +376,7 @@ exports.generate = catchAsync(async (req, res, next) => {
     }
 
     if (!fileUrl) return next(new AppError("Something went wrong while generating dd report", 400));
-    await getSFDT(buffer, res, next);
+    await getSFDT(Buffer.from(buffer), res, next, {fileId, filePath, fileUrl});
     // const htmlString = await convertDocx2Html(fileUrl, res, next);
     // res
     //     .status(202)

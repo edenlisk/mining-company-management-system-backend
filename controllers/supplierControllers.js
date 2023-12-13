@@ -2,6 +2,7 @@ const Supplier = require('../models/supplierModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError  = require('../utils/appError');
 const { getModel } = require('../utils/helperFunctions');
+const { trackUpdateModifications, trackCreateOperations, trackDeleteOperations } = require('../controllers/activityLogsControllers');
 
 
 exports.getAllSuppliers = catchAsync(async (req, res, next) => {
@@ -20,7 +21,9 @@ exports.getAllSuppliers = catchAsync(async (req, res, next) => {
 })
 
 exports.addSupplier = catchAsync(async (req, res, next) => {
-    await Supplier.create(
+    const log = trackCreateOperations("supplier", req);
+    if (log) log.logSummary = `${req.user.username} registered new supplier with name ${req.body.companyName}`;
+    const supplier = await Supplier.create(
         {
             companyName: req.body.companyName,
             TINNumber: req.body.TINNumber,
@@ -41,6 +44,10 @@ exports.addSupplier = catchAsync(async (req, res, next) => {
             numberOfTransporters: req.body.numberOfTransporters
         }
     )
+    if (!supplier) {
+        log.status = "failed";
+    }
+    await log?.save({validateBeforeSave: false});
     res
         .status(201)
         .json(
@@ -54,6 +61,7 @@ exports.addSupplier = catchAsync(async (req, res, next) => {
 exports.updateSupplier = catchAsync(async (req, res, next) => {
     const supplier = await Supplier.findById(req.params.supplierId);
     if (!supplier) return next(new AppError("Selected supplier no longer exists!", 400));
+    const log = trackUpdateModifications(req.body, supplier, req);
     if (req.body.companyName) supplier.companyName = req.body.companyName;
     if (req.body.TINNumber) supplier.TINNumber = req.body.TINNumber;
     if (req.body.licenseNumber) supplier.licenseNumber = req.body.licenseNumber;
@@ -78,7 +86,11 @@ exports.updateSupplier = catchAsync(async (req, res, next) => {
             supplier.mineSites.push(mineSite);
         }
     }
-    await supplier.save({validateModifiedOnly: true});
+    const result = await supplier.save({validateModifiedOnly: true});
+    if (!result) {
+        log.status = "failed";
+    }
+    await log?.save({validateBeforeSave: false});
     res
         .status(202)
         .json(
