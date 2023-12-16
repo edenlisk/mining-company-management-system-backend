@@ -77,6 +77,9 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
                     mineralGrade: null,
                     mineralPrice: null,
                     pricePerUnit: null,
+                    netPrice: null,
+                    ASIR: null,
+                    sampleIdentification: null,
                     unpaid: null,
                     settled: false,
                     tantalum: null,
@@ -195,6 +198,10 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (lot.weightOut) existingLot.weightOut = parseFloat(lot.weightOut);
                 if (lot.tantalum) existingLot.tantalum = parseFloat(lot.tantalum);
                 if (lot.USDRate) existingLot.USDRate = parseFloat(lot.USDRate);
+                if (lot.netPrice) existingLot.netPrice = parseFloat(lot.netPrice);
+                if (lot.pricingGrade) existingLot.pricingGrade = parseFloat(lot.pricingGrade);
+                if (lot.ASIR) existingLot.ASIR = parseFloat(lot.ASIR);
+                if (lot.sampleIdentification) existingLot.sampleIdentification = lot.sampleIdentification;
                 // if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
                 if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
                     if (lot.nonSellAgreement?.weight > 0) {
@@ -237,26 +244,31 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 }
                 if (lot.comment) existingLot.comment = lot.comment;
             } else {
-                entry.output.push(
-                    {
-                        lotNumber: lot.lotNumber,
-                        weightOut: lot.weightOut,
-                        exportedAmount: 0,
-                        cumulativeAmount: lot.weightOut,
-                        rmaFee: null,
-                        USDRate: null,
-                        rmaFeeUSD: null,
-                        rmaFeeDecision: "pending",
-                        paid: 0,
-                        mineralGrade: null,
-                        mineralPrice: null,
-                        pricePerUnit: null,
-                        unpaid: null,
-                        settled: false,
-                        tantalum: null,
-                        status: "in stock",
-                    }
-                )
+                if (lot.lotNumber && lot.weightOut) {
+                    entry.output.push(
+                        {
+                            lotNumber: lot.lotNumber,
+                            weightOut: lot.weightOut,
+                            exportedAmount: 0,
+                            cumulativeAmount: lot.weightOut,
+                            rmaFee: null,
+                            USDRate: null,
+                            rmaFeeUSD: null,
+                            rmaFeeDecision: "pending",
+                            paid: 0,
+                            mineralGrade: null,
+                            mineralPrice: null,
+                            pricePerUnit: null,
+                            netPrice: null,
+                            ASIR: null,
+                            sampleIdentification: null,
+                            unpaid: null,
+                            settled: false,
+                            tantalum: null,
+                            status: "in stock",
+                        }
+                    )
+                }
             }
         }
     }

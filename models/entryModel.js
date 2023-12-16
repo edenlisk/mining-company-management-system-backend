@@ -58,12 +58,34 @@ exports.entry = {
     // }
 }
 
-exports.lotSchema = new mongoose.Schema(
+const lotSchema = new mongoose.Schema(
     {
-        lotNumber: Number,
-        weightOut: Number,
+        lotNumber: {
+            type: String,
+            required: [true, "Please provide lot number"],
+        },
+        weightOut: {
+            type: Number,
+            required: [true, "Please provide weight out"],
+        },
         mineralGrade: Number,
         mineralPrice: Number,
+        pricingGrade: {
+            type: String,
+            default: null
+        },
+        ASIR: {
+            type: Number,
+            default: null
+        },
+        netPrice: {
+            type: Number,
+            default: null
+        },
+        sampleIdentification: {
+            type: String,
+            default: null
+        },
         exportedAmount: {
             type: Number,
             validate: {
@@ -182,6 +204,7 @@ exports.lotSchema = new mongoose.Schema(
     }
 )
 
+exports.lotSchema = lotSchema;
 
 // const entrySchema = new mongoose.Schema(
 //     {

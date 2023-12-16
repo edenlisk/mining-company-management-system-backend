@@ -72,6 +72,9 @@ exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
                     mineralGrade: null,
                     mineralPrice: null,
                     pricePerUnit: null,
+                    netPrice: null,
+                    ASIR: null,
+                    sampleIdentification: null,
                     unpaid: null,
                     settled: false,
                     londonMetalExchange: null,
@@ -193,6 +196,10 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 if (lot.treatmentCharges) existingLot.treatmentCharges = parseFloat(lot.treatmentCharges);
                 if (lot.londonMetalExchange) existingLot.londonMetalExchange = parseFloat(lot.londonMetalExchange);
                 if (lot.pricePerUnit) existingLot.pricePerUnit = parseFloat(lot.pricePerUnit);
+                if (lot.netPrice) existingLot.netPrice = parseFloat(lot.netPrice);
+                if (lot.ASIR) existingLot.ASIR = parseFloat(lot.ASIR);
+                if (lot.pricingGrade) existingLot.pricingGrade = parseFloat(lot.pricingGrade);
+                if (lot.sampleIdentification) existingLot.sampleIdentification = lot.sampleIdentification;
                 // if (lot.nonSellAgreement?.weight) {
                 //     existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
                 // }
@@ -237,6 +244,33 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                     }
                 }
                 if (lot.comment) existingLot.comment = lot.comment;
+            } else {
+                if (lot.lotNumber && lot.weightOut) {
+                    entry.output.push(
+                        {
+                            lotNumber: lot.lotNumber,
+                            weightOut: lot.weightOut,
+                            exportedAmount: 0,
+                            cumulativeAmount: lot.weightOut,
+                            rmaFee: null,
+                            USDRate: null,
+                            rmaFeeUSD: null,
+                            rmaFeeDecision: "pending",
+                            paid: 0,
+                            mineralGrade: null,
+                            mineralPrice: null,
+                            pricePerUnit: null,
+                            netPrice: null,
+                            ASIR: null,
+                            sampleIdentification: null,
+                            unpaid: null,
+                            settled: false,
+                            londonMetalExchange: null,
+                            treatmentCharges: null,
+                            status: "in stock"
+                        }
+                    )
+                }
             }
         }
     }
