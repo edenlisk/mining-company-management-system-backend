@@ -440,6 +440,16 @@ const managingDirector = {
         create: true,
         edit: true,
     },
+    ASIR: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    pricingGrade: {
+        view: true,
+        create: true,
+        edit: true,
+    },
     pricePerUnit: {
         view: true,
         create: true,
@@ -450,12 +460,27 @@ const managingDirector = {
         create: true,
         edit: true,
     },
+    netPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
     gradeImg: {
         view: true,
         create: true,
         edit: true,
     },
     tantal: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    niobium: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    iron: {
         view: true,
         create: true,
         edit: true,
@@ -471,6 +496,11 @@ const managingDirector = {
         edit: true
     },
     metricTonUnit: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    sampleIdentification: {
         view: true,
         create: true,
         edit: true
@@ -1115,4 +1145,16 @@ exports.getSFDT = async (buffer, res, next, options={}) => {
             return next(new AppError(error.message, 400));
             // console.error('Error:', error.message); // Handle any errors
         });
+}
+
+exports.replaceSpecialCharacters = (str) => {
+    if (!str) return "";
+    const regex = /[^a-zA-Z0-9]/g;
+    return str.replace(regex, '');
+    // return str
+    //     .replace(/[\u0300-\u036f]/g, "")
+    //     .replace(/[^\w\s]/gi, '')
+    //     .replace(/\s+/g, ' ')
+    //     .trim()
+    //     .toLowerCase();
 }

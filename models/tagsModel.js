@@ -6,6 +6,8 @@ const tagsSchema = new mongoose.Schema(
         tagNumber: {
             type: String,
             unique: true,
+            maxLength: 7,
+            minLength: 7,
             required: [true, "Please provide tag number"]
         },
         tagType: {

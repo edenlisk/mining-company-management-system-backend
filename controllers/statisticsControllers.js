@@ -36,7 +36,6 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
                 );
             }
         }
-        console.log(detailedStock);
     } else if (req.params.model === "lithium" || req.params.model === "beryllium") {
         const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}});
         for (const entry of entries) {
@@ -214,8 +213,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 }
             ]
         )
-        stock.push({value: entry[0].balance, name: specificModel});
-
+        stock.push({value: entry[0]?.balance, name: specificModel});
     }
     for (const model of models) {
         const Entry = getModel(model);

@@ -6,7 +6,7 @@ const Shipment = require("../models/shipmentModel");
 const Settings = require('../models/settingsModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
-const {getModel, fonts, getModelAcronym, getSFDT} = require('../utils/helperFunctions');
+const {getModel, fonts, getModelAcronym, getSFDT, replaceSpecialCharacters} = require('../utils/helperFunctions');
 const fs = require('fs');
 const imagekit = require('../utils/imagekit');
 const ExcelJS = require('exceljs');
@@ -36,7 +36,7 @@ exports.createShipment = catchAsync(async (req, res, next) => {
             entries: req.body.entries,
             shipmentPrice: req.body.shipmentPrice,
             shipmentGrade: req.body.shipmentGrade,
-            shipmentNumber: req.body.shipmentNumber,
+            shipmentNumber: replaceSpecialCharacters(req.body.shipmentNumber),
             netWeight: req.body.netWeight,
             buyerId: req.body.buyerId,
             shipmentSamplingDate: req.body.shipmentSamplingDate,
@@ -69,7 +69,8 @@ exports.getOneShipment = catchAsync(async (req, res, next) => {
         for (const item of shipment.entries) {
             const entry = await Entry.findById(item.entryId);
             if (!entry) continue;
-            const lot = entry.output.find(lt => lt.lotNumber === item.lotNumber);
+            const lot = entry.output?.find(lt => parseInt(lt.lotNumber) === parseInt(item.lotNumber));
+            if (!lot) continue;
             const lotInfo = {
                 entryId: entry._id,
                 supplyDate: entry.supplyDate,
@@ -158,7 +159,7 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
             for (const item of req.body.entries) {
                 const entry = await Entry.findById(item.entryId);
                 if (!entry) continue;
-                const lot = entry.output?.find(value => value.lotNumber === item.lotNumber);
+                const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
                 if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
                 const lotShipment = lot.shipments?.find(value => value.shipmentNumber === shipment.shipmentNumber);
                 if (lotShipment) {
@@ -648,6 +649,9 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     worksheet.getRow(currentRow).getCell(columnMapping.exportWeight).value = totalExportWeight;
     worksheet.getRow(currentRow).getCell(columnMapping.numberOfMineTags).value = totalMineTags;
     worksheet.getRow(entries.length + 2).font = {bold: true};
+    worksheet.getRow(entries.length + 4).getCell(2).value = `AFTER PROCESSING AND SAMPLING THE NET WEIGHT IS ${shipment.netWeight} KGS`
+    worksheet.getRow(entries.length + 5).getCell(2).value = `SAMPLE ${shipment.sampleWeight} KGS`;
+    worksheet.getRow(entries.length + 6).getCell(2).value = `DUST ${shipment.dustWeight} KGS`;
     await workbook.xlsx.writeFile(`MINE TAGS LIST.xlsx`);
     if (shipment.tagListFile?.fileId) {
         imagekit.deleteFile(shipment.tagListFile?.fileId, (err) => {
@@ -787,6 +791,9 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
     worksheet.getRow(currentRow + 2).getCell(columnMapping.companyName).value = `SAMPLE: ${shipment.sampleWeight}`;
     worksheet.getRow(currentRow + 3).getCell(columnMapping.companyName).value = `DUST: ${shipment.dustWeight}`;
     worksheet.spliceRows(currentRow + 4, 0, []);
+    worksheet.getRow(currentRow + 5).getCell(3).value = `NET WEIGHT: ${shipment.netWeight} KGS`;
+    worksheet.getRow(currentRow + 6).getCell(3).value = `SAMPLE: ${shipment.sampleWeight} KGS`;
+    worksheet.getRow(currentRow + 7).getCell(3).value = `DUST: ${shipment.dustWeight} KGS`;
     if (shipment.negociantTagListFile?.fileId) {
         imagekit.deleteFile(shipment.negociantTagListFile?.fileId, (err) => {
             if (err) {
@@ -912,7 +919,6 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
                 newRow.getCell(columnMapping.tagWeight).value = tag.weight;
             }
         })
-
         negociantTags?.map((tag, index) => {
             const newRow = worksheet.getRow(currentRow + mineTags.length - negociantTags.length + index);
             if (entry.mineralType === 'mixed') {
@@ -928,7 +934,6 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
             newRow.getCell(columnMapping.mineSiteTick).value = "YES";
             newRow.getCell(columnMapping.grandTotalForExport).value = exportedWeight;
         })
-
         const finalRow = worksheet.getRow(currentRow + mineTags.length - 1);
         finalRow.getCell(columnMapping.totalTagWeight).value = totalTagWeight;
         // finalRow.getCell(columnMapping.weightOut).value = exportedWeight;

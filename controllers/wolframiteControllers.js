@@ -75,7 +75,10 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
                     pricePerUnit: null,
                     unpaid: null,
                     settled: false,
-                    // TODO 10: REQUIREMENTS TO CALCULATE WOLFRAMITE PRICES
+                    netPrice: null,
+                    ASIR: null,
+                    sampleIdentification: null,
+                    // TODO 10: REQUIREMENTS TO CALCULATE WOLFRAMITE PRICES --> DONE
                     status: "in stock"
                 }
             )
@@ -191,6 +194,10 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                 if (lot.pricePerUnit) existingLot.pricePerUnit = parseFloat(lot.pricePerUnit);
                 if (lot.USDRate) existingLot.USDRate = parseFloat(lot.USDRate);
                 if (lot.rmaFeeDecision) existingLot.rmaFeeDecision = parseFloat(lot.rmaFeeDecision);
+                if (lot.netPrice) existingLot.netPrice = parseFloat(lot.netPrice);
+                if (lot.pricingGrade) existingLot.pricingGrade = parseFloat(lot.pricingGrade);
+                if (lot.ASIR) existingLot.ASIR = parseFloat(lot.ASIR);
+                if (lot.sampleIdentification) existingLot.sampleIdentification = lot.sampleIdentification;
                 // if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
                 if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
                     if (lot.nonSellAgreement?.weight > 0) {
@@ -231,6 +238,32 @@ exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
                     }
                 }
                 if (lot.comment) existingLot.comment = lot.comment;
+            } else {
+                if (lot.lotNumber && lot.weightOut) {
+                    entry.output.push(
+                        {
+                            lotNumber: lot.lotNumber,
+                            weightOut: lot.weightOut,
+                            exportedAmount: 0,
+                            cumulativeAmount: lot.weightOut,
+                            rmaFee: null,
+                            USDRate: null,
+                            rmaFeeUSD: null,
+                            rmaFeeDecision: "pending",
+                            paid: 0,
+                            mineralGrade: null,
+                            mineralPrice: null,
+                            metricTonUnit: null,
+                            pricePerUnit: null,
+                            netPrice: null,
+                            ASIR: null,
+                            sampleIdentification: null,
+                            unpaid: null,
+                            settled: false,
+                            status: "in stock"
+                        }
+                    )
+                }
             }
         }
     }
