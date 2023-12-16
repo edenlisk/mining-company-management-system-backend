@@ -14,9 +14,7 @@ const shipmentSchema = new mongoose.Schema(
                     lotNumber: Number
                 }
             ],
-            default: () => {
-                return [];
-            }
+            required: [true, "Please provide entries"],
         },
         shipmentGrade: {
             type: Number,
@@ -198,7 +196,7 @@ shipmentSchema.pre('save', async function (next) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
                 if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
-                const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
+                const lot = entry.output.find(value => parseInt(value.lotNumber) === (parseInt(item.lotNumber)));
                 if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
                 lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
                 lot.exportedAmount += item.quantity;

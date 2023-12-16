@@ -171,7 +171,7 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                     } else {
                         // const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber));
                         shipment.entries.map(value => {
-                            if ((value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber)) {
+                            if ((value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber))) {
                                 value.quantity = item[shipment.shipmentNumber];
                             }
                         })
@@ -185,7 +185,7 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                     lot.shipments.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
                     lot.exportedAmount = item.exportedAmount;
                     lot.cumulativeAmount = item.balance;
-                    shipment.entries.push({entryId: item.entryId, lotNumber: item.lotNumber, quantity: item[shipment.shipmentNumber]});
+                    shipment.entries.push({entryId: item.entryId, lotNumber: parseInt(item.lotNumber), quantity: item[shipment.shipmentNumber]});
                 }
                 await entry.save({validateModifiedOnly: true});
             }
