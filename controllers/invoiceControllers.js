@@ -4,6 +4,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 const INVOICE = require('../utils/invoiceTemplater');
+const {getModelAcronym} = require("../utils/helperFunctions");
 const { getModel } = require('../utils/helperFunctions');
 
 
@@ -109,7 +110,6 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
                 textTransform: 'uppercase',
             },
         ],
-
         // [
         //     {
         //         text: 'Item 2',
@@ -212,7 +212,7 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
                         alignment: 'left',
                     },
                     {
-                        text: item.itemName,
+                        text: getModelAcronym(item.mineralType),
                         border: [false, false, false, true],
                         margin: [0, 5, 0, 5],
                         alignment: 'left',
@@ -263,7 +263,7 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
             const Entry = getModel(item.mineralType);
             const entry = await Entry.findById(item.entryId);
             if (entry) {
-                const lot = entry.output.find(lot => lot.lotNumber === item.lotNumber);
+                const lot = entry.output.find(lot => parseInt(lot.lotNumber) === parseInt(item.lotNumber));
                 if (lot) {
                     if (lot.paymentHistory) {
                         if (lot.paymentHistory.length === 0) continue;

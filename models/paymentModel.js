@@ -58,7 +58,11 @@ const paymentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             rel: 'Payment'
         },
-        model: String
+        model: String,
+        paymentMode: {
+            type: String,
+            default: null
+        }
     },
     {timestamps: true}
 )
@@ -92,55 +96,35 @@ const paymentSchema = new mongoose.Schema(
 
 paymentSchema.pre('save', async function (next) {
     const { getModel } = require('../utils/helperFunctions');
-    const Entry = getModel(this.model);
-    if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
-        const entry = await Entry.findOne({_id: this.entryId});
-        const lot = entry.output.find(lot => lot.lotNumber === this.lotNumber);
-        if (lot.settled === true) return next(new AppError("This lot is already paid", 400));
-        if (this.paymentInAdvanceId) {
-            const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
-            if (!payment.consumed) {
-                if (payment.remainingAmount >= lot.mineralPrice) {
-                    lot.paid += (lot.mineralPrice - lot?.rmaFeeUSD);
-                    lot.unpaid = 0;
-                    lot.settled = true;
-                    lot.rmaFeeDecision = "pending";
-                    payment.remainingAmount -= lot.mineralPrice;
-                    // TODO 12: FIND APPROPRIATE COMMENT.
-                    payment.consumptionDetails.push(
-                        {
-                            date: (new Date()).toDateString(),
-                            comment: `Deducted ${lot.rmaFeeUSD} for paying Rwanda Mining Association fee.`
-                        }
-                    )
-                    payment.consumptionDetails.push(
-                        {
-                            date: (new Date()).toDateString(),
-                            comment: `Deducted ${lot.mineralPrice} for paying mineral price of ${this.lotNumber} of minerals supplied on ${entry.supplyDate}.`
-                        }
-                    )
-                    // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
-                    const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
-                    lot.paymentHistory.push(
-                        {
-                            paymentId: this._id,
-                            beneficiary,
-                            nationalId,
-                            phoneNumber,
-                            location,
-                            paymentAmount: payment.paymentAmount - payment.remainingAmount,
-                            email,
-                            paymentDate: new Date(),
-                            currency
-                        }
-                    );
-                } else {
-                    if (payment.remainingAmount >= lot.rmaFeeUSD) {
+    if (this.isNew) {
+        const Entry = getModel(this.model);
+        if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
+            const entry = await Entry.findById(this.entryId);
+            const lot = entry?.output?.find(lot => parseInt(lot.lotNumber) === parseInt(this.lotNumber));
+            if (lot.settled === true) return next(new AppError("This lot is already paid", 400));
+            if (this.paymentInAdvanceId) {
+                const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
+                if (!payment.consumed) {
+                    if (payment.remainingAmount >= lot.mineralPrice) {
+                        lot.paid += (lot.mineralPrice - lot?.rmaFeeUSD);
+                        lot.unpaid = 0;
+                        lot.settled = true;
                         lot.rmaFeeDecision = "pending";
-                        lot.paid += (payment.remainingAmount - lot.rmaFeeUSD);
-                        lot.unpaid -= (payment.remainingAmount - lot.rmaFeeUSD);
-                        // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
-                        payment.remainingAmount -= (payment.remainingAmount - lot.rmaFeeUSD);
+                        payment.remainingAmount -= lot.mineralPrice;
+                        // TODO 12: FIND APPROPRIATE COMMENT.
+                        payment.consumptionDetails.push(
+                            {
+                                date: (new Date()).toDateString(),
+                                comment: `Deducted ${lot.rmaFeeUSD} for paying Rwanda Mining Association fee.`
+                            }
+                        )
+                        payment.consumptionDetails.push(
+                            {
+                                date: (new Date()).toDateString(),
+                                comment: `Deducted ${lot.mineralPrice} for paying mineral price of ${this.lotNumber} of minerals supplied on ${entry.supplyDate}.`
+                            }
+                        )
+                        // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
                         const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
                         lot.paymentHistory.push(
                             {
@@ -148,91 +132,118 @@ paymentSchema.pre('save', async function (next) {
                                 beneficiary,
                                 nationalId,
                                 phoneNumber,
-                                location,
-                                paymentAmount: payment.remainingAmount,
+                                location: location?.district,
+                                paymentAmount: payment.paymentAmount - payment.remainingAmount,
                                 email,
                                 paymentDate: new Date(),
-                                currency
+                                currency,
+                                paymentMode: payment.paymentMode
                             }
                         );
+                    } else {
+                        if (payment.remainingAmount >= lot.rmaFeeUSD) {
+                            lot.rmaFeeDecision = "pending";
+                            lot.paid += (payment.remainingAmount - lot.rmaFeeUSD);
+                            lot.unpaid -= (payment.remainingAmount - lot.rmaFeeUSD);
+                            // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
+                            payment.remainingAmount -= (payment.remainingAmount - lot.rmaFeeUSD);
+                            const {beneficiary, nationalId, phoneNumber, location, email, currency} = payment;
+                            lot.paymentHistory.push(
+                                {
+                                    paymentId: this._id,
+                                    beneficiary,
+                                    nationalId,
+                                    phoneNumber,
+                                    location: location?.district,
+                                    paymentAmount: payment.remainingAmount,
+                                    email,
+                                    paymentDate: new Date(),
+                                    currency,
+                                    paymentMode: payment.paymentMode
+                                }
+                            );
+                        }
                     }
                 }
-            }
-            await payment.save({validateModifiedOnly: true});
-        } else {
-            lot.paid += this.paymentAmount;
-            lot.unpaid -= this.paymentAmount;
-            const self = this;
-            const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
-            lot.paymentHistory.push(
-                {
-                    paymentId: this._id,
-                    beneficiary,
-                    nationalId,
-                    phoneNumber,
-                    location,
-                    email,
-                    currency,
-                    paymentDate: this.paymentDate,
-                    paymentAmount: this.paymentAmount
-                }
-            );
-        }
-        await entry.save({validateModifiedOnly: true});
-    } else if (["lithium", "beryllium"].includes(this.model)) {
-        const entry = await Entry.findOne({_id: this.entryId});
-        if (entry.settled) return next(new AppError("This entry is already paid", 400));
-        if (this.paymentInAdvanceId) {
-            const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
-            if (!payment.consumed) {
-                if (payment.remainingAmount >= entry.mineralPrice) {
-                    entry.paid += entry.mineralPrice;
-                    entry.unpaid -= entry.mineralPrice;
-                    entry.settled = true;
-                    payment.remainingAmount -= entry.mineralPrice;
-                    payment.consumptionDetails.push(
-                        {
-                            date: (new Date()).toDateString(),
-                            comment: `Deducted ${entry.mineralPrice} for paying mineral price of ${this.entryId} of minerals supplied on ${entry.supplyDate}.`
-                        }
-                    )
-                    const { beneficiary, nationalId, phoneNumber, location, email, currency } = payment;
-                    entry.paymentHistory.push(
-                        {
-                            paymentId: this._id,
-                            beneficiary,
-                            nationalId,
-                            phoneNumber,
-                            location,
-                            email,
-                            currency,
-                            paymentDate: new Date(),
-                            paymentAmount: payment.paymentAmount - payment.remainingAmount
-                        }
-                    )
-                }
                 await payment.save({validateModifiedOnly: true});
+            } else {
+                lot.paid += this.paymentAmount;
+                lot.unpaid -= this.paymentAmount;
+                const self = this;
+                const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
+                lot.paymentHistory.push(
+                    {
+                        paymentId: this._id,
+                        beneficiary,
+                        nationalId,
+                        phoneNumber,
+                        location,
+                        email,
+                        currency,
+                        paymentDate: this.paymentDate,
+                        paymentAmount: this.paymentAmount,
+                        paymentMode: this.paymentMode
+                    }
+                );
             }
-        } else {
-            entry.paid += this.paymentAmount;
-            entry.unpaid -= this.paymentAmount;
-            const self = this;
-            const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
-            entry.paymentHistory.push(
-                {
-                    paymentId: this._id,
-                    beneficiary,
-                    nationalId,
-                    phoneNumber,
-                    location,
-                    email,
-                    currency,
-                    paymentDate: new Date(),
-                    paymentAmount: this.paymentAmount
+            await entry.save({validateModifiedOnly: true});
+        } else if (["lithium", "beryllium"].includes(this.model)) {
+            const entry = await Entry.findById(this.entryId);
+            if (entry.settled) return next(new AppError("This entry is already paid", 400));
+            if (this.paymentInAdvanceId) {
+                const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
+                if (!payment.consumed) {
+                    if (payment.remainingAmount >= entry.mineralPrice) {
+                        entry.paid += entry.mineralPrice;
+                        entry.unpaid -= entry.mineralPrice;
+                        entry.settled = true;
+                        payment.remainingAmount -= entry.mineralPrice;
+                        payment.consumptionDetails.push(
+                            {
+                                date: (new Date()).toDateString(),
+                                comment: `Deducted ${entry.mineralPrice} for paying mineral price of ${this.entryId} of minerals supplied on ${entry.supplyDate}.`
+                            }
+                        )
+                        const { beneficiary, nationalId, phoneNumber, location, email, currency } = payment;
+                        entry.paymentHistory.push(
+                            {
+                                paymentId: this._id,
+                                beneficiary,
+                                nationalId,
+                                phoneNumber,
+                                location: location?.district,
+                                email,
+                                currency,
+                                paymentDate: new Date(),
+                                paymentAmount: payment.paymentAmount - payment.remainingAmount,
+                                paymentMode: this.paymentMode,
+                            }
+                        )
+                    }
+                    await payment.save({validateModifiedOnly: true});
                 }
-            );
+            } else {
+                entry.paid += this.paymentAmount;
+                entry.unpaid -= this.paymentAmount;
+                const self = this;
+                const { beneficiary, nationalId, phoneNumber, location, email, currency } = self;
+                entry.paymentHistory.push(
+                    {
+                        paymentId: this._id,
+                        beneficiary,
+                        nationalId,
+                        phoneNumber,
+                        location,
+                        email,
+                        currency,
+                        paymentDate: new Date(),
+                        paymentAmount: this.paymentAmount,
+                        paymentMode: this.paymentMode
+                    }
+                );
+            }
+            await entry.save({validateModifiedOnly: true});
         }
-        await entry.save({validateModifiedOnly: true});
     }
     this.model = undefined;
     next();

@@ -137,7 +137,7 @@ exports.handleChangeSupplier = async (docObject, next) => {
 }
 
 exports.getMonthWords = monthNumber => {
-    switch (monthNumber + 1) {
+    switch (monthNumber) {
         case 1:
             return "January"
         case 2:
@@ -169,6 +169,11 @@ exports.getMonthWords = monthNumber => {
 
 exports.handleConvertToUSD = (amount, USDRate) => {
     return amount / USDRate;
+}
+
+exports.decidePricingGrade = (pricingGrade) => {
+    if (pricingGrade === "KZM") return "mineralGrade";
+    if (pricingGrade === "ASIR") return "ASIR";
 }
 
 exports.multerFilter = (req, file, cb) => {
@@ -417,6 +422,9 @@ const managingDirector = {
         edit: true,
         delete: true
     },
+    dashboard: {
+        view: true
+    },
     suppliers: {
         view: true,
         create: true,
@@ -461,6 +469,11 @@ const managingDirector = {
         edit: true,
     },
     netPrice: {
+        view: true,
+        create: true,
+        edit: true,
+    },
+    invoices: {
         view: true,
         create: true,
         edit: true,
@@ -552,6 +565,10 @@ const managingDirector = {
         view: true,
         create: true,
         edit: true,
+    },
+    fileDirectory: {
+        view: true,
+        edit: true
     },
     comment: {
         view: true,

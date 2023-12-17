@@ -63,6 +63,9 @@ const settingsSchema = new mongoose.Schema(
         logsLifeTime: {
             type: Number,
             default: 90
+        },
+        roadNumber: {
+            type: String,
         }
     }
 )

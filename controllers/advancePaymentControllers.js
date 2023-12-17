@@ -74,6 +74,7 @@ exports.addAdvancePayment = catchAsync(async (req, res, next) => {
             location: JSON.parse(req.body.location),
             paymentDate: req.body.paymentDate?.split('T')[0],
             USDRate: req.body.USDRate,
+            paymentMode: req.body.paymentMode,
             sfdt: JSON.stringify(sfdt),
             // contractName: req.file.filename,
             // message: req.body.message,

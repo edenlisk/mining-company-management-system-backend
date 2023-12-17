@@ -149,7 +149,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                     } else {
                         const tags = exifreader.load(data);
                         const imageDate = tags['CreateDate'];
-                        const lot = entry.output.find(item => item.lotNumber === parseInt(file.fieldname));
+                        const lot = entry.output.find(item => parseInt(item.lotNumber) === parseInt(file.fieldname));
                         lot.gradeImg.filename = response.name;
                         if (logs && logs.modifications) {
                             logs.modifications.push(
@@ -190,7 +190,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     if (req.body.comment) entry.comment = req.body.comment;
     if (req.body.output) {
         for (const lot of req.body.output) {
-            const existingLot = entry.output.find(value => value.lotNumber === parseInt(lot.lotNumber));
+            const existingLot = entry.output.find(value => parseInt(value.lotNumber) === parseInt(lot.lotNumber));
             if (existingLot) {
                 if (lot.mineralGrade) existingLot.mineralGrade = parseFloat(lot.mineralGrade);
                 if (lot.pricePerUnit) existingLot.pricePerUnit = parseFloat(lot.pricePerUnit);
@@ -199,9 +199,19 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                 if (lot.tantalum) existingLot.tantalum = parseFloat(lot.tantalum);
                 if (lot.USDRate) existingLot.USDRate = parseFloat(lot.USDRate);
                 if (lot.netPrice) existingLot.netPrice = parseFloat(lot.netPrice);
-                if (lot.pricingGrade) existingLot.pricingGrade = parseFloat(lot.pricingGrade);
+                if (lot.pricingGrade) existingLot.pricingGrade = lot.pricingGrade;
                 if (lot.ASIR) existingLot.ASIR = parseFloat(lot.ASIR);
                 if (lot.sampleIdentification) existingLot.sampleIdentification = lot.sampleIdentification;
+                if (lot.niobium) {
+                    if (parseFloat(lot.niobium) !== existingLot.niobium) {
+                        existingLot.niobium = parseFloat(lot.niobium);
+                    }
+                }
+                if (lot.iron) {
+                    if (parseFloat(lot.iron) !== existingLot.iron) {
+                        existingLot.iron = parseFloat(lot.iron);
+                    }
+                }
                 // if (lot.nonSellAgreement?.weight) existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
                 if (lot.nonSellAgreement?.weight !== existingLot.nonSellAgreement?.weight) {
                     if (lot.nonSellAgreement?.weight > 0) {
@@ -223,7 +233,7 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
                     existingLot.rmaFee = rmaFeeColtan * existingLot.weightOut;
                 }
                 if (existingLot.rmaFee && existingLot.USDRate) {
-                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
+                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(5);
                 }
                 if (existingLot.mineralPrice && parseFloat(lot.mineralPrice)) {
                     if (!existingLot.unpaid && existingLot.unpaid !== 0) {
@@ -320,10 +330,10 @@ exports.deleteGradeImg = catchAsync(async (req, res, next) => {
         entry.gradeImg = undefined;
         await entry.save({validateModifiedOnly: true});
     } else {
-        const lot = entry.output.find(item => item.lotNumber === parseInt(req.body.lotNumber));
+        const lot = entry.output?.find(item => parseInt(item.lotNumber) === parseInt(req.body.lotNumber));
         // await imagekit.deleteFile(lot.gradeImg.fileId);
         if (log) {
-            log.modifications = [{fieldName: "gradeImg", initialValue: lot.gradeImg?.filePath, newValue: ""}];
+            log.modifications = [{fieldName: "gradeImg", initialValue: lot?.gradeImg?.filePath, newValue: ""}];
         }
         lot.gradeImg = undefined;
         await entry.save({validateModifiedOnly: true});

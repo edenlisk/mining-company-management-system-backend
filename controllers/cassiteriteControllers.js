@@ -58,7 +58,7 @@ exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
     entry.time = req.body.time;
     if (req.body.output) {
         for (const lot of req.body.output) {
-            entry.output.push(
+            entry?.output?.push(
                 {
                     lotNumber: lot.lotNumber,
                     weightOut: lot.weightOut,
@@ -85,7 +85,7 @@ exports.createCassiteriteEntry = catchAsync(async (req, res, next) => {
         }
     }
     const log = trackCreateOperations("cassiterite", req);
-    const result = await entry.save({validateModifiedOnly: true});
+    const result = await entry?.save({validateModifiedOnly: true});
     if (!result) {
         log.status = "failed";
     }
@@ -189,7 +189,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
     const { rmaFeeCassiterite } = await Settings.findOne();
     if (req.body.output) {
         for (const lot of req.body.output) {
-            const existingLot = entry.output.find(value => value.lotNumber === parseInt(lot.lotNumber));
+            const existingLot = entry.output.find(value => parseInt(value.lotNumber) === parseInt(lot.lotNumber));
             if (existingLot) {
                 if (lot.mineralGrade) existingLot.mineralGrade = parseFloat(lot.mineralGrade);
                 if (lot.mineralPrice) existingLot.mineralPrice = parseFloat(lot.mineralPrice);
@@ -198,7 +198,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                 if (lot.pricePerUnit) existingLot.pricePerUnit = parseFloat(lot.pricePerUnit);
                 if (lot.netPrice) existingLot.netPrice = parseFloat(lot.netPrice);
                 if (lot.ASIR) existingLot.ASIR = parseFloat(lot.ASIR);
-                if (lot.pricingGrade) existingLot.pricingGrade = parseFloat(lot.pricingGrade);
+                if (lot.pricingGrade) existingLot.pricingGrade = lot.pricingGrade;
                 if (lot.sampleIdentification) existingLot.sampleIdentification = lot.sampleIdentification;
                 // if (lot.nonSellAgreement?.weight) {
                 //     existingLot.nonSellAgreement.weight = lot.nonSellAgreement.weight;
@@ -224,7 +224,7 @@ exports.updateCassiteriteEntry = catchAsync(async (req, res, next) => {
                     existingLot.rmaFee = rmaFeeCassiterite * existingLot.weightOut;
                 }
                 if (existingLot.rmaFee && existingLot.USDRate) {
-                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(3);
+                    existingLot.rmaFeeUSD = handleConvertToUSD(existingLot.rmaFee, existingLot.USDRate).toFixed(5);
                 }
                 if (existingLot.mineralPrice && parseFloat(lot.mineralPrice)) {
                     if (!existingLot.unpaid && existingLot.unpaid !== 0) {

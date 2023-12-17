@@ -236,7 +236,7 @@ exports.stockSummary = catchAsync(async (req, res, next) => {
                 }
             ]
         );
-        stock.push({value: entry[0].balance, name: model});
+        stock.push({value: entry[0]?.balance, name: model});
     }
 
     res
@@ -457,6 +457,23 @@ exports.generateReconciliationExcelTable = catchAsync(async (req, res, next) => 
         .json(
             {
                 status: "Success"
+            }
+        )
+    ;
+})
+
+exports.getOneEntry = catchAsync(async (req, res, next) => {
+    const model = req.params.model;
+    const Entry = getModel(model);
+    const entry = await Entry.findById(req.params.entryId);
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    entry
+                }
             }
         )
     ;

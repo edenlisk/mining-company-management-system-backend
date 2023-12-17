@@ -35,8 +35,8 @@ const populateSiteCodes = (minesites) => {
     return site_codes;
 }
 
-const getProduction = async (model, supplierId, endMonth) => {
-    const {specifiedMonth, sixMonthsAgo} = getSixMonthsAgo(endMonth);
+const getProduction = async (model, supplierId, startMonth, endMonth = new Date().toISOString().split('T')[0]) => {
+    const {specifiedMonth, sixMonthsAgo} = getSixMonthsAgo(new Date(endMonth).getMonth());
     const Entry = getModel(model.toLowerCase());
     const supplierOverallProduction = await Entry.aggregate(
         [
@@ -44,9 +44,10 @@ const getProduction = async (model, supplierId, endMonth) => {
                 $match: {
                     supplierId: new mongoose.Types.ObjectId(supplierId),
                     supplyDate: {
-                        $lte: specifiedMonth, // Last day of the specified month
-                        $gt: sixMonthsAgo // Six months ago from the specified month
+                        $lte: endMonth ? new Date(endMonth) : specifiedMonth, // Last day of the specified month
+                        $gt: startMonth ? new Date(startMonth) : sixMonthsAgo // Six months ago from the specified month
                     },
+                    mineralType: {$ne: "mixed"}
                 }
             },
             {
@@ -65,8 +66,8 @@ const getProduction = async (model, supplierId, endMonth) => {
         ]
     )
     const monthMap = {};
-    let currentDate = new Date(sixMonthsAgo);
-    while (currentDate < specifiedMonth) {
+    let currentDate = new Date(startMonth ? new Date(startMonth) : sixMonthsAgo);
+    while (currentDate < (endMonth ? new Date(endMonth) : specifiedMonth)) {
         const currentYear = currentDate.getFullYear();
         const currentMonth = currentDate.getMonth() + 1; // Adjusting for 0-based index
         monthMap[`${currentYear}-${currentMonth}`] = 0;
@@ -86,16 +87,59 @@ const getProduction = async (model, supplierId, endMonth) => {
     }));
 }
 
-const createFolderImageKit = async (folderName, parentFolderPath) => {
-    const response = await imagekit.createFolder(
-        {
-            folderName: folderName,
-            parentFolderPath: parentFolderPath
-        }
-    );
-    return !!response;
+const getMixedProduction = async (supplierId, startMonth, endMonth = new Date().toISOString().split('T')[0]) => {
+    const Entry = getModel("coltan");
+    const { specifiedMonth, sixMonthsAgo } = getSixMonthsAgo(new Date(endMonth).getMonth());
+    const supplierOverallProduction = await Entry.aggregate(
+        [
+            {
+                $match: {
+                    supplierId: new mongoose.Types.ObjectId(supplierId),
+                    supplyDate: {
+                        $lte: endMonth ? new Date(endMonth) : specifiedMonth, // Last day of the specified month
+                        $gt: startMonth ? new Date(startMonth) : sixMonthsAgo // Six months ago from the specified month
+                    },
+                    mineralType: {$eq: "mixed"}
+                }
+            },
+            {
+                $project: {
+                    month: { $month: '$supplyDate' },
+                    year: { $year: '$supplyDate' },
+                    weightIn: 1,
+                },
+            },
+            {
+                $group: {
+                    _id: { month: '$month', year: '$year' },
+                    totalWeightIn: { $sum: '$weightIn' },
+                },
+            }
+        ]
+    )
+
+    const monthMap = {};
+    let currentDate = new Date(startMonth ? new Date(startMonth) : sixMonthsAgo);
+    while (currentDate < (endMonth ? new Date(endMonth) : specifiedMonth)) {
+        const currentYear = currentDate.getFullYear();
+        const currentMonth = currentDate.getMonth() + 1; // Adjusting for 0-based index
+        monthMap[`${currentYear}-${currentMonth}`] = 0;
+        currentDate.setMonth(currentDate.getMonth() + 1);
+    }
+
+    // Populate the object with matching results
+    supplierOverallProduction.forEach(result => {
+        const { year, month } = result._id;
+        monthMap[`${year}-${month}`] = result.totalWeightIn;
+    });
+    // Convert the object back to an array
+    return Object.keys(monthMap).map(key => ({
+        _id: {year: parseInt(key.split('-')[0]), month: parseInt(key.split('-')[1])},
+        totalWeightIn: monthMap[key],
+    }));
 }
-// folder: `/dd_reports/${year}/${month}`,
+
+
 const uploadFileImageKit = async (file, fileName, folder) => {
     const response = imagekit.upload(
         {
@@ -109,24 +153,6 @@ const uploadFileImageKit = async (file, fileName, folder) => {
     }
 }
 
-const listFilesImageKit = async (path, includeFolder = true) => {
-    const response = await imagekit.listFiles(
-        {
-            path,
-            includeFolder
-        }
-    )
-    if (response) {
-        return response;
-    }
-}
-
-const deleteFileImageKit = async (fileId) => {
-    const response = await imagekit.deleteFile(fileId);
-    if (response) {
-        return !!response;
-    }
-}
 
 exports.generate = catchAsync(async (req, res, next) => {
     // Load the docx file as binary content
@@ -149,29 +175,74 @@ exports.generate = catchAsync(async (req, res, next) => {
         "mineral_type4": "mixed"
     }
     const sampleObject = {};
+    const averageProduction = {
+        "cassiterite": null,
+        "coltan": null,
+        "wolframite": null,
+        "mixed": null
+    }
+    const mixedProduction = await getMixedProduction(req.params.supplierId, req.body.startMonth, req.body.endMonth);
     for (const model of models) {
-        const mineralProduction = await getProduction(model, req.params.supplierId, req.body.endMonth);
+        const mineralProduction = await getProduction(model, req.params.supplierId, req.body.startMonth, req.body.endMonth);
+        let totalWeightIn = 0;
         for (const production of mineralProduction) {
-            sampleObject[`month_${mineralProduction.indexOf(production) + 1}`] = getMonthWords(production._id.month);
+            sampleObject[`month_${mineralProduction.indexOf(production) + 1}`] = getMonthWords(production?._id?.month);
             sampleObject[`mineral_type${models.indexOf(model) + 1}`] = mineralTypes[`mineral_type${models.indexOf(model) + 1}`];
             sampleObject[`month${mineralProduction.indexOf(production) + 1}_type${models.indexOf(model) + 1}`] = production.totalWeightIn;
+            totalWeightIn += production?.totalWeightIn;
+        }
+        if (totalWeightIn > 0) {
+            averageProduction[model] = totalWeightIn / (mineralProduction.length * 24);
+        } else {
+            averageProduction[model] = 0;
         }
     }
-    const fileName = `${req.body.date_of_report ? req.body.date_of_report : new Date().toISOString().split('T')[0]} iTSCi Template Due Diligence ${supplier.companyName}.docx`;
+    if (mixedProduction.length > 0) {
+        let totalWeightIn = 0;
+        for (const production of mixedProduction) {
+            sampleObject[`month_${mixedProduction.indexOf(production) + 1}`] = getMonthWords(production?._id?.month);
+            sampleObject[`mineral_type4`] = mineralTypes[`mineral_type4`];
+            sampleObject[`month${mixedProduction.indexOf(production) + 1}_type4`] = production?.totalWeightIn;
+            totalWeightIn += production?.totalWeightIn;
+        }
+        if (totalWeightIn > 0) {
+            averageProduction["mixed"] = totalWeightIn / (mixedProduction.length * 24);
+        } else {
+            averageProduction["mixed"] = 0;
+        }
+    }
+    let productionPerDaySummary = '';
+    if (averageProduction) {
+        for (const mineralType of Object.keys(averageProduction)) {
+            productionPerDaySummary += `${averageProduction[mineralType]?.toFixed(3)} kg/day for ${mineralType}\n`;
+        }
+    }
 
+    const fileName = `${req.body.date_of_report ? req.body.date_of_report : new Date().toISOString().split('T')[0]} iTSCi Template Due Diligence ${supplier.companyName}.docx`;
 
     // Render the document (Replace {first_name} by John, {last_name} by Doe, ...)
 
+    const currentDate = new Date();
+    const twoDaysAgo = new Date(currentDate);
+    twoDaysAgo.setDate(currentDate.getDate() - 2);
     const buffer = doc.render({
-        sites_coordinates: populateSitesCoordinates(supplier.mineSites),
-        name_of_sites: populateSitesNames(supplier.mineSites),
-        code_of_sites: populateSiteCodes(supplier.mineSites),
+        sites_coordinates: populateSitesCoordinates(supplier?.mineSites),
+        name_of_sites: populateSitesNames(supplier?.mineSites),
+        code_of_sites: populateSiteCodes(supplier?.mineSites),
         ...req.body,
-        sites_district: supplier.address.district,
-        sites_sector: supplier.address.sector,
+        sites_district: supplier?.address?.district,
+        sites_sector: supplier?.address?.sector,
         // TODO 15: USE SECTOR INSTEAD OF SECTOR
-        sites_cell: supplier.address.sector,
-        ...sampleObject
+        sites_cell: supplier?.address?.sector,
+        ...sampleObject,
+        company_license_number: supplier?.licenseNumber,
+        company_visited: supplier?.companyName,
+        sites_visited: populateSitesNames(supplier?.mineSites),
+        number_of_minesites: supplier?.mineSites?.length,
+        number_of_minesites_visited: supplier?.mineSites?.length,
+        date_of_report: new Date().toISOString().split('T')[0],
+        date_of_visit: twoDaysAgo?.toISOString().split('T')[0],
+        production_per_day_observations: productionPerDaySummary,
         // name_of_processor: this.docInfo.name_of_processor,
         // name_of_consultant: this.docInfo.name_of_consultant,
         // email_of_consultant: this.docInfo.email_of_consultant,
@@ -342,102 +413,47 @@ exports.generate = catchAsync(async (req, res, next) => {
     // )
 
     if (buffer && month && year) {
-        const response = await listFilesImageKit('/dd_reports', true);
+        const response = await uploadFileImageKit(Buffer.from(buffer), fileName, `/dd_reports/${year}/${month}`);
         if (response) {
-            const existingYear = response.find(item => item.name === `${year}`);
-            if (existingYear) {
-                const response1 = await listFilesImageKit(`/dd_reports/${year}`, true);
-                if (response1) {
-                    const existingMonth = response1.find(item => item.name === `${month}`);
-                    if (!existingMonth) {
-                        await createFolderImageKit(month, `/dd_reports/${year}`);
-                    }
-                    const response2 = await uploadFileImageKit(buffer, fileName, `/dd_reports/${year}/${month}`);
-                    if (response2) {
-                        fileUrl = response2.url;
-                        fileId = response2.fileId
-                        filePath = response2.filePath
-                    }
-                }
-            } else {
-                const isSuccess = await createFolderImageKit(year, `/dd_reports`);
-                if (isSuccess) {
-                    await createFolderImageKit(month, `/dd_reports/${year}`);
-                    const response2 = await uploadFileImageKit(buffer, fileName, `/dd_reports/${year}/${month}`);
-                    if (response2) {
-                        fileUrl = response2.url;
-                        fileId = response2.fileId
-                        filePath = response2.filePath
-                    }
-                }
-
-            }
+            fileUrl = response.url;
+            fileId = response.fileId
+            filePath = response.filePath
         }
+        // const response = await listFilesImageKit('/dd_reports', true);
+        // if (response) {
+        //     const existingYear = response.find(item => item.name === `${year}`);
+        //     if (existingYear) {
+        //         const response1 = await listFilesImageKit(`/dd_reports/${year}`, true);
+        //         if (response1) {
+        //             const existingMonth = response1.find(item => item.name === `${month}`);
+        //             if (!existingMonth) {
+        //                 await createFolderImageKit(month, `/dd_reports/${year}`);
+        //             }
+        //             const response2 = await uploadFileImageKit(Buffer.from(buffer), fileName, `/dd_reports/${year}/${month}`);
+        //             if (response2) {
+        //                 fileUrl = response2.url;
+        //                 fileId = response2.fileId
+        //                 filePath = response2.filePath
+        //             }
+        //         }
+        //     } else {
+        //         const isSuccess = await createFolderImageKit(year, `/dd_reports`);
+        //         if (isSuccess) {
+        //             await createFolderImageKit(month, `/dd_reports/${year}`);
+        //             const response2 = await uploadFileImageKit(Buffer.from(buffer), fileName, `/dd_reports/${year}/${month}`);
+        //             if (response2) {
+        //                 fileUrl = response2.url;
+        //                 fileId = response2.fileId
+        //                 filePath = response2.filePath
+        //             }
+        //         }
+        //
+        //     }
+        // }
     }
 
     if (!fileUrl) return next(new AppError("Something went wrong while generating dd report", 400));
     await getSFDT(Buffer.from(buffer), res, next, {fileId, filePath, fileUrl});
-    // const htmlString = await convertDocx2Html(fileUrl, res, next);
-    // res
-    //     .status(202)
-    //     .json(
-    //         {
-    //             status: "Success",
-    //             data: {
-    //                 htmlString,
-    //                 fileId,
-    //                 filePath
-    //             }
-    //         }
-    //     )
-    // ;
-
-
-
-    // imagekit.createFolder({
-    //     folderName: `${year}`,
-    //     parentFolderPath: "/dd_reports"
-    // }, (err, response) => {
-    //     if (err) {
-    //         console.log(err)
-    //     } else {
-    //         imagekit.createFolder({
-    //             folderName: `${month}`,
-    //             parentFolderPath: `/dd_reports/${year}/${month}`
-    //         }, (err, response) => {
-    //             if (err) {
-    //                 console.log(err);
-    //             } else {
-    //                 imagekitPath = `/dd_reports/${year}/${month}`
-    //             }
-    //         })
-    //     }
-    // })
-
-    // imagekit.upload(
-    //     {
-    //         file: buffer,
-    //         fileName: `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`,
-    //         folder: imagekitPath
-    //     }, (err, response) => {
-    //         if (err) {
-    //             console.log(err)
-    //         } else {
-    //             console.log(response)
-    //         }
-    //     }
-    // )
-
-
-    // fs.writeFileSync(path.resolve(filePath, `${req.body.date_of_report} iTSCi Template Due Diligence ${req.body.company_visited}.docx`), buffer);
-    // res
-    //     .status(200)
-    //     .json(
-    //         {
-    //             status: "Success",
-    //         }
-    //     )
-    // ;
 })
 
 exports.generateLabReport = async (entry, lot, user) => {

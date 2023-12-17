@@ -61,7 +61,7 @@ exports.entry = {
 const lotSchema = new mongoose.Schema(
     {
         lotNumber: {
-            type: String,
+            type: Number,
             required: [true, "Please provide lot number"],
         },
         weightOut: {
@@ -178,7 +178,7 @@ const lotSchema = new mongoose.Schema(
                         default: null
                     },
                     location: {
-                        type: Object,
+                        type: String,
                         default: null
                     },
                     currency:  {
@@ -192,6 +192,10 @@ const lotSchema = new mongoose.Schema(
                     paymentAmount: {
                         type: Number,
                         default: null
+                    },
+                    paymentMode: {
+                        type: String,
+                        default: null
                     }
                 }
             ],
@@ -203,6 +207,13 @@ const lotSchema = new mongoose.Schema(
         }
     }
 )
+
+lotSchema.pre('save', async function (next) {
+    if (this.isModified(['mineralPrice', 'rmaFeeUSD']) && !this.isNew && this.mineralPrice && this.rmaFeeUSD) {
+        this.netPrice = this.mineralPrice - this.rmaFeeUSD;
+    }
+    next();
+})
 
 exports.lotSchema = lotSchema;
 

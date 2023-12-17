@@ -6,6 +6,7 @@ const {
     lastCreatedEntries,
     currentStock,
     topSuppliers,
+    getOneEntry,
     unsettledLots, generateReconciliationExcelTable
 } = require('../controllers/statisticsControllers');
 const { protect, restrictTo } = require('../controllers/authControllers');
@@ -34,5 +35,8 @@ router.route('/unpaid-lots/:supplierId')
 
 router.route('/reconciliations/:model')
     .post(generateReconciliationExcelTable)
+
+router.route('/entry-info/:model/:entryId')
+    .get(protect, getOneEntry)
 
 module.exports = router;

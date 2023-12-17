@@ -295,7 +295,7 @@ class Invoice {
                             ],
                             [
                                 {
-                                    text: 'Total Amount ($)',
+                                    text: 'Total Amount Paid ($)',
                                     bold: true,
                                     fontSize: 20,
                                     alignment: 'right',
