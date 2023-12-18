@@ -2,6 +2,10 @@ const mongoose = require('mongoose');
 
 const lithiumSchema = new mongoose.Schema(
     {
+        supplierId: {
+            type: mongoose.Schema.Types.ObjectId,
+            default: null
+        },
         supplierName: String,
         phoneNumber: String,
         supplyDate: {
@@ -35,6 +39,10 @@ const lithiumSchema = new mongoose.Schema(
             immutable: true
         },
         mineralGrade: Number,
+        sampleIdentification: {
+            type: String,
+            default: null
+        },
         exportedAmount: {
             type: Number,
             validate: {
@@ -156,12 +164,15 @@ const lithiumSchema = new mongoose.Schema(
 )
 
 lithiumSchema.pre('save', async function (next) {
+    const { handleChangeSupplier } = require('../utils/helperFunctions');
     if (this.isNew) {
         this.exportedAmount = 0;
         this.cumulativeAmount = this.weightOut;
         this.paid = 0;
         this.settled = false;
+
     }
+    await handleChangeSupplier(this, next);
     if (this.isModified(['paid', 'unpaid']) && !this.isNew) {
         if (this.unpaid <= 0) {
             this.settled = true;

@@ -5,6 +5,7 @@ const APIFeatures = require('../utils/apiFeatures');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const imagekit = require('../utils/imagekit');
+const {trackUpdateModifications} = require("./activityLogsControllers");
 
 
 
@@ -32,6 +33,7 @@ exports.getAllLithiumEntries = catchAsync(async (req, res, next) => {
 exports.createLithiumEntry = catchAsync(async (req, res, next) => {
     await Lithium.create(
         {
+            supplierId: req.body.supplierId,
             supplierName: req.body.supplierName,
             phoneNumber: req.body.phoneNumber,
             mineralType: req.body.mineralType,
@@ -43,7 +45,8 @@ exports.createLithiumEntry = catchAsync(async (req, res, next) => {
             exportedAmount: 0,
             paid: 0,
             mineralPrice: null,
-            mineralGrade: null,
+            mineralGrade: req.body.mineralGrade,
+            sampleIdentification: req.body.sampleIdentification,
             pricePerUnit: null,
             unpaid: null,
             settled: false,
@@ -81,50 +84,51 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
     const entry = await Lithium.findById(req.params.entryId);
     // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
-    // if (req.body.supplierId) entry.supplierId = req.body.supplierId;
-    // const logs = trackUpdateModifications(req.body, entry, req);
-
+    if (req.body.supplierId) entry.supplierId = req.body.supplierId;
+    const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
-        for (const file of req.files) {
+        const filePromises = req.files.map(async (file) => {
             const fileData = fs.readFileSync(file.path);
             const response = await imagekit.upload({
                 file: fileData,
                 fileName: file.originalname,
                 folder: `/lithium`
             });
-
             if (response) {
-                fs.readFile(file.path, (err, data) => {
-                    if (err) {
-                        return next(new AppError("Error occurred while processing file"))
-                    } else {
-                        const tags = exifreader.load(data);
-                        const imageDate = tags['CreateDate'];
-                        entry.gradeImg.filename = response.name;
-                        // logs.modifications.push(
-                        //     {
-                        //         fieldName: "gradeImg",
-                        //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
-                        //         newValue: `${response.url}--${imageDate ? imageDate.description : "No date"}`,
-                        //     }
-                        // )
-                        entry.gradeImg.filePath = response.url;
-                        entry.gradeImg.fileId = response.fileId;
-                        if (imageDate) {
-                            entry.gradeImg.createdAt = imageDate.description;
-                        }
-                    }
-                    fs.unlink(file.path, (err) => {
+                return new Promise((resolve, reject) => {
+                    fs.readFile(file.path, (err, data) => {
                         if (err) {
-                            console.log('file deleted successfully from file system');
+                            reject(new AppError("Error occurred while processing file"));
+                        } else {
+                            const tags = exifreader.load(data);
+                            const imageDate = tags['CreateDate'];
+                            entry.gradeImg.filename = response.name;
+                            if (logs && logs.modifications) {
+                                logs.modifications.push({
+                                    fieldName: "gradeImg",
+                                    initialValue: `${entry.gradeImg?.filePath}--${entry.gradeImg?.createdAt}`,
+                                    newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
+                                });
+                            }
+                            entry.gradeImg.filePath = response.url;
+                            entry.gradeImg.fileId = response.fileId;
+                            if (imageDate) {
+                                entry.gradeImg.createdAt = imageDate.description;
+                            }
+                            resolve();
                         }
-                    })
-                })
-
+                        fs.unlink(file.path, (err) => {
+                            if (err) {
+                                console.log('file deleted successfully from file system');
+                            }
+                        });
+                    });
+                });
             }
-
-        }
+        });
+        await Promise.all(filePromises);
     }
+    if (req.body.sampleIdentification) entry.sampleIdentification = req.body.sampleIdentification;
     if (req.body.weightIn) entry.weightIn = parseFloat(req.body.weightIn);
     if (req.body.weightOut) entry.weightOut = parseFloat(req.body.weightOut);
     if (req.body.mineralGrade) entry.mineralGrade = parseFloat(req.body.mineralGrade);

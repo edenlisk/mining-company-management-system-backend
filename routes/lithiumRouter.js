@@ -9,7 +9,7 @@ const {
 } = require('../controllers/lithiumControllers');
 const { protect, restrictTo } = require('../controllers/authControllers');
 
-const { deleteGradeImg } = require('../controllers/coltanControllers');
+const { deleteGradeImg, uploadGradeImg } = require('../controllers/coltanControllers');
 const router = express.Router();
 
 router.route('/')
@@ -21,7 +21,7 @@ router.route('/')
 
 router.route('/:entryId')
     .get(protect, getOneLithiumEntry)
-    .patch(protect, updateLithiumEntry)
+    .patch(protect, uploadGradeImg.any(), updateLithiumEntry)
     .delete(protect, deleteLithiumEntry)
 
 router.route('/delete-grade-img/:model/:entryId')

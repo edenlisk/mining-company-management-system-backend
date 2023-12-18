@@ -34,6 +34,7 @@ exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
     const log = trackCreateOperations("Beryllium", req);
     const beryllium = await Beryllium.create(
         {
+            supplierId: req.body.supplierId,
             supplierName: req.body.supplierName,
             phoneNumber: req.body.phoneNumber,
             mineralType: req.body.mineralType,
@@ -45,7 +46,8 @@ exports.createBerylliumEntry = catchAsync(async (req, res, next) => {
             exportedAmount: 0,
             paid: 0,
             mineralPrice: null,
-            mineralGrade: req.body.body,
+            mineralGrade: req.body.mineralGrade,
+            sampleIdentification: req.body.sampleIdentification,
             pricePerUnit: null,
             unpaid: null,
             settled: false,
@@ -87,56 +89,56 @@ exports.updateBerylliumEntry = catchAsync(async (req, res, next) => {
     const entry = await Beryllium.findById(req.params.entryId);
     // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
-    // if (req.body.supplierId) entry.supplierId = req.body.supplierId;
+    if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
-        for (const file of req.files) {
+        const filePromises = req.files.map(async (file) => {
             const fileData = fs.readFileSync(file.path);
             const response = await imagekit.upload({
                 file: fileData,
                 fileName: file.originalname,
                 folder: `/beryllium`
             });
-
             if (response) {
-                fs.readFile(file.path, (err, data) => {
-                    if (err) {
-                        return next(new AppError("Error occurred while processing file"))
-                    } else {
-                        const tags = exifreader.load(data);
-                        const imageDate = tags['CreateDate'];
-                        entry.gradeImg.filename = response.name;
-                        if (logs && logs.modifications) {
-                            logs.modifications.push(
-                                {
+                return new Promise((resolve, reject) => {
+                    fs.readFile(file.path, (err, data) => {
+                        if (err) {
+                            reject(new AppError("Error occurred while processing file"));
+                        } else {
+                            const tags = exifreader.load(data);
+                            const imageDate = tags['CreateDate'];
+                            entry.gradeImg.filename = response.name;
+                            if (logs && logs.modifications) {
+                                logs.modifications.push({
                                     fieldName: "gradeImg",
                                     initialValue: `${entry.gradeImg?.filePath}--${entry.gradeImg?.createdAt}`,
                                     newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
-                                }
-                            )
+                                });
+                            }
+                            entry.gradeImg.filePath = response.url;
+                            entry.gradeImg.fileId = response.fileId;
+                            if (imageDate) {
+                                entry.gradeImg.createdAt = imageDate.description;
+                            }
+                            resolve();
                         }
-                        entry.gradeImg.filePath = response.url;
-                        entry.gradeImg.fileId = response.fileId;
-                        if (imageDate) {
-                            entry.gradeImg.createdAt = imageDate.description;
-                        }
-                    }
-                    fs.unlink(file.path, (err) => {
-                        if (err) {
-                            console.log('file deleted successfully from file system');
-                        }
-                    })
-                })
-
+                        fs.unlink(file.path, (err) => {
+                            if (err) {
+                                console.log('file deleted successfully from file system');
+                            }
+                        });
+                    });
+                });
             }
-
-        }
+        });
+        await Promise.all(filePromises);
     }
     if (req.body.weightOut) entry.weightOut = parseFloat(req.body.weightOut);
     if (req.body.weightIn) entry.weightIn = parseFloat(req.body.weightIn);
     if (req.body.mineralGrade) entry.mineralGrade = parseFloat(req.body.mineralGrade);
     if (req.body.pricePerUnit) entry.pricePerUnit = parseFloat(req.body.pricePerUnit);
     // if (req.body.nonSellAgreement?.weight) entry.nonSellAgreement.weight = req.body.nonSellAgreement?.weight;
+    if (req.body.sampleIdentification) entry.sampleIdentification = req.body.sampleIdentification;
     if (req.body.nonSellAgreement?.weight !== entry.nonSellAgreement?.weight) {
         if (req.nonSellAgreement?.weight > 0) {
             entry.cumulativeAmount = 0;

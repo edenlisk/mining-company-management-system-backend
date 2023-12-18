@@ -144,9 +144,6 @@ const wolframiteSchema = new mongoose.Schema(
 wolframiteSchema.pre('save', async function(next) {
     const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
-    // if (this.isModified(["grade", "netQuantity"]) && !this.isNew) {
-    //     // TODO 7: CALCULATE THE TOTAL PRICE OF WOLFRAMITE
-    // }
     if (this.isModified('output') && !this.isNew) {
         if (this.output) handlePaidSpecific(this.output);
     }

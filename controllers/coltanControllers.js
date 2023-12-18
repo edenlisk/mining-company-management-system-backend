@@ -129,55 +129,45 @@ exports.updateColtanEntry = catchAsync(async (req, res, next) => {
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
-        for (const file of req.files) {
+        const filePromises = req.files.map(async (file) => {
             const fileData = fs.readFileSync(file.path);
-            // const exifData = await exifreader.load(file.path);
-            // console.log(exifData);
-            // // Access specific properties from the EXIF data, e.g., exifData['DateTimeOriginal']
-            // const dateTaken = exifData['DateTimeOriginal'].description;
-            // console.log(dateTaken);
             const response = await imagekit.upload({
                 file: fileData,
                 fileName: file.originalname,
                 folder: `/coltan`
             });
-
             if (response) {
-                fs.readFile(file.path, (err, data) => {
-                    if (err) {
-                        return next(new AppError("Error occurred while processing file"))
-                    } else {
-                        const tags = exifreader.load(data);
-                        const imageDate = tags['CreateDate'];
-                        const lot = entry.output.find(item => parseInt(item.lotNumber) === parseInt(file.fieldname));
-                        lot.gradeImg.filename = response.name;
-                        if (logs && logs.modifications) {
-                            logs.modifications.push(
-                                {
+                return new Promise((resolve, reject) => {
+                    fs.readFile(file.path, (err, data) => {
+                        if (err) {
+                            reject(new AppError("Error occurred while processing file"));
+                        } else {
+                            const tags = exifreader.load(data);
+                            const imageDate = tags['CreateDate'];
+                            const lot = entry.output.find(item => parseInt(item.lotNumber) === parseInt(file.fieldname));
+                            lot.gradeImg.filename = response.name;
+                            if (logs && logs.modifications) {
+                                logs.modifications.push({
                                     fieldName: "gradeImg",
                                     initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
                                     newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
-                                }
-                            )
+                                });
+                            }
+                            lot.gradeImg.filePath = response.url;
+                            lot.gradeImg.fileId = response.fileId;
+                            if (imageDate) {
+                                lot.gradeImg.createdAt = imageDate.description;
+                            }
+                            resolve();
                         }
-                        lot.gradeImg.filePath = response.url;
-                        lot.gradeImg.fileId = response.fileId;
-                        if (imageDate) {
-                            lot.gradeImg.createdAt = imageDate.description;
-                        }
-                    }
-                    fs.unlink(file.path, () => {
-                        console.log('file deleted successfully from file system');
-                    })
-                })
-
+                        fs.unlink(file.path, () => {
+                            console.log('file deleted successfully from file system');
+                        });
+                    });
+                });
             }
-
-
-            // const exifData = exifParser.create(file.buffer).parse();
-            // const dateTaken = exifData.tags['DateTimeOriginal'];
-            // console.log(file.buffer);
-        }
+        });
+        await Promise.all(filePromises);
     }
     if (req.body.supplierId) entry.supplierId = req.body.supplierId;
     if (req.body.numberOfTags) entry.numberOfTags = req.body.numberOfTags;

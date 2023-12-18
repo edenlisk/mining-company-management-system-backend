@@ -160,18 +160,6 @@ const coltanSchema = new mongoose.Schema(
 coltanSchema.pre('save', async function (next) {
     const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
-    // if (this.isModified("netQuantity")) {
-    //     this.rmaFee = 125 * this.netQuantity;
-    // }
-    // if (this.isModified(["tantal", "netQuantity", "grade"]) && !this.isNew) {
-    //     this.totalPrice = this.tantal * this.grade * this.netQuantity;
-    // }
-    // if (this.isModified('paid')) {
-    //     if (this.paid >= (this.totalPrice - this.rmaFee)) {
-    //         this.settled = true;
-    //         // this.unsettled = 0;
-    //     }
-    // }
     if (this.isModified('output') && !this.isNew) {
         if (this.output) handlePaidSpecific(this.output);
     }

@@ -124,15 +124,14 @@ exports.handlePaidSpecific = output => {
 
 exports.handleChangeSupplier = async (docObject, next) => {
     if (docObject.isModified('supplierId') && !docObject.isNew) {
-        const supplier = await Supplier.findById(this.supplierId);
+        const supplier = await Supplier.findById(docObject.supplierId);
         if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
-        this.companyName = supplier.companyName;
-        this.licenseNumber = supplier.licenseNumber;
-        this.representativeId = supplier.representativeId;
-        this.representativePhoneNumber = supplier.representativePhoneNumber;
-        this.companyRepresentative = supplier.companyRepresentative;
-        this.TINNumber = supplier.TINNumber;
-        this.district = supplier.address.district;
+        docObject.companyName = supplier.companyName;
+        docObject.licenseNumber = supplier.licenseNumber;
+        docObject.representativeId = supplier.representativeId;
+        docObject.representativePhoneNumber = supplier.representativePhoneNumber;
+        docObject.companyRepresentative = supplier.companyRepresentative;
+        docObject.TINNumber = supplier.TINNumber;
     }
 }
 

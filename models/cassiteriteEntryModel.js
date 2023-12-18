@@ -144,18 +144,6 @@ cassiteriteSchema.pre('save', async function (next) {
     const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
     await handleChangeSupplier(this, next);
 
-    // if (this.isModified('netQuantity')) {
-    //     this.rmaFee = 50 * this.netQuantity;
-    // }
-    // if (this.isModified(["londonMetalExchange", "treatmentCharges", "grade", "netQuantity"]) && !this.isNew) {
-    //     this.totalPrice = (((this.londonMetalExchange * this.grade/100) - this.treatmentCharges)/1000) * this.netQuantity;
-    // }
-    // if (this.isModified('paid')) {
-    //     if (this.paid >= (this.totalPrice - this.rmaFee)) {
-    //         this.settled = true;
-    //         // this.unsettled = 0;
-    //     }
-    // }
     if (this.isModified('output') && !this.isNew) {
         if (this.output) handlePaidSpecific(this.output);
     }

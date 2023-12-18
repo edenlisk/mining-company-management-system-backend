@@ -7,7 +7,7 @@ const {
     updateBerylliumEntry,
     trashEntries
 } = require('../controllers/berylliumControllers');
-const { deleteGradeImg } = require('../controllers/coltanControllers');
+const { deleteGradeImg, uploadGradeImg } = require('../controllers/coltanControllers');
 const { protect, restrictTo } = require('../controllers/authControllers');
 const router = express.Router();
 
@@ -20,7 +20,7 @@ router.route('/trash')
 
 router.route('/:entryId')
     .get(protect, getOneBerylliumEntry)
-    .patch(protect, updateBerylliumEntry)
+    .patch(protect, uploadGradeImg.any(), updateBerylliumEntry)
     .delete(protect, deleteBerylliumEntry)
 
 router.route('/delete-grade-img/:model/:entryId')
