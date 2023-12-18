@@ -4,6 +4,7 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Shipment = require("../models/shipmentModel");
 const Settings = require('../models/settingsModel');
+const Supplier = require('../models/supplierModel');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const {getModel, fonts, getModelAcronym, getSFDT, replaceSpecialCharacters} = require('../utils/helperFunctions');
@@ -103,7 +104,7 @@ exports.getOneShipment = catchAsync(async (req, res, next) => {
             const lotInfo = {
                 entryId: entry._id,
                 supplyDate: entry.supplyDate,
-                companyName: entry.companyName,
+                companyName: entry.supplierName,
                 beneficiary: entry.beneficiary,
                 mineralType: getModelAcronym(entry.mineralType),
                 weightIn: entry.weightIn,
@@ -164,21 +165,6 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
         const Entry = getModel(shipment.model);
         if (["cassiterite", "coltan", "wolframite"].includes(shipment.model)) {
 
-            const totalWeight = shipment.entries?.reduce(
-                (total, item) => total + parseFloat(item.quantity),
-                0
-            );
-            let totalGrade = 0;
-            // const totalGrade = this.entries.reduce(
-            //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
-            //     0
-            // );
-
-            let totalPrice = 0;
-            // const totalPrice = selectedData.reduce(
-            //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
-            //     0
-            // );
             for (const item of req.body.entries) {
                 const entry = await Entry.findById(item.entryId);
                 if (!entry) continue;
@@ -192,8 +178,6 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                         lot.cumulativeAmount = item.balance;
                         shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (value.lotNumber !== item.lotNumber));
                     } else {
-                        totalGrade += parseFloat(item[shipment.shipmentNumber]) * lot[decidePricingGrade(lot.pricingGrade)] ? lot[decidePricingGrade(lot.pricingGrade)] : lot.ASIR || lot.mineralGrade || 0;
-                        totalPrice += parseFloat(item[shipment.shipmentNumber]) * lot.mineralPrice;
                         // const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber));
                         shipment.entries.map(value => {
                             if ((value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber))) {
@@ -207,8 +191,6 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                     }
                 } else {
                     if (item[shipment.shipmentNumber] === 0) continue;
-                    totalGrade += parseFloat(item[shipment.shipmentNumber]) * lot[decidePricingGrade(lot.pricingGrade)] ? lot[decidePricingGrade(lot.pricingGrade)] : lot.ASIR || lot.mineralGrade || 0;
-                    totalPrice += parseFloat(item[shipment.shipmentNumber]) * lot.mineralPrice;
                     lot.shipments.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
                     lot.exportedAmount = item.exportedAmount;
                     lot.cumulativeAmount = item.balance;
@@ -216,9 +198,6 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                 }
                 await entry.save({validateModifiedOnly: true});
             }
-            shipment.netWeight = totalWeight;
-            shipment.averagePrice = totalPrice > 0 ? totalPrice / totalWeight : 0;
-            shipment.averageGrade = totalGrade > 0 ? totalGrade / totalWeight : 0;
         } else if (["lithium", "beryllium"].includes(shipment.model)) {
             // TODO 23: Implement shipment update for lithium and beryllium => done
             for (const item of this.entries) {
@@ -294,76 +273,11 @@ exports.deleteShipment = catchAsync(async (req, res, next) => {
 })
 
 exports.shipmentReport = catchAsync(async (req, res, next) => {
-    const shipment = await Shipment.findOne({_id: req.params.shipmentId});
+    const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("Something went wrong, shipment is missing!", 400));
     const Entry = getModel(shipment.model);
-    const entryIds = shipment.entries.map(entry => entry.entryId);
-    const entries = await Entry.find({_id: {$in: entryIds}});
-    // const tableData = [
-    //     [
-    //         {text: "Supply date", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //         {text: 'Supplier name', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //         {text: "Lot No", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //         {text: 'Weight out', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //         {text: "Exported amount", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //         {text: "Balance", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //         {text: "Grade", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-    //     ]
-    // ];
-    //
-    // const populateDoc = async (tableData) => {
-    //     for (const item of shipment.entries) {
-    //         const Entry = getModel(shipment.model);
-    //         const entry = await Entry.findById(item.entryId);
-    //         const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
-    //         tableData.push([
-    //             {text: entry.supplyDate.toISOString().split('T')[0]},
-    //             {text: entry.companyName},
-    //             {text: item.lotNumber},
-    //             {text: lot.weightOut},
-    //             {text: item.quantity},
-    //             {text: lot.cumulativeAmount},
-    //             {text: lot.mineralGrade}
-    //         ])
-    //     }
-    //     return tableData;
-    // }
-    //
-    // const docDefinition = {
-    //     pageOrientation: 'landscape',
-    //     pageMargins: [40, 50, 40, 50],
-    //     content: [
-    //         {
-    //             text: `Shipment details with shipment number: ${shipment.shipmentNumber}`,
-    //             alignment: 'left',
-    //             margin: [30, 20, 30, 20],
-    //             fontSize: 25
-    //         },
-    //         {
-    //             table: {
-    //                 width: ['*', '*', '*', 'auto'],
-    //                 body: await populateDoc(tableData),
-    //             },
-    //             alignment: 'center',
-    //         }
-    //     ],
-    //     defaultStyle: {
-    //         font: 'Helvetica',
-    //         fontSize: 20
-    //     }
-    // };
-    // const printer = new PdfPrinter(fonts);
-    //
-    // // SAVE THE DOCUMENT ON THE FILE SYSTEM
-    // const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    // // pdfDoc.pipe(fs.createWriteStream('document.pdf'));
-    // // pdfDoc.end();
-    // // 1. create structure of the report
-    // // 2. populate data into report
-    // // 3. send report back to client
-    // res.setHeader('Content-Type', 'application/pdf');
-    // pdfDoc.pipe(res);
-    // pdfDoc.end();
+    // const entryIds = shipment.entries.map(entry => entry.entryId);
+    // const entries = await Entry.find({_id: {$in: entryIds}});
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`${shipment.shipmentNumber}`);
     worksheet.columns = [
@@ -386,7 +300,7 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
         for (const item of shipment.entries) {
             const entry = await Entry.findById(item.entryId);
             if (!entry) continue;
-            const lot = entry.output.find(value => value.lotNumber === item.lotNumber);
+            const lot = entry.output.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
             let exportWeight = 0;
             const lotShipment = lot.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
             if (lotShipment) exportWeight = lotShipment.weight;
@@ -425,15 +339,103 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
         });
     }
     worksheet.getRow(1).font = {bold: true};
-    await workbook.xlsx.writeFile(`${__dirname}/../public/data/shipment/shipment.xlsx`);
-    res
-        .status(200)
-        .json(
-            {
-                status: "success",
+    const buffer = await workbook.xlsx.writeBuffer();
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.end(Buffer.from(buffer));
+    // const buffer = await workbook.xlsx.writeFile(`${__dirname}/../public/data/shipment/shipment.xlsx`);
+})
+
+exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
+    const shipment = await Shipment.findById(req.params.shipmentId);
+    if (!shipment) return next(new AppError("Something went wrong, shipment is missing!", 400));
+    const Entry = getModel(shipment.model);
+    // const entryIds = shipment.entries.map(entry => entry.entryId);
+    // const entries = await Entry.find({_id: {$in: entryIds}});
+    const tableData = [
+        [
+            {text: "Supply date", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            {text: 'Supplier name', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            {text: "Lot No", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            {text: 'Weight out', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            {text: `To Be Exported`, margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            // {text: "Balance", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            {text: "Grade", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+        ]
+    ];
+
+    const populateDoc = async (tableData) => {
+        for (const item of shipment.entries) {
+            // const Entry = getModel(shipment.model);
+            const entry = await Entry.findById(item.entryId);
+            if (!entry) continue;
+            if (["lithium", "beryllium"].includes(shipment.model)) {
+                const shipmentEntry = entry.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
+                if (!shipmentEntry) continue;
+                tableData.push(
+                    [
+                        {text: entry.supplyDate.toISOString().split('T')[0]},
+                        {text: entry.supplierName},
+                        {text: ""},
+                        {text: entry.weightOut},
+                        {text: shipment.weight},
+                        // {text: entry.cumulativeAmount},
+                        {text: entry.mineralGrade}
+                    ]
+                )
+            } else {
+                const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+                if (!lot) continue;
+                const lotShipment = lot.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
+                if (!lotShipment) continue;
+                tableData.push([
+                    {text: entry.supplyDate.toISOString().split('T')[0]},
+                    {text: entry.companyName},
+                    {text: item.lotNumber},
+                    {text: lot.weightOut},
+                    {text: lotShipment.weight},
+                    // {text: lot.cumulativeAmount},
+                    {text: lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade}
+                ])
             }
-        )
-    ;
+        }
+        return tableData;
+    }
+
+    const docDefinition = {
+        pageOrientation: 'landscape',
+        pageMargins: [40, 50, 40, 50],
+        content: [
+            {
+                text: `Shipment details for shipment number: ${shipment.shipmentNumber}`,
+                alignment: 'left',
+                margin: [30, 20, 30, 20],
+                fontSize: 25
+            },
+            {
+                table: {
+                    width: ['*', '*', '*', 'auto'],
+                    body: await populateDoc(tableData),
+                },
+                alignment: 'center',
+            }
+        ],
+        defaultStyle: {
+            font: 'Helvetica',
+            fontSize: 20
+        }
+    };
+    const printer = new PdfPrinter(fonts);
+
+    // SAVE THE DOCUMENT ON THE FILE SYSTEM
+    const pdfDoc = printer.createPdfKitDocument(docDefinition);
+    // pdfDoc.pipe(fs.createWriteStream('document.pdf'));
+    // pdfDoc.end();
+    // 1. create structure of the report
+    // 2. populate data into report
+    // 3. send report back to client
+    res.setHeader('Content-Type', 'application/pdf');
+    pdfDoc.pipe(res);
+    pdfDoc.end();
 })
 
 exports.shipmentQuarterReport = catchAsync(async (req, res, next) => {
@@ -468,7 +470,23 @@ exports.shipmentQuarterReport = catchAsync(async (req, res, next) => {
                 $lte: new Date(req.body.endDate)
             }
         })
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(`${shipment.shipmentNumber}`);
+    worksheet.columns = [
+        { header: 'DATE', key: 'supplyDate', width: 15, style: {alignment: "left"} },
+        { header: 'COMPANY\n/COOPERATIVE NAME', key: 'companyName', width: 15, style: {alignment: "left"} },
+        { header: 'Weight In (KG)', key: "weightIn", width: 15, style: {alignment: "left"} },
+        { header: 'Weight Out (KG)', key: "weightOut", width: 15, style: {alignment: "left"} },
+        { header: 'LOT NUMBER', key: "lotNumber", width: 15, style: {alignment: "left"} },
+        { header: 'ASI LABO GRADE (%)', key: "mineralGrade", width: 15, style: {alignment: "left"} },
+        { header: 'PRICE/KG ($USD)', key: "pricePerUnit", width: 15, style: {alignment: "left"} },
+        { header: 'TOTAL PRICE', key: "mineralPrice", width: 15, style: {alignment: "left"} },
+        { header: 'WEIGHT * GRADE', key: "weightGrade", width: 15, style: {alignment: "left"} },
+    ];
+
     const reportRawData = [];
+
 
     const Entry = getModel(req.body.model);
     for (const shipmentRawDatum of shipmentRawData) {
@@ -582,8 +600,6 @@ exports.tagList = catchAsync(async (req, res, next) => {
     const Entry = getModel(shipment.model);
     const entryIds = shipment.entries.map(entry => entry.entryId);
     const entries = await Entry.find({_id: {$in: entryIds}}).populate('mineTags negociantTags');
-    console.log(entries);
-
     res
         .status(200)
         .json(
@@ -610,10 +626,10 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
 
     const fileHeading = {
         4: `MATERIAL: ${shipment.shipmentMinerals?.toUpperCase()}`,
-        5: `BUYER: ${shipment.buyerName?.toUpperCase()}`,
+        5: `BUYER: ${shipment.buyerName?.toUpperCase() || ""}`,
         6: `LOT NUMBER: ${shipment.shipmentNumber}`,
         7: `ITA/iTSCi SHIPMENT NUMBER: ${shipment.iTSCiShipmentNumber}`,
-        8: `EXPORT DATE: ${shipment.shipmentDate}`
+        8: `EXPORT DATE: ${shipment.shipmentDate || ''}`
     }
 
     for (const [key, value] of Object.entries(fileHeading)) {
@@ -681,7 +697,8 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     worksheet.getRow(entries.length + 4).getCell(2).value = `AFTER PROCESSING AND SAMPLING THE NET WEIGHT IS ${shipment.netWeight} KGS`
     worksheet.getRow(entries.length + 5).getCell(2).value = `SAMPLE ${shipment.sampleWeight} KGS`;
     worksheet.getRow(entries.length + 6).getCell(2).value = `DUST ${shipment.dustWeight} KGS`;
-    await workbook.xlsx.writeFile(`MINE TAGS LIST.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    // await workbook.xlsx.writeFile(`MINE TAGS LIST.xlsx`);
     if (shipment.tagListFile?.fileId) {
         imagekit.deleteFile(shipment.tagListFile?.fileId, (err) => {
             if (err) {
@@ -695,11 +712,11 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     }
     let fileId = ""
     let url = ""
-    const data = fs.readFileSync(`MINE TAGS LIST.xlsx`);
-    if (data) {
+    // const data = fs.readFileSync(`MINE TAGS LIST.xlsx`);
+    if (buffer) {
         const response = await imagekit.upload(
             {
-                file: data,
+                file: Buffer.from(buffer),
                 fileName: `${shipment.shipmentNumber} MINE TAGS LIST.xlsx`,
                 folder: `/shipments/${shipment.shipmentNumber}`,
                 overwriteFile: true,
@@ -708,13 +725,13 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
         if (response) {
             fileId = response.url;
             url = response.fileId;
-            fs.unlink(`${shipment.shipmentNumber} MINE TAGS LIST.xlsx`, (err) => {
-                if (err) {
-                    console.log(err);
-                } else {
-                    console.log('file deleted successfully');
-                }
-            })
+            // fs.unlink(`${shipment.shipmentNumber} MINE TAGS LIST.xlsx`, (err) => {
+            //     if (err) {
+            //         console.log(err);
+            //     } else {
+            //         console.log('file deleted successfully');
+            //     }
+            // })
         }
     }
     shipment.tagListFile.url = fileId;
@@ -745,10 +762,10 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
 
     const fileHeading = {
         2: `MATERIAL: ${shipment.shipmentMinerals?.toUpperCase()}`,
-        3: `BUYER: ${shipment.buyerName?.toUpperCase()}`,
+        3: `BUYER: ${shipment.buyerName?.toUpperCase() || ''}`,
         4: `LOT NUMBER: ${shipment.shipmentNumber}`,
         5: `ITA/iTSCi SHIPMENT NUMBER: ${shipment.iTSCiShipmentNumber}`,
-        6: `DATE: ${shipment.shipmentDate}`,
+        6: `DATE: ${shipment.shipmentDate || ''}`,
     }
     for (const [key, value] of Object.entries(fileHeading)) {
         worksheet.getRow(Number(key)).getCell(1).value = value;
@@ -834,23 +851,24 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
         shipment.negociantTagListFile.fileId = "";
         shipment.negociantTagListFile.url = "";
     }
-    await workbook.xlsx.writeFile(`negociant-Tags.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    // await workbook.xlsx.writeFile(`negociant-Tags.xlsx`);
     const data = fs.readFileSync(`negociant-Tags.xlsx`);
-    if (data) {
+    if (buffer) {
         const response = await imagekit.upload({
-            file: data,
+            file: Buffer.from(buffer),
             fileName: `${shipment.shipmentNumber} NEGOCIANT TAGS LIST.xlsx`,
             folder: `/shipments/${shipment.shipmentNumber}`,
         });
         shipment.negociantTagListFile.url = response.url;
         shipment.negociantTagListFile.fileId = response.fileId;
-        fs.unlink(`${shipment.shipmentNumber} negociant-Tags.xlsx`, (err) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log('file deleted successfully');
-            }
-        });
+        // fs.unlink(`${shipment.shipmentNumber} negociant-Tags.xlsx`, (err) => {
+        //     if (err) {
+        //         console.log(err);
+        //     } else {
+        //         console.log('file deleted successfully');
+        //     }
+        // });
     }
     await shipment.save({validateBeforeSave: false});
     res
@@ -984,11 +1002,12 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         shipment.packingListFile.fileId = "";
         shipment.packingListFile.url = "";
     }
-    await workbook.xlsx.writeFile(`packing-list.xlsx`);
+    const buffer = await workbook.xlsx.writeBuffer();
+    // await workbook.xlsx.writeFile(`packing-list.xlsx`);
     const data = fs.readFileSync(`packing-list.xlsx`);
-    if (data) {
+    if (buffer) {
         const response = await imagekit.upload({
-            file: data,
+            file: Buffer.from(buffer),
             fileName: `${shipment.shipmentNumber} PACKING LIST.xlsx`,
             folder: `/shipment/${shipment.shipmentNumber}`,
         })
@@ -996,13 +1015,13 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
             shipment.packingListFile.fileId = response.fileId;
             shipment.packingListFile.url = response.url;
         }
-        fs.unlink(`${shipment.shipmentNumber} packing-list.xlsx`, (err) => {
-            if (err) {
-                console.log(err);
-            } else {
-                console.log('file deleted successfully');
-            }
-        })
+        // fs.unlink(`${shipment.shipmentNumber} packing-list.xlsx`, (err) => {
+        //     if (err) {
+        //         console.log(err);
+        //     } else {
+        //         console.log('file deleted successfully');
+        //     }
+        // })
     }
     await shipment.save({ validateBeforeSave: false });
     res
@@ -1030,6 +1049,59 @@ exports.generateForwardNote = catchAsync(async (req, res, next) => {
             {url: response?.url, fileId: response?.fileId, filePath: response?.filePath}
         );
     }
+})
+
+exports.shipmentSuppliersGraph = catchAsync(async (req, res, next) => {
+    const shipment = await Shipment.findById(req.params.shipmentId);
+    if (!shipment) return next(new AppError("Unable to generate Shipment Suppliers Graph, Please try again!", 401));
+    const Entry = getModel(shipment.model);
+    const formatedData = {};
+    if (shipment.entries?.length > 0) {
+        for (const item of shipment.entries) {
+            const entry = await Entry.findById(item.entryId);
+            if (entry) {
+                const supplier = await Supplier.findById(entry?.supplierId);
+                if (supplier) {
+                    if (!formatedData[supplier.companyName.split(' ').join('_')]) {
+                        formatedData[supplier.companyName.split(' ').join('_')] = [item.quantity];
+                    } else {
+                        formatedData[supplier.companyName.split(' ').join('_')].push(item.quantity);
+                    }
+                }
+            }
+        }
+    }
+    const graphData = Object.entries(formatedData).map(([key, value]) => {
+        return {
+            name: key.split('_').join(' '),
+            value: value.reduce((a, b) => a + b, 0)
+        }
+    })
+    graphData.push(
+        {
+            value: shipment.netWeight,
+            itemStyle: {
+                color: 'none',
+                decal: {
+                    symbol: 'none'
+                }
+            },
+            label: {
+                show: false
+            }
+        }
+    )
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    graphData
+                }
+            }
+        )
+    ;
 })
 
 const multerStorage = multer.diskStorage(
@@ -1063,1650 +1135,6 @@ const upload = multer(
 )
 
 exports.uploadCertificates = upload;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

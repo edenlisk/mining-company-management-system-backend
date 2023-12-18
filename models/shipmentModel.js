@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const { getModel } = require('../utils/helperFunctions');
 const Buyer = require('./buyerModel');
 const AppError = require('../utils/appError');
+const {decidePricingGrade} = require("../utils/helperFunctions");
 
 const shipmentSchema = new mongoose.Schema(
     {
@@ -213,6 +214,43 @@ shipmentSchema.pre('save', async function (next) {
                 await entry.save({validateModifiedOnly: true});
             }
         }
+    }
+    if (this.isModified('entries') && !this.isNew) {
+        const totalWeight = this.entries?.reduce(
+            (total, item) => total + parseFloat(item.quantity),
+            0
+        );
+        let totalGrade = 0
+        // const totalGrade = this.entries.reduce(
+        //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
+        //     0
+        // );
+
+        let totalPrice = 0;
+        // const totalPrice = selectedData.reduce(
+        //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
+        //     0
+        // );
+        if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
+            for (const item of this.entries) {
+                const entry = await Entry.findById(item.entryId);
+                if (!entry) continue;
+                const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+                if (!lot || !entry) continue;
+                totalGrade += (parseFloat(item.quantity) * lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0);
+                totalPrice += (parseFloat(item.quantity) * lot.mineralPrice ? lot.mineralPrice : 0);
+            }
+        } else if (["lithium", "beryllium"].includes(this.model)) {
+            for (const item of this.entries) {
+                const entry = await Entry.findById(item.entryId);
+                if (!entry) continue;
+                totalGrade += (parseFloat(item.quantity) * entry.mineralGrade ? entry.mineralGrade : 0);
+                totalPrice += (parseFloat(item.quantity) * entry.mineralPrice ? entry.mineralPrice : 0);
+            }
+        }
+        this.netWeight = totalWeight;
+        this.averageGrade = (totalGrade / totalWeight) ? (totalGrade / totalWeight).toFixed(5) : 0;
+        this.averagePrice = (totalPrice / totalWeight) ? (totalPrice / totalWeight).toFixed(5) : 0;
     }
     next();
 })

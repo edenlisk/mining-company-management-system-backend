@@ -13,6 +13,8 @@ const {
     generateICGLRPackingList,
     shipmentQuarterReport,
     generateForwardNote,
+    shipmentReportPdf,
+    shipmentSuppliersGraph,
 } = require('../controllers/shipmentControllers');
 const { protect, restrictTo } = require('../controllers/authControllers');
 
@@ -22,10 +24,13 @@ router.route('/')
     .post(protect, createShipment)
 
 router.route('/report/:shipmentId')
+    .post(protect, shipmentReportPdf)
+
+router.route('/report/worksheet/:shipmentId')
     .post(protect, shipmentReport)
 
-router.route('/quarter-report')
-    .post(protect, shipmentQuarterReport)
+router.route('/graph/:shipmentId')
+    .post(protect, shipmentSuppliersGraph)
 
 router.route('/tags/:shipmentId')
     .get(protect, tagList)
