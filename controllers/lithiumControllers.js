@@ -130,6 +130,7 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
     }
     if (req.body.sampleIdentification) entry.sampleIdentification = req.body.sampleIdentification;
     if (req.body.weightIn) entry.weightIn = parseFloat(req.body.weightIn);
+    if (req.body.supplierName) entry.supplierName = req.body.supplierName;
     if (req.body.weightOut) entry.weightOut = parseFloat(req.body.weightOut);
     if (req.body.mineralGrade) entry.mineralGrade = parseFloat(req.body.mineralGrade);
     if (req.body.pricePerUnit) entry.pricePerUnit = parseFloat(req.body.pricePerUnit);
