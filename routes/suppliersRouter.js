@@ -7,6 +7,7 @@ const {
     updateSupplier,
     deleteSupplier,
     getOneSupplier,
+    getDueDiligence,
     supplierProductionHistory } = require('../controllers/supplierControllers');
 const { protect, restrictTo } = require('../controllers/authControllers');
 
@@ -16,6 +17,9 @@ router.route('/')
 
 router.route("/generate/:supplierId")
     .post(protect, generate)
+
+router.route('/due-diligence')
+    .post(protect, getDueDiligence)
 
 router.route('/:supplierId')
     .get(protect, getOneSupplier)
