@@ -19,7 +19,7 @@ router.route("/generate/:supplierId")
     .post(protect, generate)
 
 router.route('/due-diligence')
-    .post(protect, getDueDiligence)
+    .post(getDueDiligence)
 
 router.route('/:supplierId')
     .get(protect, getOneSupplier)
