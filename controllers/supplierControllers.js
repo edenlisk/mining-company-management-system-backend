@@ -172,6 +172,6 @@ exports.supplierProductionHistory = catchAsync(async (req, res, next) => {
 exports.getDueDiligence = catchAsync(async (req, res, next) => {
     const data = fs.readFileSync(`${__dirname}/../public/data/templates/dd template suppliers.docx`);
     if (data) {
-        await getSFDT(Buffer.from(data), res, next);
+        await getSFDT(data, res, next);
     }
 })
