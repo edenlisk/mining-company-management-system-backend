@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
-const { entry, lotSchema } = require('../models/entryModel');
+const { entrySchema, lotSchema } = require('../models/entryModel');
 const Supplier = require('./supplierModel');
 const AppError = require('../utils/appError');
 
 const coltanLotSchema = lotSchema.clone();
 coltanLotSchema.add(
     {
-        tantalum: {
+        tantal: {
             type: Number
         },
         niobium: {
@@ -20,46 +20,79 @@ coltanLotSchema.add(
     }
 );
 
-
-const coltanSchema = new mongoose.Schema(
-    {
-        ...entry,
-        name: {
-            type: String,
-            default: "coltan",
-            immutable: true
-        },
-        weightIn: Number,
-        numberOfTags: Number,
-        mineTags: {
-            type: [
-                {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Tag"
-                }
-            ],
-            default: []
-        },
-        negociantTags: {
-            type: [
-                {
-                    type: mongoose.Schema.Types.ObjectId,
-                    ref: "Tag"
-                }
-            ],
-            default: []
-        },
-        output: {
-            type: [coltanLotSchema],
-            default: [],
-        },
+const coltanSchema = entrySchema.clone();
+coltanSchema.add({
+    output:  {
+        type: [coltanLotSchema],
+        default: []
     },
-    {
-        timestamps: true,
-        toJSON: {virtuals: true},
-        toObject: {virtuals: true}
+})
+
+coltanSchema.set('toObject', { virtuals: true });
+coltanSchema.set('toJSON', { virtuals: true });
+
+coltanLotSchema.pre('save', async function(next) {
+    const {decidePricingGrade} = require("../utils/helperFunctions");
+    const Settings = require('../models/settingsModel');
+    if (this.isModified(["pricingGrade", "tantal", "mineralGrade", "ASIR"]) && !this.isNew) {
+        if (this[decidePricingGrade(this.pricingGrade)] && this.tantal) {
+            this.pricePerUnit = this.tantal * this[decidePricingGrade(this.pricingGrade)];
+        }
     }
-)
+    if (this.isModified('pricePerUnit') && !this.isNew) {
+        if (this.pricePerUnit && this.weightOut) {
+            this.mineralPrice = (this.pricePerUnit * this.weightOut).toFixed(5);
+        }
+    }
+    if (this.isModified(["weightOut"])) {
+        const { rmaFeeColtan } = await Settings.findOne();
+        if (this.weightOut && rmaFeeColtan) {
+            this.rmaFeeRWF = this.weightOut * rmaFeeColtan;
+        }
+    }
+    next();
+})
+
+
+
+// const coltanSchema = new mongoose.Schema(
+//     {
+//         name: {
+//             type: String,
+//             default: "coltan",
+//             immutable: true
+//         },
+//         weightIn: Number,
+//         numberOfTags: Number,
+//         mineTags: {
+//             type: [
+//                 {
+//                     type: mongoose.Schema.Types.ObjectId,
+//                     ref: "Tag"
+//                 }
+//             ],
+//             default: []
+//         },
+//         negociantTags: {
+//             type: [
+//                 {
+//                     type: mongoose.Schema.Types.ObjectId,
+//                     ref: "Tag"
+//                 }
+//             ],
+//             default: []
+//         },
+//         output: {
+//             type: [coltanLotSchema],
+//             default: [],
+//         },
+//     },
+//     {
+//         timestamps: true,
+//         toJSON: {virtuals: true},
+//         toObject: {virtuals: true}
+//     }
+// )
 
 
 // {
@@ -166,6 +199,24 @@ coltanSchema.pre('save', async function (next) {
     next();
     // formula = tantal * grade
 })
+
+coltanSchema.statics.findCurrentStock = async function () {
+    const result = await this.find(
+        {
+            $and: [
+                {
+                    $expr: {
+                        $gt: ['$output.cumulativeAmount', 0]
+                    }
+                },
+            ]
+        }
+    );
+    return {
+        entries: result,
+        balance: result.reduce((acc, curr) => acc + curr.output.reduce((acc, curr) => acc + curr.cumulativeAmount, 0), 0)
+    };}
+
 
 coltanSchema.methods.requestEditPermission = function (editExpiresIn = 30) {
     this.editRequestedAt = Date.now();

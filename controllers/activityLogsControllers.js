@@ -50,7 +50,7 @@ const checkObject = (obj) => {
 
 exports.trackUpdateModifications = (body, entry, req) => {
     const modifications = [];
-    const exemptedFields = ["_id", "__v", "_v", "createdAt", "updatedAt", "shipments", "supplierId", "entryId", "isSupplierBeneficiary", "paymentHistory", "id"];
+    const exemptedFields = ["_id", "__v", "_v", "createdAt", "updatedAt", "shipmentHistory", "supplierId", "entryId", "isSupplierBeneficiary", "paymentHistory", "id"];
     for (const key in body) {
         if (body.hasOwnProperty(key) && !exemptedFields.includes(`${key}`)) {
             if (`${key}` !== "output" && body[key] !== entry[key] && !checkObject(body[key]) && body[key] !== null) {

@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const bcrypt = require('bcryptjs');
+const { totp } = require('otplib');
 const {permissions} = require('../utils/helperFunctions')
 
 const notificationsSchema = new mongoose.Schema(
@@ -55,10 +56,6 @@ const userSchema = new mongoose.Schema(
                 return "storekeeper"
             }
         },
-        // permissions: {
-        //     type: String,
-        //     enum: ["storekeeper", "ceo", "managing-director", "operations-manager", "accountant", "traceability-officer"],
-        // },
         notifications: {
             type: [notificationsSchema],
             default: [],
@@ -98,6 +95,16 @@ const userSchema = new mongoose.Schema(
             default: () => true
         },
         passwordChangedAt: Date,
+        loginAttempts: {
+            type: Number,
+            default: 0
+        },
+        secretCode: {
+            type: String,
+        },
+        secretCodeExpiresAt: {
+            type: Date,
+        }
     },
     {
         indexes: [{unique: true, fields: ['phoneNumber', "email"]}]
@@ -112,12 +119,20 @@ userSchema.pre('save', async function (next) {
     next();
 })
 
-// userSchema.pre('save', async function (next) {
-//     if (this.isModified('role')) {
-//         this.permissions = permissions[this.role];
-//     }
-//     next();
-// })
+userSchema.methods.generateOTP = function () {
+    totp.options = {
+        step: 600,
+        algorithm: 'sha512',
+        digits: 6
+    }
+    this.secretCode = totp.generate(process.env.TOTP_SECRET);
+    this.secretCodeExpiresAt = Date.now() + 10 * 60 * 1000;
+    return this.secretCode;
+}
+
+userSchema.methods.verifyOTP = function (candidateOTP) {
+    return totp.check(candidateOTP, process.env.TOTP_SECRET);
+}
 
 userSchema.methods.verifyPassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);

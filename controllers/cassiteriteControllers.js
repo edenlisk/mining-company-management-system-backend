@@ -321,34 +321,3 @@ exports.trashEntries = catchAsync(async (req, res, next) => {
 })
 
 
-const multerStorage = multer.diskStorage(
-    {
-        destination: function (req, file, cb) {
-            cb(null, `${__dirname}/../public/data/cassiterite`);
-        },
-        filename: function (req, file, cb) {
-            // const fileExtension = path.extname(file.originalname);
-            // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
-            cb(null, file.originalname);
-        }
-    }
-)
-
-const multerFilter = (req, file, cb) => {
-    const fileExtension = path.extname(file.originalname);
-    const allowExtension = ['.png', '.jpg', '.jpeg'];
-    if (allowExtension.includes(fileExtension.toLowerCase())) {
-        cb(null, true);
-    } else {
-        cb(new AppError("Not a .jpg, .jpeg or .png file selected", 400), false);
-    }
-}
-
-const upload = multer(
-    {
-        storage: multerStorage,
-        fileFilter: multerFilter
-    }
-)
-
-exports.uploadGradeImg = upload;

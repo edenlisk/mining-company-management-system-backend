@@ -32,6 +32,26 @@ const settingsSchema = new mongoose.Schema(
                 message: "Rwanda Mining Association fee per kg for coltan can't be negative number"
             },
         },
+        rmaFeeLithium: {
+            type: Number,
+            default: 0,
+            validate: {
+                validator: (value) => {
+                    return value >= 0;
+                },
+                message: "Rwanda Mining Association fee per kg for lithium can't be negative number"
+            },
+        },
+        rmaFeeBeryllium: {
+            type: Number,
+            default: 0,
+            validate: {
+                validator: (value) => {
+                    return value >= 0;
+                },
+                message: "Rwanda Mining Association fee per kg for beryllium can't be negative number"
+            },
+        },
         nameOfCompany: {
             type: String,
             default: () => {

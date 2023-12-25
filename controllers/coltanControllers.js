@@ -9,7 +9,7 @@ const catchAsync = require('../utils/catchAsync');
 const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
-const { handleConvertToUSD, getSFDT } = require('../utils/helperFunctions');
+const { handleConvertToUSD, getSFDT, filterResponse } = require('../utils/helperFunctions');
 const imagekit = require('../utils/imagekit');
 const { getModel, updateMineTags, updateNegociantTags } = require('../utils/helperFunctions');
 const { generateLabReport } = require('../utils/docTemplater');
@@ -107,9 +107,10 @@ exports.createColtanEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.getOneColtanEntry = catchAsync(async (req, res, next) => {
-    const entry = await Coltan.findById(req.params.entryId)
+    let entry = await Coltan.findById(req.params.entryId)
         .populate('mineTags').populate('negociantTags');
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
+    entry = filterResponse(entry, req.user?.permissions, "coltan");
     res
         .status(200)
         .json(

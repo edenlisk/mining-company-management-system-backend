@@ -4,59 +4,93 @@
 
 const mongoose = require('mongoose');
 
-exports.entry = {
-    supplierId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Supplier',
-        // required: true
-    },
-    mineralType: {
-        type: String
-    },
-    companyName: {
-        type: String,
-    },
-    licenseNumber: {
-        type: String
-    },
-    TINNumber: {
-        type: String
-    },
-    companyRepresentative: {
-        type: String,
-        // required: [true, "Please provide company representative"]
-    },
-    beneficiary: {
-        type: String
-    },
-    representativeId: {
-        type: String,
-        immutable: true,
-    },
-    representativePhoneNumber: {
-        type: String
-    },
-    supplyDate: {
-        type: Date
-    },
-    time: {
-        type: String
-    },
-    comment: {
-        type: String,
-        default: null
+
+const entrySchema = new mongoose.Schema(
+    {
+        supplierId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Supplier',
+            // required: [true, "Please you must select supplier"]
+        },
+        mineralType: {
+            type: String,
+            default: null
+        },
+        companyName: {
+            type: String,
+            required: [true, "Please provide company name"]
+        },
+        licenseNumber: {
+            type: String,
+            default: null
+        },
+        TINNumber: {
+            type: String,
+            default: null
+        },
+        companyRepresentative: {
+            type: String,
+            default: null
+            // required: [true, "Please provide company representative"]
+        },
+        beneficiary: {
+            type: String,
+            default: null
+        },
+        mineTags: {
+            type: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Tag"
+                }
+            ],
+            default: []
+        },
+        negociantTags: {
+            type: [
+                {
+                    type: mongoose.Schema.Types.ObjectId,
+                    ref: "Tag"
+                }
+            ],
+            default: []
+        },
+        numberOfTags: {
+            type: Number,
+            default: null
+        },
+        weightIn: {
+            type: Number,
+            default: null
+        },
+        // representativeId: {
+        //     type: String,
+        //     immutable: true,
+        // },
+        representativePhoneNumber: {
+            type: String
+        },
+        supplyDate: {
+            type: Date
+        },
+        time: {
+            type: String
+        },
+        comment: {
+            type: String,
+            default: null
+        },
+        visible: {
+            type: Boolean,
+            default: true
+        }
+    },{
+        timestamps: true,
+        toJSON: {virtuals: true},
+        toObject: {virtuals: true}
     }
-    // visible: {
-    //     type: Boolean,
-    //     default: true
-    // },
-    // editRequestedAt: Date,
-    // editExpiresAt: Date,
-    // editableFields: {
-    //     type: [String],
-    //     default: []
-    // }
-}
+)
+
 
 const lotSchema = new mongoose.Schema(
     {
@@ -68,59 +102,86 @@ const lotSchema = new mongoose.Schema(
             type: Number,
             required: [true, "Please provide weight out"],
         },
-        mineralGrade: Number,
-        mineralPrice: Number,
-        pricingGrade: {
-            type: String,
+        mineralGrade: {
+            type: Number,
+            default: null
+        },
+        mineralPrice: {
+            type: Number,
             default: null
         },
         ASIR: {
             type: Number,
             default: null
         },
-        netPrice: {
-            type: Number,
-            default: null
+        pricingGrade: {
+            type: String,
+            default: function () {
+                if (this.ASIR) {
+                    return "ASIR"
+                } else {
+                    return null;
+                }
+            }
         },
+        // netPrice: {
+        //     type: Number,
+        //     default: null
+        // },
         sampleIdentification: {
             type: String,
             default: null
         },
-        exportedAmount: {
+        // exportedAmount: {
+        //     type: Number,
+        //     validate: {
+        //         validator: function (val) {
+        //             if (val && this.weightOut) {
+        //                 return val <= this.weightOut;
+        //             }
+        //         },
+        //         message: "Exported amount must be less than or equal to weight out."
+        //     }
+        // },
+        // cumulativeAmount: {
+        //     type: Number,
+        //     validate: {
+        //         validator: function (val) {
+        //             if (val && this.weightOut) {
+        //                 return val <= this.weightOut;
+        //             }
+        //         },
+        //         message: "Balance amount must be less than or equal to weight out."
+        //     }
+        // },
+        rmaFeeRWF: {
             type: Number,
-            validate: {
-                validator: function (val) {
-                    if (val && this.weightOut) {
-                        return val <= this.weightOut;
-                    }
-                },
-                message: "Exported amount must be less than or equal to weight out."
-            }
+            default: null
         },
-        cumulativeAmount: {
+        USDRate: {
             type: Number,
-            validate: {
-                validator: function (val) {
-                    if (val && this.weightOut) {
-                        return val <= this.weightOut;
-                    }
-                },
-                message: "Balance amount must be less than or equal to weight out."
-            }
+            default: null
         },
-        rmaFee: Number,
-        USDRate: Number,
-        rmaFeeUSD: Number,
+        // rmaFeeUSD: {
+        //     type: Number,
+        //     default: null
+        // },
         rmaFeeDecision: {
             type: String,
             default: "pending"
         },
-        paid: Number,
-        unpaid: {
+        // paid: Number,
+        // unpaid: {
+        //     type: Number,
+        // },
+        // settled: {
+        //     type: Boolean,
+        //     default: false
+        // },
+        pricePerUnit: {
             type: Number,
+            default: null
         },
-        settled: Boolean,
-        pricePerUnit: Number,
         nonSellAgreement: {
             weight: {
                 type: Number,
@@ -134,18 +195,30 @@ const lotSchema = new mongoose.Schema(
                 },
                 default: 0
             },
-            date:  {
+            date: {
                 type: Date,
                 default: null
             }
         },
         gradeImg: {
-            filename: String,
-            createdAt: Date,
-            filePath: String,
-            fileId: String
+            filename: {
+                type: String,
+                default: null
+            },
+            createdAt: {
+                type: Date,
+                default: null
+            },
+            filePath: {
+                type: String,
+                default: null
+            },
+            fileId: {
+                type: String,
+                default: null
+            }
         },
-        shipments: {
+        shipmentHistory: {
             type: [
                 {
                     shipmentNumber: String,
@@ -155,45 +228,33 @@ const lotSchema = new mongoose.Schema(
                         default: null
                     }
                 }
-            ]
+            ],
+            default: []
         },
-        status: {
-            type: String,
-            default: "in stock"
-        },
+        // status: {
+        //     type: String,
+        //     default: "in stock"
+        // },
         paymentHistory: {
             type: [
                 {
-                    paymentId: mongoose.Schema.Types.ObjectId,
-                    beneficiary: {
-                        type: String,
-                        default: null
+                    paymentId: {
+                        type: mongoose.Schema.Types.ObjectId,
+                        ref: "Payment"
                     },
-                    nationalId: {
+                    paymentAmount: Number,
+                    paymentDate: Date,
+                    paymentMode: String,
+                    beneficiary: String,
+                    currency: {
                         type: String,
-                        default: null
+                        default: "USD"
                     },
-                    phoneNumber:  {
+                    phoneNumber: {
                         type: String,
                         default: null
                     },
                     location: {
-                        type: String,
-                        default: null
-                    },
-                    currency:  {
-                        type: String,
-                        default: null
-                    },
-                    paymentDate: {
-                        type: Date,
-                        default: null
-                    },
-                    paymentAmount: {
-                        type: Number,
-                        default: null
-                    },
-                    paymentMode: {
                         type: String,
                         default: null
                     }
@@ -205,68 +266,86 @@ const lotSchema = new mongoose.Schema(
             type: String,
             default: null
         }
+    }, {
+        toJSON: {virtuals: true},
+        toObject: {virtuals: true}
     }
 )
 
-lotSchema.pre('save', async function (next) {
-    if (this.isModified(['mineralPrice', 'rmaFeeUSD']) && !this.isNew && this.mineralPrice && this.rmaFeeUSD) {
-        this.netPrice = this.mineralPrice - this.rmaFeeUSD;
+
+entrySchema.pre('save', async function (next) {
+    const { handleChangeSupplier } = require('../utils/helperFunctions');
+    if (this.isModified('supplierId') && !this.isNew) {
+        await handleChangeSupplier(this, next);
     }
-    next();
 })
 
+lotSchema.virtual('paid').get(function () {
+    if (!this.paymentHistory.length) return 0;
+    return this.paymentHistory.reduce((acc, curr) => {
+        if (curr.paymentAmount) {
+            return acc + curr.paymentAmount;
+        } else {
+            return acc;
+        }
+    }, 0);
+
+})
+
+lotSchema.virtual('rmaFeeUSD').get(function () {
+    if (this.rmaFeeRWF && this.USDRate) {
+        return (this.rmaFeeRWF / this.USDRate).toFixed(5);
+    } else {
+        return null;
+    }
+
+})
+
+lotSchema.virtual('netPrice').get(function () {
+    if (this.mineralPrice && this.rmaFeeUSD) {
+        return (this.mineralPrice - parseFloat(this.rmaFeeUSD)).toFixed(5);
+    } else {
+        return null;
+    }
+
+})
+lotSchema.virtual('unpaid').get(function () {
+    if (!this.netPrice) return null;
+    return (parseFloat(this.netPrice) - parseFloat(this.paid)).toFixed(5);
+
+})
+lotSchema.virtual('exportedAmount').get(function () {
+    if (!this.shipmentHistory.length) return 0;
+    return this.shipmentHistory.reduce((acc, curr) => {
+        return acc + curr.weight;
+    }, 0);
+})
+lotSchema.virtual('cumulativeAmount').get(function () {
+    if (this.nonSellAgreement.weight > 0) return 0;
+    if (!this.shipmentHistory.length) return this.weightOut;
+    return this.weightOut - this.exportedAmount;
+})
+lotSchema.virtual('status').get(function () {
+    if (this.nonSellAgreement.weight > 0) {
+        return "non-sell agreement";
+    } else if (this.cumulativeAmount > 0) {
+        return "in stock";
+    } else if (this.shipmentHistory.length > 0 && this.cumulativeAmount === 0) {
+        return "sold out";
+    }
+})
+lotSchema.virtual('settled').get(function () {
+    if (!this.netPrice) return false;
+    if (this.unpaid === 0 || this.paid === this.netPrice) return true;
+
+})
+
+
+// TODO 25: HOW TO CALCULATE RMA FEE RWF
+// lotSchema.virtual('rmaFeeRWF').get(function () {
+//     if (!this.weightOut) return null;
+// })
+
 exports.lotSchema = lotSchema;
-
-// const entrySchema = new mongoose.Schema(
-//     {
-//         mineralSupplied: {
-//             type: String,
-//             enum: ["cassiterite", "coltan", "wolframite", "beryllium", "lithium", "mixed minerals"]
-//         },
-//         mineralPrice: {
-//             type: Number,
-//             validate: {
-//                 validator: (elem) => {
-//                     return elem >= 0;
-//                 },
-//                 message: "Mineral price can't be negative number"
-//             }
-//         },
-//     }, {
-//         timestamps: true
-//     }
-// )
-
-// TODO 1: FIND CONVENIENT WAY OF STRUCTURING TYPE OF MINERALS AND ITS QUANTITY
-
-// entrySchema.pre('save', async function (next) {
-//     if (this.isNew) {
-//         if (this.mineralSupplied.toLowerCase() === "coltan") {
-//             this.LME = undefined;
-//             this.TC = undefined;
-//             // this.mineralPrice = this.tantal * this.mineralGrade;
-//         } else if (this.mineralSupplied.toLowerCase() === "cassiterite") {
-//             this.tantal = undefined;
-//             // this.mineralPrice = ((this.LME * (this.mineralGrade)/100) - this.TC)/1000;
-//         }
-//     }
-//     next()
-// })
-
-// entrySchema.pre('save', async function (next) {
-//     if (this.isModified('supplierId') && !this.isNew) {
-//         const supplier = await Supplier.findById(this.supplierId);
-//         if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
-//         this.companyName = supplier.companyName;
-//         this.licenseNumber = supplier.licenseNumber;
-//         this.representativeId = supplier.representativeId;
-//         this.representativePhoneNumber = supplier.representativePhoneNumber;
-//         this.TINNumber = supplier.TINNumber;
-//         this.district = supplier.address.district;
-//     }
-//     next();
-// })
-
-
-// module.exports = mongoose.model('Entry', entrySchema);
+exports.entrySchema = entrySchema;
 

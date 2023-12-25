@@ -159,7 +159,7 @@ exports.updateLithiumEntry = catchAsync(async (req, res, next) => {
             if (Boolean(parseFloat(entry.paid))) {
                 entry.paid -= parseFloat(req.body.mineralPrice )- entry.mineralPrice;
             }
-        } else if (parseFloat(req.body.mineralPrice )< entry.mineralPrice) {
+        } else if (parseFloat(req.body.mineralPrice) < entry.mineralPrice) {
             entry.unpaid -= entry.mineralPrice - parseFloat(req.body.mineralPrice);
             if (Boolean(parseFloat(entry.paid))) {
                 entry.paid += entry.mineralPrice - parseFloat(req.body.mineralPrice);

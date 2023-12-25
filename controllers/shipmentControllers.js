@@ -19,13 +19,25 @@ const { generateForwardNote } = require('../utils/docTemplater');
 
 exports.getAllshipments = catchAsync(async (req, res, next) => {
     const shipments = await Shipment.find().sort("-createdAt");
+    const newShipments = [];
+    if (shipments) {
+        for (const shipment of shipments) {
+            const tempShipment = {
+                ...shipment._doc,
+                averageGrade: parseFloat(await shipment.averageGrade),
+                averagePrice: parseFloat(await shipment.averagePrice),
+                netWeight: parseFloat(shipment.netWeight),
+            }
+            newShipments.push(tempShipment);
+        }
+    }
     res
         .status(200)
         .json(
             {
                 status: "Success",
                 data: {
-                    shipments
+                    shipments: newShipments
                 }
             }
         )
@@ -65,60 +77,42 @@ exports.downloadCertificate = catchAsync(async (req, res, next) => {
 exports.getOneShipment = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("The selected shipment no longer exists", 400));
+    const newShipment = {
+        ...shipment._doc,
+        averageGrade: parseFloat(await shipment.averageGrade),
+        averagePrice: parseFloat(await shipment.averagePrice),
+        netWeight: parseFloat(shipment.netWeight),
+    }
     const Entry = getModel(shipment.model);
     const shipmentLots = [];
-    if (["coltan", "cassiterite", "wolframite"].includes(shipment.model)) {
-        for (const item of shipment.entries) {
-            const entry = await Entry.findById(item.entryId);
-            if (!entry) continue;
-            const lot = entry.output?.find(lt => parseInt(lt.lotNumber) === parseInt(item.lotNumber));
-            if (!lot) continue;
-            const lotInfo = {
-                entryId: entry._id,
-                supplyDate: entry.supplyDate,
-                companyName: entry.companyName,
-                beneficiary: entry.beneficiary,
-                mineralType: getModelAcronym(entry.mineralType),
-                weightIn: entry.weightIn,
-                weightOut: lot.weightOut,
-                lotNumber: lot.lotNumber,
-                exportedAmount: lot.exportedAmount,
-                balance: lot.cumulativeAmount,
-                mineralGrade: lot.pricingGrade ? lot[decidePricingGrade(lot.pricingGrade)] : lot.ASIR || lot.mineralGrade,
-                mineralPrice: lot.mineralPrice,
-                [shipment.shipmentNumber]: item.quantity,
-                index: uuidv4(),
-            }
-            if (shipment.model === "coltan") {
-                lotInfo.niobium = lot.niobium;
-                lotInfo.iron = lot.iron;
-            } else if (shipment.model === "wolframite") {
-                lotInfo.metricTonUnit = lot.metricTonUnit;
-            }
-            shipmentLots.push(lotInfo);
+    for (const item of shipment.entries) {
+        const entry = await Entry.findById(item.entryId);
+        if (!entry) continue;
+        const lot = entry.output?.find(lt => parseInt(lt.lotNumber) === parseInt(item.lotNumber));
+        if (!lot) continue;
+        const lotInfo = {
+            entryId: entry._id,
+            supplyDate: entry.supplyDate,
+            companyName: entry.companyName,
+            beneficiary: entry.beneficiary,
+            mineralType: getModelAcronym(entry.mineralType),
+            weightIn: entry.weightIn,
+            weightOut: lot.weightOut,
+            lotNumber: lot.lotNumber,
+            exportedAmount: lot.exportedAmount,
+            balance: lot.cumulativeAmount,
+            mineralGrade: lot.pricingGrade ? lot[decidePricingGrade(lot.pricingGrade)] : lot.ASIR || lot.mineralGrade,
+            mineralPrice: lot.mineralPrice,
+            [shipment.shipmentNumber]: item.quantity,
+            index: uuidv4(),
         }
-    } else if (["lithium", "beryllium"].includes(shipment.model)) {
-        for (const item of shipment.entries) {
-            const entry = await Entry.findById(item.entryId);
-            if (!entry) continue;
-            const lotInfo = {
-                entryId: entry._id,
-                supplyDate: entry.supplyDate,
-                companyName: entry.supplierName,
-                beneficiary: entry.beneficiary,
-                mineralType: getModelAcronym(entry.mineralType),
-                weightIn: entry.weightIn,
-                weightOut: entry.weightOut,
-                // lotNumber: lot.lotNumber,
-                exportedAmount: entry.exportedAmount,
-                balance: entry.cumulativeAmount,
-                mineralGrade: entry.mineralGrade,
-                mineralPrice: entry.mineralPrice,
-                [shipment.shipmentNumber]: item.quantity,
-                index: uuidv4(),
-            }
-            shipmentLots.push(lotInfo);
+        if (shipment.model === "coltan") {
+            lotInfo.niobium = lot.niobium;
+            lotInfo.iron = lot.iron;
+        } else if (shipment.model === "wolframite") {
+            lotInfo.metricTonUnit = lot.metricTonUnit;
         }
+        shipmentLots.push(lotInfo);
     }
     res
         .status(200)
@@ -126,7 +120,7 @@ exports.getOneShipment = catchAsync(async (req, res, next) => {
             {
                 status: "Success",
                 data: {
-                    shipment,
+                    shipment: newShipment,
                     shipmentLots
                 }
             }
@@ -163,76 +157,34 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
     }
     if (req.body.entries) {
         const Entry = getModel(shipment.model);
-        if (["cassiterite", "coltan", "wolframite"].includes(shipment.model)) {
-
-            for (const item of req.body.entries) {
-                const entry = await Entry.findById(item.entryId);
-                if (!entry) continue;
-                const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
-                if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
-                const lotShipment = lot.shipments?.find(value => value.shipmentNumber === shipment.shipmentNumber);
-                if (lotShipment) {
-                    if (item[shipment.shipmentNumber] === 0) {
-                        lot.shipments = lot.shipments.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
-                        lot.exportedAmount = item.exportedAmount;
-                        lot.cumulativeAmount = item.balance;
-                        shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (value.lotNumber !== item.lotNumber));
-                    } else {
-                        // const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (value.lotNumber === item.lotNumber));
-                        shipment.entries.map(value => {
-                            if ((value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber))) {
-                                value.quantity = item[shipment.shipmentNumber];
-                            }
-                        })
-                        // shipmentEntry.quantity = item[shipment.shipmentNumber];
-                        lotShipment.weight = item[shipment.shipmentNumber];
-                        lot.exportedAmount = item.exportedAmount;
-                        lot.cumulativeAmount = item.balance;
-                    }
+        for (const item of req.body.entries) {
+            const entry = await Entry.findById(item.entryId);
+            if (!entry) continue;
+            const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+            if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
+            const lotShipment = lot.shipmentHistory?.find(value => value.shipmentNumber === shipment.shipmentNumber);
+            if (lotShipment) {
+                if (parseInt(item[shipment.shipmentNumber]) === 0) {
+                    lot.shipmentHistory = lot.shipmentHistory.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
+                    shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (parseInt(value.lotNumber) !== parseInt(item.lotNumber)));
                 } else {
-                    if (item[shipment.shipmentNumber] === 0) continue;
-                    lot.shipments.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
-                    lot.exportedAmount = item.exportedAmount;
-                    lot.cumulativeAmount = item.balance;
-                    shipment.entries.push({entryId: item.entryId, lotNumber: parseInt(item.lotNumber), quantity: item[shipment.shipmentNumber]});
+                    const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber)));
+                    if (!shipmentEntry) continue;
+                    shipmentEntry.quantity = item[shipment.shipmentNumber];
+                    // shipment.entries.map(value => {
+                    //     if ((value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber))) {
+                    //         value.quantity = item[shipment.shipmentNumber];
+                    //     }
+                    // })
+                    // shipmentEntry.quantity = item[shipment.shipmentNumber];
+                    lotShipment.weight = item[shipment.shipmentNumber];
                 }
-                await entry.save({validateModifiedOnly: true});
+            } else {
+                if (parseInt(item[shipment.shipmentNumber]) === 0) continue;
+                lot.shipmentHistory.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
+                shipment.entries.push({entryId: item.entryId, lotNumber: parseInt(item.lotNumber), quantity: item[shipment.shipmentNumber]});
             }
-        } else if (["lithium", "beryllium"].includes(shipment.model)) {
-            // TODO 23: Implement shipment update for lithium and beryllium => done
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                const lotShipment = entry.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
-                if (lotShipment) {
-                    if (item[shipment.shipmentNumber] === 0) {
-                        entry.shipments = entry.shipments.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
-                        entry.exportedAmount = item.exportedAmount;
-                        entry.cumulativeAmount = item.balance;
-                        shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)));
-                    } else {
-                        // const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)));
-                        shipment.entries.map(value => {
-                            if ((value.entryId.equals(item.entryId))) {
-                                value.quantity = item[shipment.shipmentNumber];
-                            }
-                        })
-                        // shipmentEntry.quantity = item[shipment.shipmentNumber];
-                        lotShipment.weight = item[shipment.shipmentNumber];
-                        entry.exportedAmount = item.exportedAmount;
-                        entry.cumulativeAmount = item.balance;
-                    }
-                } else {
-                    if (item[shipment.shipmentNumber] === 0) continue;
-                    entry.shipments.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
-                    entry.exportedAmount = item.exportedAmount;
-                    entry.cumulativeAmount = item.balance;
-                    shipment.entries.push({entryId: item.entryId, quantity: item[shipment.shipmentNumber]});
-                    // entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                    // entry.exportedAmount += item.quantity;
-                    // entry.cumulativeAmount -= item.quantity;
-                }
-                await entry.save({validateModifiedOnly: true});
-            }
+            await entry.save({validateModifiedOnly: true});
         }
     }
     if (req.body.buyerId) shipment.buyerId = req.body.buyerId;
@@ -287,7 +239,7 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
         { header: 'NET QUANTITY (KG)', key: "exportWeight", width: 15, style: {alignment: "left"} },
         { header: 'TYPE OF MINERAL', key: "mineralType", width: 15, style: {alignment: "left"} },
         { header: 'LOT NUMBER', key: "lotNumber", width: 15, style: {alignment: "left"} },
-        { header: 'ASI LABO GRADE (%)', key: "mineralGrade", width: 15, style: {alignment: "left"} },
+        { header: 'ASIR LABO GRADE (%)', key: "mineralGrade", width: 15, style: {alignment: "left"} },
         { header: 'PRICE/KG ($USD)', key: "pricePerUnit", width: 15, style: {alignment: "left"} },
         { header: 'TOTAL PRICE', key: "mineralPrice", width: 15, style: {alignment: "left"} },
         { header: 'WEIGHT * GRADE', key: "weightGrade", width: 15, style: {alignment: "left"} },
@@ -302,11 +254,11 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
             if (!entry) continue;
             const lot = entry.output.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
             let exportWeight = 0;
-            const lotShipment = lot.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
+            const lotShipment = lot.shipmentHistory.find(value => value.shipmentNumber === shipment.shipmentNumber);
             if (lotShipment) exportWeight = lotShipment.weight;
             totalExportWeight += exportWeight;
             totalPrice += lot.mineralPrice;
-            totalWeightGrade += (lot.weightOut * lot.mineralGrade);
+            totalWeightGrade += (lot.weightOut * lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0);
             worksheet.addRow({
                 supplyDate: entry.supplyDate?.toISOString().split('T')[0],
                 companyName: entry.companyName,
@@ -314,10 +266,10 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
                 exportWeight,
                 mineralType: getModelAcronym(shipment.model),
                 lotNumber: item.lotNumber,
-                mineralGrade: lot.mineralGrade,
+                mineralGrade: lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0,
                 pricePerUnit: lot.pricePerUnit,
                 mineralPrice: lot.mineralPrice,
-                weightGrade: lot.weightGrade * lot.mineralGrade
+                weightGrade: lot.weightOut * lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0,
             })
         }
         const averagePrice = totalPrice / totalExportWeight;
@@ -334,7 +286,7 @@ exports.shipmentReport = catchAsync(async (req, res, next) => {
             pricePerUnit: averagePrice,
         });
         worksheet.addRow({
-            companyName: "AVERAGE GRADE SN",
+            companyName: "AVERAGE GRADE",
             mineralGrade: averageGradeSN,
         });
     }
@@ -359,7 +311,7 @@ exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
             {text: 'Weight out', margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
             {text: `To Be Exported`, margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
             // {text: "Balance", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
-            {text: "Grade", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
+            // {text: "Grade", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
         ]
     ];
 
@@ -368,35 +320,19 @@ exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
             // const Entry = getModel(shipment.model);
             const entry = await Entry.findById(item.entryId);
             if (!entry) continue;
-            if (["lithium", "beryllium"].includes(shipment.model)) {
-                const shipmentEntry = entry.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
-                if (!shipmentEntry) continue;
-                tableData.push(
-                    [
-                        {text: entry.supplyDate.toISOString().split('T')[0]},
-                        {text: entry.supplierName},
-                        {text: ""},
-                        {text: entry.weightOut},
-                        {text: shipment.weight},
-                        // {text: entry.cumulativeAmount},
-                        {text: entry.mineralGrade}
-                    ]
-                )
-            } else {
-                const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
-                if (!lot) continue;
-                const lotShipment = lot.shipments.find(value => value.shipmentNumber === shipment.shipmentNumber);
-                if (!lotShipment) continue;
-                tableData.push([
-                    {text: entry.supplyDate.toISOString().split('T')[0]},
-                    {text: entry.companyName},
-                    {text: item.lotNumber},
-                    {text: lot.weightOut},
-                    {text: lotShipment.weight},
-                    // {text: lot.cumulativeAmount},
-                    {text: lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade}
-                ])
-            }
+            const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+            if (!lot) continue;
+            const lotShipment = lot.shipmentHistory.find(value => value.shipmentNumber === shipment.shipmentNumber);
+            if (!lotShipment) continue;
+            tableData.push([
+                {text: entry.supplyDate.toISOString().split('T')[0]},
+                {text: entry.companyName},
+                {text: item.lotNumber},
+                {text: lot.weightOut},
+                {text: lotShipment.weight},
+                // {text: lot.cumulativeAmount},
+                {text: lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0}
+            ])
         }
         return tableData;
     }
@@ -670,7 +606,7 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
         }
         totalWeightIn += entry.weightIn;
         const exportWeight = entry.output?.reduce((acc, lot) => {
-            const lotShipment = lot.shipments.find(ship => ship.shipmentNumber === shipment.shipmentNumber);
+            const lotShipment = lot.shipmentHistory.find(ship => ship.shipmentNumber === shipment.shipmentNumber);
             if (lotShipment) {
                 return acc + lotShipment.weight;
             }
@@ -949,7 +885,7 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         // ((weightOut * mineralGrade)1 + (weightOut * mineralGrade)2)  / totalWeightOut =====> averageMineralGrade
         const totalWeightOutMineralGrade = entry.output.reduce((acc, output) => acc + (output.weightOut * output.mineralGrade), 0);
         const exportedWeight = entry.output.reduce((acc, lot) => {
-            const lotShipment = lot.shipments.find(ship => ship.shipmentNumber === shipment.shipmentNumber);
+            const lotShipment = lot.shipmentHistory.find(ship => ship.shipmentNumber === shipment.shipmentNumber);
             if (lotShipment) return acc + lotShipment.weight;
         }, 0);
         const totalWeightOut = entry.output.reduce((acc, output) => acc + output.weightOut, 0);

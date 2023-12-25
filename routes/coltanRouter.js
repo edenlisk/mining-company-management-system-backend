@@ -22,7 +22,7 @@ router.route('/trash')
     .get(trashEntries)
 
 router.route('/:entryId')
-    .get(protect, getOneColtanEntry)
+    .get(getOneColtanEntry)
     .patch(protect, uploadGradeImg.any(), updateColtanEntry)
     .delete(protect, deleteColtanEntry)
 

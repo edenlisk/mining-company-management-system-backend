@@ -10,10 +10,12 @@ const Cassiterite = require('../models/cassiteriteEntryModel');
 const Wolframite = require('../models/wolframiteEntryModel');
 const Beryllium = require('../models/berylliumEntryModel');
 const Lithium = require('../models/lithiumEntryModel');
+const Settings = require('../models/settingsModel');
 const Tag = require('../models/tagsModel');
 const AppError = require('./appError');
 const mongoose = require('mongoose');
 const catchAsync = require('./catchAsync');
+const { totp } = require('otplib');
 
 
 exports.getModel = (model) => {
@@ -128,7 +130,7 @@ exports.handleChangeSupplier = async (docObject, next) => {
         if (!supplier) return next(new AppError("The Selected supplier no longer exists!", 400));
         docObject.companyName = supplier.companyName;
         docObject.licenseNumber = supplier.licenseNumber;
-        docObject.representativeId = supplier.representativeId;
+        // docObject.representativeId = supplier.representativeId;
         docObject.representativePhoneNumber = supplier.representativePhoneNumber;
         docObject.companyRepresentative = supplier.companyRepresentative;
         docObject.TINNumber = supplier.TINNumber;
@@ -512,6 +514,16 @@ const managingDirector = {
         create: true,
         edit: true
     },
+    negociantTags: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    mineTags: {
+        view: true,
+        create: true,
+        edit: true
+    },
     sampleIdentification: {
         view: true,
         create: true,
@@ -522,10 +534,18 @@ const managingDirector = {
         create: true,
         edit: true,
     },
-    rmaFee:{
+    rmaFeeRWF:{
+        view: true,
+    },
+    rmaFeeUSD: {
         view: true,
     },
     paymentHistory: {
+        view: true,
+        create: true,
+        edit: true
+    },
+    shipmentHistory: {
         view: true,
         create: true,
         edit: true
@@ -568,6 +588,11 @@ const managingDirector = {
     fileDirectory: {
         view: true,
         edit: true
+    },
+    dueDiligence: {
+        view: true,
+        create: true,
+        edit: true,
     },
     comment: {
         view: true,
@@ -1022,7 +1047,7 @@ exports.permissions = {
     labTechnician
 }
 
-const specialStrings = ["TINNumber", "rmaFee", "USDRate", "rmaFeeUSD"];
+const specialStrings = ["TINNumber", "rmaFee", "USDRate", "rmaFeeUSD", "rmaFeeRWF"];
 
 
 exports.toCamelCase = str => {
@@ -1037,7 +1062,11 @@ exports.toCamelCase = str => {
 }
 
 exports.toInitialCase = str => {
-    if (specialStrings.includes(str)) return str;
+    if (str === "TINNumber") return "TIN Number";
+    if (str === "rmaFee") return "RMA Fee";
+    if (str === "USDRate") return "USD Rate";
+    if (str === "rmaFeeUSD") return "RMA Fee USD";
+    if (str === "rmaFeeRWF") return "RMA Fee RWF";
     return str
         .replace(/([a-z])([A-Z])/g, '$1 $2')
         .replace(/^./, function (str) {
@@ -1173,4 +1202,138 @@ exports.replaceSpecialCharacters = (str) => {
     //     .replace(/\s+/g, ' ')
     //     .trim()
     //     .toLowerCase();
+}
+
+exports.filterResponse = (data, permissions, model) => {
+    if (!data) return {};
+    const filteredData = {...data};
+    if (["cassiterite", "coltan", "wolframite"].includes(model)) {
+        filteredData["output"] = [];
+        if (filteredData.output) {
+            for (const lot of filteredData.output) {
+                const filteredLot = {};
+                for (const [key, value] of Object.entries(lot)) {
+                    if (Object.keys(permissions).includes(key)) {
+                        if (permissions[key].view) filteredLot[key] = value;
+                    } else {
+                        filteredLot[key] = value;
+                    }
+                }
+                filteredData["output"].push(filteredLot);
+            }
+        }
+    } else {
+        for (const [key, value] of Object.entries(filteredData)) {
+            if (Object.keys(permissions).includes(key)) {
+                if (permissions[key].view) filteredData[key] = value;
+            } else {
+                filteredData[key] = value;
+            }
+        }
+    }
+    return filteredData;
+}
+
+const decideOutput = (model, type) => {
+    if (type === "mixed") {
+        if (model === "cassiterite") return "cassiteriteOutput";
+        if (model === "coltan") return "coltanOutput";
+    }
+    return "output";
+}
+
+exports.decideRMARate = async (model) => {
+    const settings = await Settings.findOne();
+    if (!settings) {
+        if (model === "cassiterite") return settings["rmaFeeCassiterite"];
+        if (model === "coltan") return settings["rmaFeeColtan"];
+        if (model === "wolframite") return settings["rmaFeeWolframite"];
+        if (model === "lithium") return settings["rmaFeeLithium"];
+        if (model === "beryllium") return settings["rmaFeeBeryllium"];
+    }
+}
+
+exports.createNewEntry = async (req, Entry, model) => {
+    return await Entry.create(
+        {
+            supplierId: req.body.supplierId,
+            companyName: req.body.companyName,
+            licenseNumber: req.body.licenseNumber,
+            beneficiary: req.body.beneficiary,
+            TINNumber: req.body.TINNumber,
+            mineralType: req.body.mineralType,
+            // representativeId: supplier.representativeId,
+            email: req.body.email,
+            output: req.body[decideOutput(model, req.body.mineralType)],
+            representativePhoneNumber: req.body.representativePhoneNumber,
+            numberOfTags: req.body.numberOfTags,
+            weightIn: req.body.weightIn,
+            weightOut: req.body.weightOut,
+            supplyDate: req.body.supplyDate,
+            time: req.body.time,
+        }
+    );
+}
+
+exports.findCurrentStock = (schema) => async function () {
+    const result = await schema.find(
+        {
+            $and: [
+                {
+                    $expr: {
+                        $gt: ['$output.cumulativeAmount', 0]
+                    }
+                },
+            ]
+        }
+    );
+    return result.reduce((acc, curr) => acc + curr.output.reduce((acc, curr) => acc + curr.cumulativeAmount, 0), 0);
+}
+
+exports.generateOTP = () => {
+    totp.options = {
+        step: 600,
+        algorithm: 'sha512',
+        digits: 6
+    }
+    return totp.generate(process.env.TOTP_SECRET);
+}
+
+const multerStorage = multer.diskStorage(
+    {
+        destination: function (req, file, cb) {
+            cb(null, `${__dirname}/../public/data/temp-images-dir`);
+        },
+        filename: function (req, file, cb) {
+            // const fileExtension = path.extname(file.originalname);
+            // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
+            cb(null, file.originalname);
+        }
+    }
+)
+
+const multerFilter = (req, file, cb) => {
+    const fileExtension = path.extname(file.originalname);
+    const allowExtension = ['.png', '.jpg', '.jpeg'];
+    if (allowExtension.includes(fileExtension.toLowerCase())) {
+        cb(null, true);
+    } else {
+        cb(new AppError("Not a .jpg, .jpeg or .png file selected", 400), false);
+    }
+}
+
+const upload = multer(
+    {
+        storage: multerStorage,
+        fileFilter: multerFilter
+    }
+)
+
+exports.uploadGradeImg = upload;
+
+
+exports.calculatePricePerUnit = (tantal, grade) => {
+    if (tantal && grade) {
+        return (tantal * grade);
+    }
 }

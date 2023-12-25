@@ -43,6 +43,8 @@ exports.updateSettings = catchAsync(async (req, res, next) => {
     if (req.body.rmaFeeColtan) settings.rmaFeeColtan = req.body.rmaFeeColtan;
     if (req.body.rmaFeeCassiterite) settings.rmaFeeCassiterite = req.body.rmaFeeCassiterite;
     if (req.body.rmaFeeWolframite) settings.rmaFeeWolframite = req.body.rmaFeeWolframite;
+    if (req.body.rmaFeeLithium) settings.rmaFeeLithium = req.body.rmaFeeLithium;
+    if (req.body.rmaFeeBeryllium) settings.rmaFeeBeryllium = req.body.rmaFeeBeryllium;
     if (req.body.address) settings.address = req.body.address;
     if (req.representative) settings.representative = req.body.representative;
     if (req.body.nameOfCompany) settings.nameOfCompany = req.body.nameOfCompany;

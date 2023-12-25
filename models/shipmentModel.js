@@ -61,18 +61,6 @@ const shipmentSchema = new mongoose.Schema(
             type: String,
             default: null
         },
-        netWeight: {
-            type: Number,
-            default: null
-        },
-        averageGrade: {
-            type: Number,
-            default: null
-        },
-        averagePrice: {
-            type: Number,
-            default: null
-        },
         shipmentNumber: {
             type: String,
             unique: true,
@@ -152,13 +140,60 @@ const shipmentSchema = new mongoose.Schema(
             default: null
         },
     },
-    {timestamps: true}
+    {
+        timestamps: true,
+        toJSON: {virtuals: true},
+        toObject: {virtuals: true}
+    }
 )
 
 // TODO 24: REPLACE TOTAL SHIPMENT QUANTITY WITH NET WEIGHT -----> DONE
 
 
 // TODO 8: PRE `SAVE` FOR SHIPMENT
+
+shipmentSchema.virtual('netWeight').get(function () {
+    if (!this.entries?.length) return null;
+    return this.entries.reduce((acc, curr) => {
+        return acc + curr.quantity;
+    }, 0);
+})
+
+shipmentSchema.virtual('averageGrade').get(async function () {
+    if (!this.entries?.length) return null;
+    if (this.entries) {
+        const Entry = getModel(this.model);
+        const entries = await Entry.find({_id: {$in: this.entries.map(item => item.entryId)}});
+        // const totalWeight = this.entries.reduce((acc, curr) => {
+        //     return acc + curr.quantity;
+        // }, 0);
+        if (!this.netWeight) return null;
+        const totalGrade = entries.reduce((acc, curr) => {
+            const lot = curr.output.find(value => parseInt(value.lotNumber) === (parseInt(this.entries.find(item => item.entryId.toString() === curr._id.toString()).lotNumber)));
+            const lotShipment = lot.shipmentHistory.find(value => value.shipmentNumber === this.shipmentNumber);
+            if (!lotShipment) return acc;
+            return acc + (lotShipment.weight * lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0);
+        }, 0);
+        return (totalGrade / this.netWeight).toFixed(5);
+    }
+})
+
+shipmentSchema.virtual('averagePrice').get(async function () {
+    if (!this.entries?.length) return null;
+    const Entry = getModel(this.model);
+    const entries = await Entry.find({_id: {$in: this.entries.map(item => item.entryId)}});
+    // const totalWeight = this.entries.reduce((acc, curr) => {
+    //     return acc + curr.quantity;
+    // }, 0);
+    if (!this.netWeight) return null;
+    const totalPrice = entries.reduce((acc, curr) => {
+        const lot = curr.output.find(value => parseInt(value.lotNumber) === (parseInt(this.entries.find(item => item.entryId.toString() === curr._id.toString()).lotNumber)));
+        const lotShipment = lot.shipmentHistory.find(value => value.shipmentNumber === this.shipmentNumber);
+        if (!lotShipment) return acc;
+        return acc + (lotShipment.weight * lot.mineralPrice || 0);
+    }, 0);
+    return (totalPrice / this.netWeight).toFixed(5);
+})
 
 shipmentSchema.pre('save', async function (next) {
     // if (this.isNew) {
@@ -193,65 +228,67 @@ shipmentSchema.pre('save', async function (next) {
             }
         )
         this.shipmentMinerals = this.model.charAt(0).toUpperCase() + this.model.slice(1);
-        if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
-                const lot = entry.output.find(value => parseInt(value.lotNumber) === (parseInt(item.lotNumber)));
-                if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
-                lot.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                lot.exportedAmount += item.quantity;
-                lot.cumulativeAmount -= item.quantity;
-                await entry.save({validateModifiedOnly: true});
-            }
-        } else if (["lithium", "beryllium"].includes(this.model)) {
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
-                entry.shipments.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                entry.exportedAmount += item.quantity;
-                entry.cumulativeAmount -= item.quantity;
-                await entry.save({validateModifiedOnly: true});
-            }
-        }
-    }
-    if (this.isModified('entries') && !this.isNew) {
-        const totalWeight = this.entries?.reduce(
-            (total, item) => total + parseFloat(item.quantity),
-            0
-        );
-        let totalGrade = 0
-        // const totalGrade = this.entries.reduce(
-        //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
-        //     0
-        // );
+        if (this.entries?.length > 0) {
+            // console.log(this.entries);
+            // const promises = this.entries.map(async (item) => {
+            //     console.log(item.entryId);
+            //     const entry = await Entry.findById(item.entryId);
+            //     console.log(entry);
+            //     if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
+            //     const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+            //     if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
+            //     lot.shipmentHistory.push({ shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date() });
+            //     await entry.save({ validateModifiedOnly: true });
+            // });
+            // await Promise.all(promises);
 
-        let totalPrice = 0;
-        // const totalPrice = selectedData.reduce(
-        //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
-        //     0
-        // );
-        if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
             for (const item of this.entries) {
                 const entry = await Entry.findById(item.entryId);
-                if (!entry) continue;
-                const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
-                if (!lot || !entry) continue;
-                totalGrade += (parseFloat(item.quantity) * lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0);
-                totalPrice += (parseFloat(item.quantity) * lot.mineralPrice ? lot.mineralPrice : 0);
-            }
-        } else if (["lithium", "beryllium"].includes(this.model)) {
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                if (!entry) continue;
-                totalGrade += (parseFloat(item.quantity) * entry.mineralGrade ? entry.mineralGrade : 0);
-                totalPrice += (parseFloat(item.quantity) * entry.mineralPrice ? entry.mineralPrice : 0);
+                if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
+                const lot = entry.output?.find(value => parseInt(value.lotNumber) === (parseInt(item.lotNumber)));
+                if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
+                lot.shipmentHistory.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
+                await entry.save({validateModifiedOnly: true});
             }
         }
-        this.netWeight = totalWeight;
-        this.averageGrade = (totalGrade / totalWeight) ? (totalGrade / totalWeight).toFixed(5) : 0;
-        this.averagePrice = (totalPrice / totalWeight) ? (totalPrice / totalWeight).toFixed(5) : 0;
     }
+    // if (this.isModified('entries') && !this.isNew) {
+    //     const totalWeight = this.entries?.reduce(
+    //         (total, item) => total + parseFloat(item.quantity),
+    //         0
+    //     );
+    //     let totalGrade = 0
+    //     // const totalGrade = this.entries.reduce(
+    //     //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
+    //     //     0
+    //     // );
+    //
+    //     let totalPrice = 0;
+    //     // const totalPrice = selectedData.reduce(
+    //     //     (total, item) => total + (parseFloat(item.toBeExported) * item.mineralPrice ? item.mineralPrice : 0),
+    //     //     0
+    //     // );
+    //     if (["cassiterite", "coltan", "wolframite"].includes(this.model)) {
+    //         for (const item of this.entries) {
+    //             const entry = await Entry.findById(item.entryId);
+    //             if (!entry) continue;
+    //             const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+    //             if (!lot || !entry) continue;
+    //             totalGrade += (parseFloat(item.quantity) * lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0);
+    //             totalPrice += (parseFloat(item.quantity) * lot.mineralPrice ? lot.mineralPrice : 0);
+    //         }
+    //     } else if (["lithium", "beryllium"].includes(this.model)) {
+    //         for (const item of this.entries) {
+    //             const entry = await Entry.findById(item.entryId);
+    //             if (!entry) continue;
+    //             totalGrade += (parseFloat(item.quantity) * entry.mineralGrade ? entry.mineralGrade : 0);
+    //             totalPrice += (parseFloat(item.quantity) * entry.mineralPrice ? entry.mineralPrice : 0);
+    //         }
+    //     }
+    //     this.netWeight = totalWeight;
+    //     this.averageGrade = (totalGrade / totalWeight) ? (totalGrade / totalWeight).toFixed(5) : 0;
+    //     this.averagePrice = (totalPrice / totalWeight) ? (totalPrice / totalWeight).toFixed(5) : 0;
+    // }
     next();
 })
 

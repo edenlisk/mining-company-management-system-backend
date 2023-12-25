@@ -5,57 +5,34 @@ const Supplier = require('../models/supplierModel');
 const {v4: uuidv4} = require('uuid');
 const AppError = require('../utils/appError');
 const ExcelJS = require('exceljs');
+const {decidePricingGrade} = require("../utils/helperFunctions");
 
 exports.detailedStock = catchAsync(async (req, res, next) => {
     const Entry = getModel(req.params.model);
     const detailedStock = [];
-    if (["coltan", "cassiterite", "wolframite"].includes(req.params.model)) {
-        // TODO 16: CHANGE STATUS --> DONE
-        const entries = await Entry.find({output: {$elemMatch: {status: "in stock", cumulativeAmount: {$gt: 0}}}}).sort("supplyDate");
-        for (const entry of entries) {
-            for (const lot of entry.output) {
-                if (lot.cumulativeAmount === 0 || lot.status === "sold out") continue;
-                if (lot.status === "non-sell agreement") continue;
-                detailedStock.push(
-                    {
-                        _id: entry._id,
-                        supplierName: entry.companyName,
-                        beneficiary: entry.beneficiary,
-                        supplyDate: entry.supplyDate,
-                        mineralType: getModelAcronym(entry.mineralType),
-                        lotNumber: lot.lotNumber,
-                        weightIn: entry.weightIn,
-                        weightOut: lot.weightOut,
-                        mineralGrade: lot.mineralGrade,
-                        mineralPrice: lot.mineralPrice,
-                        exportedAmount: lot.exportedAmount,
-                        cumulativeAmount: lot.cumulativeAmount,
-                        pricePerUnit: lot.pricePerUnit,
-                        index: uuidv4(),
-                    }
-                );
-            }
-        }
-    } else if (req.params.model === "lithium" || req.params.model === "beryllium") {
-        const entries = await Entry.find({status: "in stock", cumulativeAmount: {$gt: 0}});
-        for (const entry of entries) {
-            if (entry.cumulativeAmount === 0 || entry.status === "sold out") continue;
-            if (entry.status === "non-sell agreement") continue;
+    const { entries } = await Entry.findCurrentStock();
+    for (const entry of entries) {
+        for (const lot of entry.output) {
+            if (lot.cumulativeAmount === 0 || lot.status === "sold out") continue;
+            if (lot.status === "non-sell agreement") continue;
             detailedStock.push(
                 {
                     _id: entry._id,
-                    supplierName: entry.supplierName,
+                    companyName: entry.companyName,
+                    beneficiary: entry.beneficiary,
                     supplyDate: entry.supplyDate,
-                    weightOut: entry.weightOut,
-                    mineralGrade: entry.mineralGrade,
-                    mineralPrice: entry.mineralPrice,
                     mineralType: getModelAcronym(entry.mineralType),
-                    exportedAmount: entry.exportedAmount,
-                    cumulativeAmount: entry.cumulativeAmount,
-                    pricePerUnit: entry.pricePerUnit,
+                    lotNumber: lot.lotNumber,
+                    weightIn: entry.weightIn,
+                    weightOut: lot.weightOut,
+                    mineralGrade: lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade,
+                    mineralPrice: lot.mineralPrice,
+                    exportedAmount: lot.exportedAmount,
+                    cumulativeAmount: lot.cumulativeAmount,
+                    pricePerUnit: lot.pricePerUnit,
                     index: uuidv4(),
                 }
-            )
+            );
         }
     }
     res
@@ -72,8 +49,7 @@ exports.detailedStock = catchAsync(async (req, res, next) => {
 })
 
 exports.currentStock = catchAsync(async (req, res, next) => {
-    const models = ["coltan", "cassiterite", "wolframite"];
-    const generalModels = ["lithium", "beryllium"];
+    const models = ["coltan", "cassiterite", "wolframite", "lithium", "beryllium"];
     const currentStock = {};
     for (const model of models) {
         const Entry = getModel(model);
@@ -115,43 +91,6 @@ exports.currentStock = catchAsync(async (req, res, next) => {
         if (!yearStock) continue;
         completeYearStock(yearStock, currentStock, model);
     }
-    for (const model of generalModels) {
-        const Entry = getModel(model);
-        const yearStock = await Entry.aggregate(
-            [
-                {
-                    $match: {
-                        "supplyDate": { $gte: new Date(new Date().getFullYear(), 0, 1) }
-                    }
-                },
-                {
-                    $project: {
-                        month: { $month: "$supplyDate" },
-                        totalWeightOut: { $sum: "$weightOut" },
-                    }
-                },
-                {
-                    $group: {
-                        _id: { month: "$month" },
-                        totalWeightOut: { $first: "$totalWeightOut" },
-                    }
-                },
-                {
-                    $group: {
-                        _id: "$_id.month",
-                        totalWeightOut: { $sum: "$totalWeightOut" },
-                    }
-                },
-                {
-                    $sort: {
-                        _id: 1
-                    }
-                }
-            ]
-        )
-        if (!yearStock) continue;
-        completeYearStock(yearStock, currentStock, model);
-    }
     res
         .status(200)
         .json(
@@ -168,16 +107,10 @@ exports.currentStock = catchAsync(async (req, res, next) => {
 exports.paymentHistory = catchAsync(async (req, res, next) => {
     let lotPaymentHistory = [];
     const Entry = getModel(req.params.model);
-    const specificModel = ["cassiterite", "coltan", "wolframite"];
-    const generalModel = ["lithium", "beryllium"];
     const entry = await Entry.findById(req.params.entryId);
     if (!entry) return next(new AppError("The selected entry no longer exists!", 400));
-    if (specificModel.includes(req.params.model)) {
-        const lot = entry.output.find(value => value.lotNumber === parseInt(req.params.lotNumber));
-        if (lot) lotPaymentHistory = lot.paymentHistory;
-    } else if (generalModel.includes(req.params.model)) {
-        if (entry) lotPaymentHistory = entry.paymentHistory;
-    }
+    const lot = entry.output?.find(value => value.lotNumber === parseInt(req.params.lotNumber));
+    if (lot) lotPaymentHistory = lot.paymentHistory;
     res
         .status(200)
         .json(
@@ -190,55 +123,35 @@ exports.paymentHistory = catchAsync(async (req, res, next) => {
         )
     ;
 })
+// const entry = await Entry.aggregate(
+//     [
+//         {
+//             $unwind: '$output' // Unwind the "output" array
+//         },
+//         {
+//             $group: {
+//                 _id: null, // Group all documents into a single group
+//                 balance: {$sum: '$output.cumulativeAmount'}
+//             }
+//         },
+//         {
+//             $project: {
+//                 _id: 0, // Exclude the "_id" field from the result
+//                 balance: 1
+//             }
+//         }
+//     ]
+// );
+// stock.push({value: entry[0]?.balance, name: model});
 
 exports.stockSummary = catchAsync(async (req, res, next) => {
-    const models = ["cassiterite", "coltan", "wolframite"];
-    const specificModels = ["lithium", "beryllium"];
+    const models = ["cassiterite", "coltan", "wolframite", "lithium", "beryllium"];
     const stock = [];
-    for (const specificModel of specificModels) {
-        const Entry = getModel(specificModel);
-        const entry = await Entry.aggregate(
-            [
-                {
-                    $group: {
-                        _id: null, // Group all documents into a single group
-                        balance: {$sum: '$cumulativeAmount'}
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0, // Exclude the "_id" field from the result
-                        balance: 1
-                    }
-                }
-            ]
-        )
-        stock.push({value: entry[0]?.balance, name: specificModel});
-    }
     for (const model of models) {
         const Entry = getModel(model);
-        const entry = await Entry.aggregate(
-            [
-                {
-                    $unwind: '$output' // Unwind the "output" array
-                },
-                {
-                    $group: {
-                        _id: null, // Group all documents into a single group
-                        balance: {$sum: '$output.cumulativeAmount'}
-                    }
-                },
-                {
-                    $project: {
-                        _id: 0, // Exclude the "_id" field from the result
-                        balance: 1
-                    }
-                }
-            ]
-        );
-        stock.push({value: entry[0]?.balance, name: model});
+        const {balance} = await Entry.findCurrentStock();
+        stock.push({value: balance, name: model});
     }
-
     res
         .status(200)
         .json(
@@ -257,7 +170,7 @@ exports.lastCreatedEntries = catchAsync(async (req, res, next) => {
     let lastCreated = [];
     for (const model of models) {
         const Entry = getModel(model);
-        const entries = await Entry.find({visible: true})
+        const entries = await Entry.find()
             .sort({createdAt: -1})
             .limit(2)
             .select({output: 0, mineTags: 0, negociantTags: 0});
@@ -285,7 +198,7 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
         const entries = await Entry.aggregate(
             [
                 {
-                    $match: {visible: true}
+                    $match: {}
                 },
                 {
                     $group: {
@@ -441,11 +354,11 @@ exports.generateReconciliationExcelTable = catchAsync(async (req, res, next) => 
                         .reduce((accumulator, currentRecord) => accumulator + currentRecord.weightIn, 0);
                 })[entries.indexOf(entry)],
                 negociantTags: entry.negociantTags?.map(tag => tag.tagNumber).join('\n'),
-                stockOutDate: lot.nonSellAgreement?.weight > 0 ? lot.nonSellAgreement?.date?.toISOString().split('T')[0] : lot.shipments?[0].date?.toISOString().split('T')[0] : null,
-                exportedAmount: lot.shipments?[0].weight : null,
+                stockOutDate: lot.nonSellAgreement?.weight > 0 ? lot.nonSellAgreement?.date?.toISOString().split('T')[0] : lot.shipmentHistory?[0].date?.toISOString().split('T')[0] : null,
+                exportedAmount: lot.shipmentHistory?[0].weight : null,
                 nonSellAgreementWeight: lot.nonSellAgreement?.weight,
                 balance: lot.cumulativeAmount,
-                stockAfterExport: lot.weightOut - lot.shipments?[0].weight : null,
+                stockAfterExport: lot.weightOut - lot.shipmentHistory?[0].weight : null,
             }
             worksheet.addRow(row);
         }

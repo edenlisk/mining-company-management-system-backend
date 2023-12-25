@@ -3,7 +3,7 @@ const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const jwt = require('jsonwebtoken');
 const { promisify } = require('util');
-const { permissions } = require('../utils/helperFunctions');
+const { permissions, generateOTP } = require('../utils/helperFunctions');
 const { logger } = require('../utils/loggers');
 const { trackUpdateModifications, trackCreateOperations  } = require('../controllers/activityLogsControllers');
 // const Email = require('../utils/email');
@@ -37,7 +37,7 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
     // const logs = [];
-    const log = trackCreateOperations("users", req);
+    // const log = trackCreateOperations("users", req);
     const existingUser = await User.findOne({email: req.body.email.trim()});
     if (existingUser) return next(new AppError(`User with this ${req.body.email} email already exists`, 409));
     const user = await User.create(
@@ -52,12 +52,12 @@ exports.signup = catchAsync(async (req, res, next) => {
             passwordConfirm: req.body.passwordConfirm
         }
     );
-    logger.info(`create a user named: ${user.name}`);
-    log.logSummary = `${req.user.username} created a user named: ${user.name}`
-    if (!user) {
-        log.status = "failed";
-    }
-    await log.save({validateBeforeSave: false});
+    // logger.info(`create a user named: ${user.name}`);
+    // log.logSummary = `${req.user.username} created a user named: ${user.name}`
+    // if (!user) {
+    //     log.status = "failed";
+    // }
+    // await log.save({validateBeforeSave: false});
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')
@@ -74,7 +74,8 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.login = catchAsync(async (req, res, next) => {
     // const logs = [];
-    const { email, password } = req.body;
+
+    const { email, password} = req.body;
     if (!email || !password) return next(new AppError("Please provide email and password", 400));
     const user = await User.findOne({email: email.trim()}).select("+password");
     if (!user || !(await user.verifyPassword(password))) {
@@ -90,9 +91,25 @@ exports.login = catchAsync(async (req, res, next) => {
     logger.info(`${user.name} logged in successfully.`);
     log.logSummary = `${user.name} logged in successfully.`;
     await log.save({validateBeforeSave: false});
+     // token = "773944"
+    // user.secretCode = user.generateOTP();
+    // await user.save({validateModifiedOnly: true});
     // logs.push(`${user.username} logged in successfully`);
     // const preparedLogs = prepareLog(logs, `/users`, {userId: user._id, username: user.username});
     // await recordLogs(preparedLogs);
+    createSendToken(user, 200, res);
+})
+
+exports.verifyOTP = catchAsync(async (req, res, next) => {
+    const { email, otp } = req.body;
+    if (!email || !otp) return next(new AppError("Email or OTP is missing", 400));
+    const user =  await User.findOne({email: email.trim()});
+    if (!user) return next(new AppError("User with this email does not exist", 404));
+    const isValid = user.verifyOTP(otp);
+    if (!isValid) return next(new AppError("Invalid OTP", 401));
+    user.secretCode = undefined;
+    user.loginAttempts = 0;
+    await user.save({validateModifiedOnly: true});
     createSendToken(user, 200, res);
 })
 
