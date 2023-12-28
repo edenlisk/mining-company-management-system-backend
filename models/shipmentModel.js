@@ -159,6 +159,22 @@ shipmentSchema.virtual('netWeight').get(function () {
     }, 0);
 })
 
+shipmentSchema.virtual('averageNiobium').get(async function () {
+    if (!this.entries.length) return null;
+    if (this.entries) {
+        const Entry = getModel(this.model);
+        if (!this.netWeight) return null;
+        const entries = await Entry.find({_id: {$in: this.entries.map(item => item.entryId)}});
+        const weightNiobium = entries.reduce((acc, curr) => {
+            const lot = curr.output.find(value => parseInt(value.lotNumber) === (parseInt(this.entries.find(item => item.entryId.toString() === curr._id.toString()).lotNumber)));
+            const lotShipment = lot.shipmentHistory.find(value => value.shipmentNumber === this.shipmentNumber);
+            if (!lotShipment) return acc;
+            return acc + (lotShipment.weight *  (lot.niobium ? lot.niobium : 0));
+        }, 0);
+        return (weightNiobium / parseFloat(this.netWeight)).toFixed(5);
+    }
+})
+
 shipmentSchema.virtual('averageGrade').get(async function () {
     if (!this.entries?.length) return null;
     if (this.entries) {

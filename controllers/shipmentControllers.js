@@ -27,6 +27,7 @@ exports.getAllshipments = catchAsync(async (req, res, next) => {
                 averageGrade: parseFloat(await shipment.averageGrade),
                 averagePrice: parseFloat(await shipment.averagePrice),
                 netWeight: parseFloat(shipment.netWeight),
+                averageNiobium: parseFloat(await shipment.averageNiobium)
             }
             newShipments.push(tempShipment);
         }
@@ -82,6 +83,7 @@ exports.getOneShipment = catchAsync(async (req, res, next) => {
         averageGrade: parseFloat(await shipment.averageGrade),
         averagePrice: parseFloat(await shipment.averagePrice),
         netWeight: parseFloat(shipment.netWeight),
+        averageNiobium: parseFloat(await shipment.averageNiobium)
     }
     const Entry = getModel(shipment.model);
     const shipmentLots = [];

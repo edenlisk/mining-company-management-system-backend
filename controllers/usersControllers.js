@@ -39,7 +39,11 @@ exports.updateUser = catchAsync(async (req, res, next) => {
     const user = await User.findById(req.params.userId);
     if (!user) return next(new AppError("The Selected user no longer exists!", 400));
     if (req.body.permissions) user.permissions = req.body.permissions;
+    if (req.body.name) user.name = req.body.name;
+    if (req.body.email) user.email = req.body.email;
+    if (req.body.username) user.username = req.body.username;
     if (req.body.role) user.role = req.body.role;
+    if (req.body.phoneNumber) user.phoneNumber = req.body.phoneNumber;
     if (req.body.active === true) {
         user.active = true;
         logger.info(`${user.name}'s account re-activated successfully`);
