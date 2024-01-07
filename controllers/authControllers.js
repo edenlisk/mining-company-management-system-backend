@@ -129,6 +129,25 @@ exports.logout = catchAsync(async (req, res, next) => {
     ;
 })
 
+exports.verifyToken = catchAsync(async (req, res, next) => {
+    const { token } = req.body;
+    if (!token) return next(new AppError("Token is missing", 400));
+    const decode = await promisify(jwt.verify)(token, process.env.JWT_SECRET_KEY);
+    const user = await User.findById(decode?.id);
+    if (!user) return next(new AppError("Session has ended, Please login again", 401));
+    res
+        .status(200)
+        .json(
+            {
+                status: "Success",
+                data: {
+                    userId: user._id
+                }
+            }
+        )
+    ;
+})
+
 exports.protect = catchAsync(async (req, res, next) => {
     let token;
     if (req.cookies.jwt) {

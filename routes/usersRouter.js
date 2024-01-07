@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { getAllUsers, getOneUser, updateUser, deleteUser, getNotifications, updateNotificationStatus} = require('../controllers/usersControllers');
-const { signup, login, logout, protect, restrictTo } = require('../controllers/authControllers');
+const { signup, login, logout, protect, restrictTo, verifyToken } = require('../controllers/authControllers');
 
 router.route('/')
     .get(protect, getAllUsers)
@@ -24,5 +24,8 @@ router.route('/login')
 
 router.route('/logout')
     .post(logout)
+
+router.route('/verify-token')
+    .post(verifyToken)
 
 module.exports = router;

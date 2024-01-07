@@ -332,8 +332,6 @@ exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
                 {text: item.lotNumber},
                 {text: lot.weightOut},
                 {text: lotShipment.weight},
-                // {text: lot.cumulativeAmount},
-                {text: lot[decidePricingGrade(lot.pricingGrade)] || lot.ASIR || lot.mineralGrade || 0}
             ])
         }
         return tableData;
@@ -351,7 +349,7 @@ exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
             },
             {
                 table: {
-                    width: ['*', '*', '*', 'auto'],
+                    width: ['*', '*', '*', '*', "auto"],
                     body: await populateDoc(tableData),
                 },
                 alignment: 'center',
