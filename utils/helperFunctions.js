@@ -15,7 +15,7 @@ const Tag = require('../models/tagsModel');
 const AppError = require('./appError');
 const mongoose = require('mongoose');
 const catchAsync = require('./catchAsync');
-const { totp } = require('otplib');
+const { authenticator } = require('otplib');
 
 
 exports.getModel = (model) => {
@@ -196,6 +196,11 @@ exports.sendAttachment = (filePath, fileName, res) => {
     res.setHeader('Content-Disposition', 'attachment; filename=' + fileName);
     res.setHeader('Content-Type', getHeader(fileName));
     fileStream.pipe(res);
+}
+
+exports.isOTPValid = (secret, userEnteredCode, timeWindow = 30) => {
+    // Check if the OTP is valid within the specified time window
+    return authenticator
 }
 // 1                // 2        ....n
 // ((quantity * grade) + (quantity * grade))/ total quantity
