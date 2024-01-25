@@ -105,16 +105,17 @@ exports.verify2FA = catchAsync(async (req, res, next) => {
 exports.verifyCode = catchAsync(async (req, res, next) => {
     const {email, code} = req.body;
     const user = await User.findOne({email: email.trim()});
-    console.log(authenticator.timeUsed());
-    if (user.secretCode && authenticator.timeUsed() < 30) {
+    if (user.secretCode && code) {
         const isValid = authenticator.check(code, user.secretCode);
         if (isValid) {
             createSendToken(user, 200, res);
+        } else if (authenticator.timeUsed() > 30) {
+            return next(new AppError("OTP expired", 400));
         } else {
             return next(new AppError("Invalid verification code", 400));
         }
     } else {
-        return next(new AppError("OTP expired", 400));
+        return next(new AppError("Invalid verification code", 400));
     }
 })
 
