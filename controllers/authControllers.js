@@ -77,27 +77,37 @@ exports.signup = catchAsync(async (req, res, next) => {
 exports.setup2FA = catchAsync(async (req, res, next) => {
     const secret = authenticator.generateSecret();
     const otpauthUrl = authenticator.keyuri(`${req.body.email}`, 'KANZAMIN SOFTWARE', secret);
-    await User.findOneAndUpdate({email: req.body.email}, {secretCode: secret}, {new: true})
     qrcode.toDataURL(otpauthUrl, (err, imageUrl) => {
         if (err) {
             return next(new AppError("Error generating QR code", 500));
         }
-        // req.session.secret = secret; // Store the secret in session
-        res.json({imageUrl});
+        req.session.secret = secret;
+        res.json({imageUrl, secret});
     });
 })
 
 exports.verify2FA = catchAsync(async (req, res, next) => {
     const userEnteredCode = req.body.code;
-    const user = await User.findOne({email: req.body.email});
-    const isValid = authenticator.check(userEnteredCode, user.secretCode);
+    // const user = await User.findOne({email: req.body.email});
+    const isValid = authenticator.check(userEnteredCode, req.body.secret);
     if (isValid) {
+        await User.findOneAndUpdate({email: req.body.email}, {secretCode: req.body.secret}, {new: true})
+        req.session.destroy(function(err) {
+            if(err){
+                console.log(err);
+            }
+        })
         return res.json(
             {
                 status: "Success"
             }
         );
     } else {
+        req.session.destroy(function(err) {
+            if(err){
+                console.log(err);
+            }
+        })
         return next(new AppError("Invalid verification code", 400));
     }
 })

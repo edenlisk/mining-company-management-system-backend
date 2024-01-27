@@ -8,6 +8,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const xss = require('xss-clean');
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const session = require('express-session');
 const hpp = require('hpp');
 const AppError = require('./utils/appError');
 const globalErrorHandler = require('./controllers/errorController');
@@ -55,6 +56,12 @@ app.use(express.json({limit: "50mb"}));
 app.use(mongoSanitize());
 app.use(xss());
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
+app.set('trust proxy', 1);
+app.use(session({
+    secret: process.env.SESSION_KEY,
+    resave: false,
+    saveUninitialized: true,
+}))
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 const corsOptions ={

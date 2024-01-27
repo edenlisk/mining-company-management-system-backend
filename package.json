@@ -21,6 +21,7 @@
     "express": "~4.16.1",
     "express-mongo-sanitize": "^2.2.0",
     "express-rate-limit": "^6.7.0",
+    "express-session": "^1.17.3",
     "express-winston": "^4.2.0",
     "form-data": "^4.0.0",
     "helmet": "^7.0.0",
