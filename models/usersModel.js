@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const bcrypt = require('bcryptjs');
-const { totp } = require('otplib');
 const {permissions} = require('../utils/helperFunctions')
 
 const notificationsSchema = new mongoose.Schema(
@@ -101,6 +100,10 @@ const userSchema = new mongoose.Schema(
         },
         secretCode: {
             type: String,
+        },
+        secretCodeVerified: {
+            type: Boolean,
+            default: false
         },
         secretCodeExpiresAt: {
             type: Date,
