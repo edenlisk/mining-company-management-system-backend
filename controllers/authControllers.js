@@ -39,7 +39,7 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
     // const logs = [];
-    const log = trackCreateOperations("users", req);
+    // const log = trackCreateOperations("users", req);
     const existingUser = await User.findOne({email: req.body.email.trim()});
     if (existingUser) return next(new AppError(`User with this ${req.body.email} email already exists`, 409));
     const user = await User.create(
@@ -55,20 +55,23 @@ exports.signup = catchAsync(async (req, res, next) => {
         }
     );
     logger.info(`create a user named: ${user.name}`);
-    log.logSummary = `${req.user.username} created a user named: ${user.name}`
-    if (!user) {
-        log.status = "failed";
-    }
-    await log.save({validateBeforeSave: false});
+    // log.logSummary = `${req.user.username} created a user named: ${user.name}`
+    // if (!user) {
+    //     log.status = "failed";
+    // }
+    // await log.save({validateBeforeSave: false});
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')
     // createSendToken(user, 201, res);
     res
-        .status(200)
+        .status(201)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                data: {
+                    user
+                }
             }
         )
     ;
