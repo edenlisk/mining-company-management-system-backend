@@ -5,17 +5,18 @@ const { createEntry,
     getOneEntry,
     updateEntry,
     getAllEntries } = require('../controllers/entryControllers');
+const { protect } = require('../controllers/authControllers');
 
 router.route('/')
-    .get(getAllEntries)
+    .get(protect, getAllEntries)
 
 router.route('/:model')
-    .post(createEntry)
+    .post(protect, createEntry)
 
 router.route('/:model/:entryId')
-    .get(getOneEntry)
-    .patch(updateEntry)
-    .delete(deleteEntry)
+    .get(protect, getOneEntry)
+    .patch(protect, updateEntry)
+    .delete(protect, deleteEntry)
 
 
 module.exports = router;

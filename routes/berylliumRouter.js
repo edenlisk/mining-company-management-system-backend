@@ -16,7 +16,7 @@ router.route('/')
     .post(protect, createBerylliumEntry)
 
 router.route('/trash')
-    .get(trashEntries)
+    .get(protect, trashEntries)
 
 router.route('/:entryId')
     .get(protect, getOneBerylliumEntry)

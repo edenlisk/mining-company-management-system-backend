@@ -10,7 +10,6 @@ const qrcode = require('qrcode');
 const { defaultPermissions } = require('../utils/helperFunctions');
 const {trackUpdateModifications, trackCreateOperations} = require('../controllers/activityLogsControllers');
 // const Email = require('../utils/email');
-// const {recordLogs, prepareLog} = require('../utils/activityLogs');
 
 const signToken = id => {
     return jwt.sign({id}, process.env.JWT_SECRET_KEY, {expiresIn: process.env.EXPIRES_IN});
@@ -40,7 +39,7 @@ const createSendToken = (user, statusCode, res) => {
 
 exports.signup = catchAsync(async (req, res, next) => {
     // const logs = [];
-    // const log = trackCreateOperations("users", req);
+    const log = trackCreateOperations("users", req);
     const existingUser = await User.findOne({email: req.body.email.trim()});
     if (existingUser) return next(new AppError(`User with this ${req.body.email} email already exists`, 409));
     const user = await User.create(
@@ -55,12 +54,12 @@ exports.signup = catchAsync(async (req, res, next) => {
             passwordConfirm: req.body.passwordConfirm
         }
     );
-    // logger.info(`create a user named: ${user.name}`);
-    // log.logSummary = `${req.user.username} created a user named: ${user.name}`
-    // if (!user) {
-    //     log.status = "failed";
-    // }
-    // await log.save({validateBeforeSave: false});
+    logger.info(`create a user named: ${user.name}`);
+    log.logSummary = `${req.user.username} created a user named: ${user.name}`
+    if (!user) {
+        log.status = "failed";
+    }
+    await log.save({validateBeforeSave: false});
     // const email = new Email(user, process.env.EMAIL_FROM);
     // const verifyLink = `${req.originalUrl}/`;
     // email.sendVerification('')

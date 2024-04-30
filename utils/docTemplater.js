@@ -9,7 +9,6 @@ const { getModel, getMonthWords, getSixMonthsAgo, getSFDT } = require('../utils/
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
 const imagekit = require('./imagekit');
-// const { convertDocx2Html } = require('../utils/convertDocxToHtml');
 
 const populateSitesCoordinates = (minesites) => {
     let sites_coordinates = "";
@@ -139,7 +138,6 @@ const getMixedProduction = async (supplierId, startMonth, endMonth = new Date().
     }));
 }
 
-
 const uploadFileImageKit = async (file, fileName, folder) => {
     const response = imagekit.upload(
         {
@@ -152,7 +150,6 @@ const uploadFileImageKit = async (file, fileName, folder) => {
         return response;
     }
 }
-
 
 exports.generate = catchAsync(async (req, res, next) => {
     // Load the docx file as binary content
@@ -220,7 +217,6 @@ exports.generate = catchAsync(async (req, res, next) => {
 
     const fileName = `${req.body.date_of_report ? req.body.date_of_report : new Date().toISOString().split('T')[0]} iTSCi Template Due Diligence ${supplier.companyName}.docx`;
 
-    // Render the document (Replace {first_name} by John, {last_name} by Doe, ...)
 
     const currentDate = new Date();
     const twoDaysAgo = new Date(currentDate);
@@ -243,174 +239,18 @@ exports.generate = catchAsync(async (req, res, next) => {
         date_of_report: new Date().toISOString().split('T')[0],
         date_of_visit: twoDaysAgo?.toISOString().split('T')[0],
         production_per_day_observations: productionPerDaySummary,
-        // name_of_processor: this.docInfo.name_of_processor,
-        // name_of_consultant: this.docInfo.name_of_consultant,
-        // email_of_consultant: this.docInfo.email_of_consultant,
-        // is_person_trained: this.docInfo.is_person_trained,
-        // when_training: this.docInfo.when_training,
-        // purpose_of_visit: this.docInfo.purpose_of_visit,
-        // company_visited: this.docInfo.company_visited,
-        // company_license_number: this.docInfo.company_license_number,
-        // number_of_minesites: this.docInfo.number_of_minesites,
-        // number_of_minesites_visited: this.docInfo.number_of_minesites_visited,
-        // sites_visited: this.docInfo.sites_visited,
-        // date_of_report: this.docInfo.date_of_report,
-        // date_of_last_visit: this.docInfo.date_of_last_visit,
-        // list_of_person_interviewed_and_role: this.docInfo.list_of_person_interviewed_and_role,
-        // name_of_sites: this.docInfo.name_of_sites,
-        // code_of_sites: this.docInfo.code_of_sites,
-        // sites_district: this.docInfo.sites_district,
-        // sites_sector: this.docInfo.sites_sector,
-        // sites_cell: this.docInfo.sites_cell,
-        // date_of_visit: this.docInfo.date_of_visit,
-        // time_of_visit: this.docInfo.time_of_visit,
-        // sites_coordinates: this.docInfo.sites_coordinates,
-        // rmb_agent_present: this.docInfo.rmb_agent_present,
-        // rmb_agent_name: this.docInfo.rmb_agent_name,
-        // name_position_of_company_representative: this.docInfo.name_position_of_company_representative,
-        // number_of_diggers_observations: this.docInfo.number_of_diggers_observations,
-        // number_of_diggers_representative: this.docInfo.number_of_diggers_representative,
-        // number_of_washers_observations: this.docInfo.number_of_washers_observations,
-        // number_of_washers_representative: this.docInfo.number_of_washers_representative,
-        // number_of_transporters_observations: this.docInfo.number_of_transporters_observations,
-        // number_of_transporters_representative: this.docInfo.number_of_transporters_representative,
-        // number_of_teams_observations: this.docInfo.number_of_teams_observations,
-        // number_of_persons_per_team_observations: this.docInfo.number_of_persons_per_team_observations,
-        // number_of_washers_per_team_observations: this.docInfo.number_of_washers_per_team_observations,
-        // number_of_transporters_per_team_observations: this.docInfo.number_of_transporters_per_team_observations,
     }).getZip().generate({type: "arraybuffer", compression: "DEFLATE",})
 
 
 
-    // res.setHeader('Content-Type', 'application/octet-stream');
-    // res.setHeader('Content-Disposition', `attachment; filename="amarongi-risk-assessment.docx"`);
-    // res.send(buf);
-    // buf is a nodejs Buffer, you can either write it to a
-    // file or res.send it with express for example.
-
-    // const cassiteriteProduction = await getProduction("cassiterite", req.params.supplierId);
-    // for (const item of cassiteriteProduction) {
-    //     console.log(item);
-    // }
-
 
     const year = (new Date()).getFullYear();
     const month = getMonthWords((new Date()).getMonth());
-    // const filePath = `${__dirname}/../public/data/DD Reports/${year}/${month}`;
-    // let imagekitPath = `/dd_reports/${year}/${month}`;
-    // if (!fs.existsSync(filePath)) {
-    //
-    //     fs.mkdir(filePath, {recursive: true}, err => {
-    //         if (err) {
-    //             console.log(err);
-    //         }
-    //
-    //     });
-    //
-    // }
 
 
     let fileUrl = "";
     let filePath = "";
     let fileId = "";
-
-    // imagekit.listFiles(
-    //     {
-    //         path: '/dd_reports',
-    //         includeFolder: true
-    //     }, (err, response) => {
-    //         if (err) {
-    //             console.log(err);
-    //         } else {
-    //             const existingYear = response.find(item => item.name === `${year}`);
-    //             if (existingYear) {
-    //                 imagekit.listFiles(
-    //                     {
-    //                         path: `/dd_reports/${year}`,
-    //                         includeFolder: true
-    //                     }, (err1, response1) => {
-    //                         if (err1) {
-    //                             console.log(err1);
-    //                         } else {
-    //                             const existingMonth = response1.find(item => item.name === `${month}`);
-    //                             if (!existingMonth) {
-    //                                 imagekit.createFolder(
-    //                                     {
-    //                                         folderName: `${month}`,
-    //                                         parentFolderPath: `/dd_reports/${year}`
-    //                                     }, (err2, response2) => {
-    //                                         if (err2) {
-    //                                             console.log(err2);
-    //                                         } else {
-    //                                             console.log('first upload function');
-    //                                             console.log(response2);
-    //                                         }
-    //                                     }
-    //                                 )
-    //                             }
-    //                             imagekit.upload(
-    //                                 {
-    //                                     file: buffer,
-    //                                     fileName: `${req.body.date_of_report ? req.body.date_of_report : new Date().toISOString().split('T')[0]} iTSCi Template Due Diligence ${supplier.companyName}.docx`,
-    //                                     folder: `/dd_reports/${year}/${month}`,
-    //                                 }, (err2, response2) => {
-    //                                     if (err2) {
-    //                                         console.log(err2)
-    //                                     } else {
-    //                                         fileUrl = response2.url;
-    //                                         console.log('second upload function')
-    //                                         console.log(response2)
-    //                                     }
-    //                                 }
-    //                             )
-    //                         }
-    //                     }
-    //                 )
-    //
-    //             } else {
-    //                 imagekit.createFolder(
-    //                     {
-    //                         folderName: `${year}`,
-    //                         parentFolderPath: `/dd_reports`
-    //                     }, (err1, response1) => {
-    //                         if (err) {
-    //                             console.log(err1)
-    //                         } else {
-    //                             imagekit.createFolder(
-    //                                 {
-    //                                     folderName: `${month}`,
-    //                                     parentFolderPath: `/dd_reports/${year}/${month}`
-    //                                 }, (err2, response2) => {
-    //                                     if (err2) {
-    //                                         console.log(err2)
-    //                                     } else {
-    //                                         console.log(response2)
-    //                                     }
-    //                                 }
-    //                             )
-    //                         }
-    //                         imagekit.upload(
-    //                             {
-    //                                 file: buffer,
-    //                                 fileName: `${req.body.date_of_report ? req.body.date_of_report : new Date().toISOString().split('T')[0]} iTSCi Template Due Diligence ${supplier.companyName}.docx`,
-    //                                 folder: `/dd_reports/${year}/${month}`
-    //                             }, (err2, response2) => {
-    //                                 if (err2) {
-    //                                     console.log(err2);
-    //                                 } else {
-    //                                     fileUrl = response2.url;
-    //                                     console.log(response2);
-    //                                 }
-    //                             }
-    //                         )
-    //                     }
-    //                 )
-    //
-    //             }
-    //             console.log(response)
-    //         }
-    //     }
-    // )
 
     if (buffer && month && year) {
         const response = await uploadFileImageKit(Buffer.from(buffer), fileName, `/dd_reports/${year}/${month}`);
@@ -419,37 +259,6 @@ exports.generate = catchAsync(async (req, res, next) => {
             fileId = response.fileId
             filePath = response.filePath
         }
-        // const response = await listFilesImageKit('/dd_reports', true);
-        // if (response) {
-        //     const existingYear = response.find(item => item.name === `${year}`);
-        //     if (existingYear) {
-        //         const response1 = await listFilesImageKit(`/dd_reports/${year}`, true);
-        //         if (response1) {
-        //             const existingMonth = response1.find(item => item.name === `${month}`);
-        //             if (!existingMonth) {
-        //                 await createFolderImageKit(month, `/dd_reports/${year}`);
-        //             }
-        //             const response2 = await uploadFileImageKit(Buffer.from(buffer), fileName, `/dd_reports/${year}/${month}`);
-        //             if (response2) {
-        //                 fileUrl = response2.url;
-        //                 fileId = response2.fileId
-        //                 filePath = response2.filePath
-        //             }
-        //         }
-        //     } else {
-        //         const isSuccess = await createFolderImageKit(year, `/dd_reports`);
-        //         if (isSuccess) {
-        //             await createFolderImageKit(month, `/dd_reports/${year}`);
-        //             const response2 = await uploadFileImageKit(Buffer.from(buffer), fileName, `/dd_reports/${year}/${month}`);
-        //             if (response2) {
-        //                 fileUrl = response2.url;
-        //                 fileId = response2.fileId
-        //                 filePath = response2.filePath
-        //             }
-        //         }
-        //
-        //     }
-        // }
     }
 
     if (!fileUrl) return next(new AppError("Something went wrong while generating dd report", 400));
@@ -492,7 +301,6 @@ exports.generateLabReport = async (entry, lot, user) => {
     return doc.render({
         ...reportInfo,
     }).getZip().generate({type: "arraybuffer", compression: "DEFLATE",});
-    // fs.writeFileSync(path.resolve(__dirname, "output.docx"), buffer);
 }
 
 exports.generateForwardNote = async (shipment) => {
@@ -531,136 +339,3 @@ exports.generateForwardNote = async (shipment) => {
         }
     }
 }
-
-// const document = {
-//     "_id": "64c3db8965366b8b6d3cf3b1",
-//     "companyName": "KOPEMINYA",
-//     "TINNumber": "741233",
-//     "licenseNumber": "RW/JAN2003/11",
-//     "email": "kopeminya@gmail.com",
-//     "nationalId": "",
-//     "phoneNumber": "250785468686",
-//     "address": {
-//         "province": "South",
-//         "district": "Nyamagabe",
-//         "sector": "Kigeme"
-//     },
-//     "mineSites": [
-//         {
-//             "name": "Kigeme",
-//             "code": "441",
-//             "coordinates": {
-//                 "lat": "-25545",
-//                 "long": "32555"
-//             },
-//             "_id": {
-//                 "$oid": "64c3db8965366b8b6d3cf3b2"
-//             }
-//         }
-//     ],
-//     "numberOfDiggers": 20,
-//     "numberOfWashers": 30,
-//     "numberOfTransporters": 10,
-//     "typeOfMinerals": [
-//         "wolframite"
-//     ],
-//     "observations": [],
-//     "createdAt": {
-//         "$date": "2023-07-28T15:15:21.861Z"
-//     },
-//     "updatedAt": {
-//         "$date": "2023-07-28T15:16:00.978Z"
-//     },
-//     "__v": 0
-// }
-//
-// class DocTemplater {
-//     constructor(supplier, docInfo) {
-//         this.supplier = supplier;
-//         this.docInfo = docInfo;
-//         this.content = fs.readFileSync(
-//             path.resolve(`${__dirname}/../`, "dd template.docx"),
-//             "binary"
-//         );
-//         this.doc = null;
-//     }
-//
-//     createDoc() {
-//         const zip = new PizZip(this.content);
-//         this.doc = new Docxtemplater(zip, {
-//             paragraphLoop: true,
-//             linebreaks: true,
-//         });
-//     }
-//
-//
-//     populateAndGetBuffer() {
-//         const self = this.docInfo;
-//         return this.doc.render({
-//             ...self,
-//             sites_coordinates: populateSitesCoordinates(this.supplier.mineSites),
-//             name_of_sites: populateSitesNames(this.supplier.mineSites),
-//             code_of_sites: populateSiteCodes(this.supplier.mineSites),
-//             // name_of_processor: this.docInfo.name_of_processor,
-//             // name_of_consultant: this.docInfo.name_of_consultant,
-//             // email_of_consultant: this.docInfo.email_of_consultant,
-//             // is_person_trained: this.docInfo.is_person_trained,
-//             // when_training: this.docInfo.when_training,
-//             // purpose_of_visit: this.docInfo.purpose_of_visit,
-//             // company_visited: this.docInfo.company_visited,
-//             // company_license_number: this.docInfo.company_license_number,
-//             // number_of_minesites: this.docInfo.number_of_minesites,
-//             // number_of_minesites_visited: this.docInfo.number_of_minesites_visited,
-//             // sites_visited: this.docInfo.sites_visited,
-//             // date_of_report: this.docInfo.date_of_report,
-//             // date_of_last_visit: this.docInfo.date_of_last_visit,
-//             // list_of_person_interviewed_and_role: this.docInfo.list_of_person_interviewed_and_role,
-//             // name_of_sites: this.docInfo.name_of_sites,
-//             // code_of_sites: this.docInfo.code_of_sites,
-//             // sites_district: this.docInfo.sites_district,
-//             // sites_sector: this.docInfo.sites_sector,
-//             // sites_cell: this.docInfo.sites_cell,
-//             // date_of_visit: this.docInfo.date_of_visit,
-//             // time_of_visit: this.docInfo.time_of_visit,
-//             // sites_coordinates: this.docInfo.sites_coordinates,
-//             // rmb_agent_present: this.docInfo.rmb_agent_present,
-//             // rmb_agent_name: this.docInfo.rmb_agent_name,
-//             // name_position_of_company_representative: this.docInfo.name_position_of_company_representative,
-//             // number_of_diggers_observations: this.docInfo.number_of_diggers_observations,
-//             // number_of_diggers_representative: this.docInfo.number_of_diggers_representative,
-//             // number_of_washers_observations: this.docInfo.number_of_washers_observations,
-//             // number_of_washers_representative: this.docInfo.number_of_washers_representative,
-//             // number_of_transporters_observations: this.docInfo.number_of_transporters_observations,
-//             // number_of_transporters_representative: this.docInfo.number_of_transporters_representative,
-//             // number_of_teams_observations: this.docInfo.number_of_teams_observations,
-//             // number_of_persons_per_team_observations: this.docInfo.number_of_persons_per_team_observations,
-//             // number_of_washers_per_team_observations: this.docInfo.number_of_washers_per_team_observations,
-//             // number_of_transporters_per_team_observations: this.docInfo.number_of_transporters_per_team_observations,
-//         }).getZip().generate({type: "nodebuffer", compression: "DEFLATE",})
-//         // const buf = doc.getZip().generate({
-//         //     type: "nodebuffer",
-//         //     // compression: DEFLATE adds a compression step.
-//         //     // For a 50MB output document, expect 500ms additional CPU time
-//         //     compression: "DEFLATE",
-//         // });
-//     }
-//
-//     saveFile(buffer) {
-//         const year = (new Date()).getFullYear();
-//         const month = getMonthWords((new Date()).getMonth());
-//         const filePath = `${__dirname}/../public/data/DD Reports/${year}/${month}`;
-//         if (!fs.existsSync(filePath)) {
-//             fs.mkdir(filePath, {recursive: true}, err => {
-//                 if (err) {
-//                     console.log(err);
-//                 }
-//             });
-//         }
-//         fs.writeFileSync(path.resolve(filePath, `${this.docInfo.date_of_report} iTSCi Template Due Diligence ${this.docInfo.company_visited}.docx`), buffer);
-//     }
-// }
-// const dueDoc = new DocTemplater(document, {name_of_processor: "Trading Services Logistics/ KANZAMIN", name_of_consultant: "Nsanzimfura Venant", company_visited: "DUSUZUMIMIRIMO", date_of_report: "20 August 2023"});
-// dueDoc.createDoc();
-// dueDoc.saveFile(dueDoc.populateAndGetBuffer());
-
-

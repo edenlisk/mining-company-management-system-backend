@@ -25,4 +25,5 @@ router.route('/trash')
     .get(protect, getAllEntries)
 
 
+
 module.exports = router;
