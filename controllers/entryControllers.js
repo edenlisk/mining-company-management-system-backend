@@ -5,6 +5,7 @@ const AppError = require('../utils/appError');
 const APIFeatures = require('../utils/apiFeatures');
 const exifreader = require('exifreader');
 const fs = require("fs");
+require('dotenv').config()
 const imagekit = require('../utils/imagekit');
 
 
@@ -51,40 +52,27 @@ exports.getOneEntry = catchAsync(async (req, res, next) => {
 })
 
 exports.createEntry = catchAsync(async (req, res, next) => {
+    let entry;
     if (req.body.mineralType !== "mixed") {
         const Entry = getModel(req.params.model);
         if (Entry) {
-            await createNewEntry(req, Entry, req.params.model);
+            entry = await createNewEntry(req, Entry, req.params.model);
         }
     } else {
         for (const model of ["coltan", "cassiterite"]) {
             const Entry = getModel(model);
             if (Entry) {
-                await createNewEntry(req, Entry, model);
+                entry = await createNewEntry(req, Entry, model);
             }
         }
     }
 
-    // entry = await Entry.findById(entry._id);
-    // console.log('----------------')
-    // console.log(entry)
-    // entry.numberOfTags = req.body.numberOfTags;
-    // entry.grossQuantity = req.body.grossQuantity;
-    // entry.netQuantity = req.body.netQuantity;
-    // entry.supplyDate = req.body.supplyDate;
-    // entry.time = req.body.time;
-    // if (req.params.model === "mixed") {
-    //     entry.quantity.coltan = req.body.coltan;
-    //     entry.quantity.cassiterite = req.body.cassiterite;
-    //     entry.cumulativeAmount.cassiterite = entry.quantity.cassiterite;
-    //     entry.cumulativeAmount.coltan = entry.quantity.coltan;
-    // }
-    // await entry.save({validateModifiedOnly: true});
     res
         .status(201)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                entry
             }
         )
     ;
@@ -222,7 +210,10 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
         .status(202)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                data: {
+                    entry
+                }
             }
         )
     ;
