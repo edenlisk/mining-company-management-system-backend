@@ -87,7 +87,7 @@ Clone this repository to your desired folder:
 
 ```sh
   cd my-folder
-  git clone git@github.com:edenlisk/library-management-system-front-end.git
+  git clone https://github.com/edenlisk/mining-company-management-system-backend.git
 ```
 
 ### Install
