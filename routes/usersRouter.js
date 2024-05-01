@@ -14,7 +14,7 @@ router.route('/verify-code')
     .post(verifyCode)
 
 router.route('/')
-    .get(getAllUsers)
+    .get(protect, getAllUsers)
 
 router.route('/:userId')
     .get(protect, getOneUser)
@@ -27,7 +27,7 @@ router.route('/notifications/:userId/:notificationId?')
 
 
 router.route('/signup')
-    .post(signup)
+    .post(protect, signup)
 
 router.route('/login')
     .post(login)
