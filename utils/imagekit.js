@@ -1,4 +1,5 @@
 const Imagekit = require('imagekit');
+require('dotenv').config()
 
 module.exports = new Imagekit(
     {

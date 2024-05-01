@@ -123,26 +123,6 @@ exports.paymentHistory = catchAsync(async (req, res, next) => {
         )
     ;
 })
-// const entry = await Entry.aggregate(
-//     [
-//         {
-//             $unwind: '$output' // Unwind the "output" array
-//         },
-//         {
-//             $group: {
-//                 _id: null, // Group all documents into a single group
-//                 balance: {$sum: '$output.cumulativeAmount'}
-//             }
-//         },
-//         {
-//             $project: {
-//                 _id: 0, // Exclude the "_id" field from the result
-//                 balance: 1
-//             }
-//         }
-//     ]
-// );
-// stock.push({value: entry[0]?.balance, name: model});
 
 exports.stockSummary = catchAsync(async (req, res, next) => {
     const models = ["cassiterite", "coltan", "wolframite", "lithium", "beryllium"];
@@ -257,8 +237,6 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                 {
                     $project: {
                         _id: 1, // Exclude the default _id field
-                        // Include other fields from the output array as needed
-                        // newId: uuidv4(6),
                         companyName: 1,
                         beneficiary: 1,
                         lotNumber: '$output.lotNumber',
@@ -266,23 +244,14 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                         supplyDate: 1,
                         mineralGrade: '$output.mineralGrade',
                         mineralPrice: '$output.mineralPrice',
-                        // exportedAmount: '$output.exportedAmount',
-                        // cumulativeAmount: '$output.cumulativeAmount',
                         rmaFee: '$output.rmaFee',
-                        // USDRate: '$output.USDRate',
-                        // rmaFeeUSD: '$output.rmaFeeUSD',
-                        // rmaFeeDecision: '$output.rmaFeeDecision',
                         paid: '$output.paid',
                         unpaid: '$output.unpaid',
                         settled: '$output.settled',
                         pricePerUnit: '$output.pricePerUnit',
                         mineralType: 1,
                         rmaFeeUSD: '$output.rmaFeeUSD',
-                        // status: '$output.status',
-                        // londonMetalExchange: '$output.londonMetalExchange',
-                        // treatmentCharges: '$output.treatmentCharges',
-                        // shipments: '$output.shipments',
-                        // paymentHistory: '$output.paymentHistory',
+
                     },
                 },
             ]

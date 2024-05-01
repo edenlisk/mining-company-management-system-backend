@@ -10,7 +10,6 @@ const qrcode = require('qrcode');
 const { defaultPermissions } = require('../utils/helperFunctions');
 const {trackUpdateModifications, trackCreateOperations} = require('../controllers/activityLogsControllers');
 // const Email = require('../utils/email');
-// const {recordLogs, prepareLog} = require('../utils/activityLogs');
 
 const signToken = id => {
     return jwt.sign({id}, process.env.JWT_SECRET_KEY, {expiresIn: process.env.EXPIRES_IN});
@@ -55,7 +54,7 @@ exports.signup = catchAsync(async (req, res, next) => {
             passwordConfirm: req.body.passwordConfirm
         }
     );
-    // logger.info(`create a user named: ${user.name}`);
+    logger.info(`create a user named: ${user.name}`);
     // log.logSummary = `${req.user.username} created a user named: ${user.name}`
     // if (!user) {
     //     log.status = "failed";
@@ -66,10 +65,13 @@ exports.signup = catchAsync(async (req, res, next) => {
     // email.sendVerification('')
     // createSendToken(user, 201, res);
     res
-        .status(200)
+        .status(201)
         .json(
             {
-                status: "Success"
+                status: "Success",
+                data: {
+                    user
+                }
             }
         )
     ;

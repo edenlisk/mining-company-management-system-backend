@@ -74,26 +74,6 @@ exports.addPayment = catchAsync(async (req, res, next) => {
     }
     await payment.save({validateModifiedOnly: true});
 
-    // await Payment.create(
-    //     {
-    //         // supplierId: req.body.supplierId,
-    //         // supplierName: req.body.supplierName,
-    //         entryId: req.body.entryId,
-    //         lotNumber: req.body.lotNumber,
-    //         beneficiary: req.body.beneficiary,
-    //         // nationalId: req.body.nationalId,
-    //         // licenseNumber: req.body.licenseNumber,
-    //         phoneNumber: req.body.phoneNumber,
-    //         // TINNumber: req.body.TINNumber,
-    //         // email: req.body.email,
-    //         location: req.body.location,
-    //         paymentAmount: req.body.paymentAmount,
-    //         currency: req.body.currency,
-    //         paymentDate: req.body.paymentDate,
-    //         paymentInAdvanceId: req.body.paymentInAdvanceId,
-    //         model: req.body.model
-    //     }
-    // )
     res
         .status(201)
         .json(

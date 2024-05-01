@@ -11,7 +11,6 @@ const {
     generateTagList,
     generateNegociantTagList,
     generateICGLRPackingList,
-    shipmentQuarterReport,
     generateForwardNote,
     shipmentReportPdf,
     shipmentSuppliersGraph,

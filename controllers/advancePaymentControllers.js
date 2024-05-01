@@ -45,21 +45,6 @@ exports.addAdvancePayment = catchAsync(async (req, res, next) => {
                 console.error(err);
             }
         });
-            // .then((response) => {
-            //     res
-            //         .status(200)
-            //         .json(
-            //             {
-            //                 status: "Success",
-            //                 sfdt: response.data,
-            //             }
-            //         )
-            //     ;
-            // })
-            // .catch((error) => {
-            //     return next(new AppError(error.message, 400));
-            //     // console.error('Error:', error.message); // Handle any errors
-            // });
     }
     const payment = await AdvancePayment.create(
         {

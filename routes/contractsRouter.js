@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.route('/')
     .get(protect, getAllContracts)
-    .post(uploadContract.single('contract'), createContract)
+    .post(protect, uploadContract.single('contract'), createContract)
 
 
 router.route('/:buyerId')

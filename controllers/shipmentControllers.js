@@ -173,12 +173,6 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
                     const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber)));
                     if (!shipmentEntry) continue;
                     shipmentEntry.quantity = item[shipment.shipmentNumber];
-                    // shipment.entries.map(value => {
-                    //     if ((value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber))) {
-                    //         value.quantity = item[shipment.shipmentNumber];
-                    //     }
-                    // })
-                    // shipmentEntry.quantity = item[shipment.shipmentNumber];
                     lotShipment.weight = item[shipment.shipmentNumber];
                 }
             } else {
@@ -303,8 +297,6 @@ exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
     if (!shipment) return next(new AppError("Something went wrong, shipment is missing!", 400));
     const Entry = getModel(shipment.model);
-    // const entryIds = shipment.entries.map(entry => entry.entryId);
-    // const entries = await Entry.find({_id: {$in: entryIds}});
     const tableData = [
         [
             {text: "Supply date", margin: [0, 5, 0, 2], fillColor: '#93c6e8'},
@@ -374,161 +366,6 @@ exports.shipmentReportPdf = catchAsync(async (req, res, next) => {
     pdfDoc.end();
 })
 
-exports.shipmentQuarterReport = catchAsync(async (req, res, next) => {
-    // const shipments = await Shipment.aggregate(
-    //     [
-    //         {
-    //             $match: {
-    //                 model: req.body.model,
-    //                 createdAt: {
-    //                     $gte: new Date(req.body.startDate),
-    //                     $lte: new Date(req.body.endDate)
-    //                 }
-    //             }
-    //         },
-    //         {
-    //             $unwind: "$entries"
-    //         },
-    //         {
-    //             $group: {
-    //                 _id: "$entries.entryId",
-    //                 balance: { $sum: "$entries.quantity" }
-    //             }
-    //         }
-    //     ]
-    // )
-
-    const shipmentRawData = await Shipment.find(
-        {
-            model: req.body.model,
-            createdAt: {
-                $gte: new Date(req.body.startDate),
-                $lte: new Date(req.body.endDate)
-            }
-        })
-
-    const workbook = new ExcelJS.Workbook();
-    const worksheet = workbook.addWorksheet(`${shipment.shipmentNumber}`);
-    worksheet.columns = [
-        { header: 'DATE', key: 'supplyDate', width: 15, style: {alignment: "left"} },
-        { header: 'COMPANY\n/COOPERATIVE NAME', key: 'companyName', width: 15, style: {alignment: "left"} },
-        { header: 'Weight In (KG)', key: "weightIn", width: 15, style: {alignment: "left"} },
-        { header: 'Weight Out (KG)', key: "weightOut", width: 15, style: {alignment: "left"} },
-        { header: 'LOT NUMBER', key: "lotNumber", width: 15, style: {alignment: "left"} },
-        { header: 'ASI LABO GRADE (%)', key: "mineralGrade", width: 15, style: {alignment: "left"} },
-        { header: 'PRICE/KG ($USD)', key: "pricePerUnit", width: 15, style: {alignment: "left"} },
-        { header: 'TOTAL PRICE', key: "mineralPrice", width: 15, style: {alignment: "left"} },
-        { header: 'WEIGHT * GRADE', key: "weightGrade", width: 15, style: {alignment: "left"} },
-    ];
-
-    const reportRawData = [];
-
-
-    const Entry = getModel(req.body.model);
-    for (const shipmentRawDatum of shipmentRawData) {
-        if (shipmentRawDatum.entries) {
-            const grouped = shipmentRawDatum.entries.reduce((result, item) => {
-                const {entryId, quantity, _id, lotNumber} = item;
-                if (!result[entryId]) {
-                    result[entryId] = {
-                        entryId,
-                        quantitySum: 0,
-                        items: [],
-                    };
-                }
-                result[entryId].quantitySum += item.quantity;
-                result[entryId].items.push({entryId, quantity, _id, lotNumber});
-                return result;
-            }, {});
-            const singleShipment = [];
-            for (const key of Object.keys(grouped)) {
-                const items = grouped[key];
-                const entry = await Entry.findById(key);
-                if (entry) {
-                    singleShipment.push(
-                        {
-                            supplyDate: entry.supplyDate.toISOString().split('T')[0],
-                            companyName: entry.companyName,
-                            weightIn: entry.weightIn,
-                            quantity: items.quantitySum,
-                            // TODO 22: USE CORRECT CONCENTRATION, PRICE, TOTAL AMOUNT VALUES
-                            price: '',
-                            concentration: '',
-                            totalAmount: ''
-                        }
-                    )
-                }
-            }
-            reportRawData.push(singleShipment);
-        }
-    }
-
-    const tableHeading = [
-        {text: "DATE", margin: [0, 5, 0, 2], fontSize: 15},
-        {text: 'COMPANY NAMES', margin: [0, 5, 0, 2], fontSize: 15},
-        {text: "WEIGHT IN", margin: [0, 5, 0, 2], fontSize: 15},
-        {text: 'QUANTITY (KG)', margin: [0, 5, 0, 2], fontSize: 15},
-        {text: "PRICE", margin: [0, 5, 0, 2], fontSize: 15},
-        {text: "CONC.(%)", margin: [0, 5, 0, 2], fontSize: 15},
-        {text: "TOTAL AMOUNT (USD)", margin: [0, 5, 0, 2], fontSize: 15},
-    ];
-
-    const docDefinition = {
-        pageOrientation: "landscape",
-        pageMargins: [40, 50, 40, 50],
-        content: [
-            {
-                text: `OBJECT: DETAILED REPORT OF THE - TERM MINERAL SALES, WEIGHT, GRADE, PRICE AND SUPPLIERS`,
-                alignment: 'center',
-                margin: [30, 20, 30, 20],
-                fontSize: 25
-            },
-        ],
-        defaultStyle: {
-            font: 'Helvetica',
-            fontSize: 20
-        }
-    }
-
-    const populateDoc = () => {
-        const tableHead = [tableHeading];
-        for (const shipmentTable of reportRawData) {
-            for (const row of shipmentTable) {
-                const singleRow = [
-                    {text: row.supplyDate},
-                    {text: row.companyName},
-                    {text: parseInt(row.weightIn)},
-                    {text: parseInt(row.quantity)},
-                    {text: parseFloat(row.price)},
-                    {text: parseFloat(row.concentration)},
-                    {text: row.totalAmount},
-                ]
-                tableHead.push(singleRow);
-            }
-            docDefinition.content.push(
-                {
-                    table: {
-                        width: ['*', '*', '*', '*', "*", '*', "auto"],
-                        body: tableHead,
-                    },
-                    alignment: 'center',
-                },
-            )
-        }
-    }
-    populateDoc();
-
-    const printer = new PdfPrinter(fonts);
-    // SAVE THE DOCUMENT ON THE FILE SYSTEM
-    const pdfDoc = printer.createPdfKitDocument(docDefinition);
-    // 1. create structure of the report
-    // 2. populate data into report
-    // 3. send report back to client
-    // console.log('weeeeeeeeeeeeeeeeeeee')
-    res.setHeader('Content-Type', 'application/pdf');
-    pdfDoc.pipe(res);
-    pdfDoc.end();
-})
 
 exports.tagList = catchAsync(async (req, res, next) => {
     const shipment = await Shipment.findById(req.params.shipmentId);
@@ -634,7 +471,6 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     worksheet.getRow(entries.length + 5).getCell(2).value = `SAMPLE ${shipment.sampleWeight} KGS`;
     worksheet.getRow(entries.length + 6).getCell(2).value = `DUST ${shipment.dustWeight} KGS`;
     const buffer = await workbook.xlsx.writeBuffer();
-    // await workbook.xlsx.writeFile(`MINE TAGS LIST.xlsx`);
     if (shipment.tagListFile?.fileId) {
         imagekit.deleteFile(shipment.tagListFile?.fileId, (err) => {
             if (err) {
@@ -648,7 +484,6 @@ exports.generateTagList = catchAsync(async (req, res, next) => {
     }
     let fileId = ""
     let url = ""
-    // const data = fs.readFileSync(`MINE TAGS LIST.xlsx`);
     if (buffer) {
         const response = await imagekit.upload(
             {
@@ -737,18 +572,6 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
             newRow.getCell(columnMapping.negociantTagNumber).value = tag.tagNumber;
             newRow.getCell(columnMapping.price).value = entry.output[0].pricePerUnit;
             newRow.getCell(columnMapping.mineralGrade).value = totalWeightOutMineralGrade / totalWeightOut;
-            // newRow.eachCell({includeEmpty: true}, function (cell, colNumber) {
-            //     if (colNumber <= 8) {
-            //         cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
-            //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-            //         cell.border = {
-            //             bottom: { style: 'thin' },
-            //             left: { style: 'thin' },
-            //             right: { style: 'thin' },
-            //             top: { style: 'thin' },
-            //         };
-            //     }
-            // })
             currentRow++;
             index++;
         }
@@ -757,18 +580,6 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
     totalRow.getCell(columnMapping.companyName).value = 'TOTAL';
     totalRow.getCell(columnMapping.weightIn).value = totalWeightIn;
     totalRow.getCell(columnMapping.quantity).value = totalTagWeight;
-    // totalRow.eachCell({includeEmpty: true}, function (cell, colNumber) {
-    //     if (colNumber <= 8) {
-    //         cell.font = { name: 'Arial', size: 10, family: 2, bold: true };
-    //         cell.alignment = { vertical: 'middle', horizontal: 'center' };
-    //         cell.border = {
-    //             bottom: { style: 'thin' },
-    //             left: { style: 'thin' },
-    //             right: { style: 'thin' },
-    //             top: { style: 'thin' },
-    //         };
-    //     }
-    // })
     worksheet.getRow(currentRow + 1).getCell(columnMapping.companyName).value = `NET WEIGHT: ${shipment.netWeight}`;
     worksheet.getRow(currentRow + 2).getCell(columnMapping.companyName).value = `SAMPLE: ${shipment.sampleWeight}`;
     worksheet.getRow(currentRow + 3).getCell(columnMapping.companyName).value = `DUST: ${shipment.dustWeight}`;
@@ -788,8 +599,6 @@ exports.generateNegociantTagList = catchAsync(async (req, res, next) => {
         shipment.negociantTagListFile.url = "";
     }
     const buffer = await workbook.xlsx.writeBuffer();
-    // await workbook.xlsx.writeFile(`negociant-Tags.xlsx`);
-    const data = fs.readFileSync(`negociant-Tags.xlsx`);
     if (buffer) {
         const response = await imagekit.upload({
             file: Buffer.from(buffer),
@@ -919,12 +728,6 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         })
         const finalRow = worksheet.getRow(currentRow + mineTags.length - 1);
         finalRow.getCell(columnMapping.totalTagWeight).value = totalTagWeight;
-        // finalRow.getCell(columnMapping.weightOut).value = exportedWeight;
-        // finalRow.getCell(columnMapping.mineralGrade).value = averageMineralGrade;
-        // finalRow.getCell(columnMapping.negociantTagNumber).value = entry.negociantTags[0].tagNumber;
-        // finalRow.getCell(columnMapping.mineSiteStatus).value = "GREEN";
-        // finalRow.getCell(columnMapping.mineSiteTick).value = "YES";
-        // finalRow.getCell(columnMapping.grandTotalForExport).value = exportedWeight;
         currentRow += mineTags.length + 1;
     }
     if (shipment.packingListFile?.fileId) {
@@ -939,8 +742,6 @@ exports.generateICGLRPackingList = catchAsync(async (req, res, next) => {
         shipment.packingListFile.url = "";
     }
     const buffer = await workbook.xlsx.writeBuffer();
-    // await workbook.xlsx.writeFile(`packing-list.xlsx`);
-    const data = fs.readFileSync(`packing-list.xlsx`);
     if (buffer) {
         const response = await imagekit.upload({
             file: Buffer.from(buffer),

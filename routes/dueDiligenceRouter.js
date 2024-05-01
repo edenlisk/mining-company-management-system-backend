@@ -6,15 +6,16 @@ const { getAllDueDiligenceDocuments,
     deleteDiligence,
     downloadDueDiligenceDocument,
     updateDiligence } = require('../controllers/dueDiligenceControllers');
+const {protect} = require("../controllers/authControllers");
 // const { protect, restrictTo } = require('../controllers/authControllers');
 
 router.route('/')
-    .get(getAllDueDiligenceDocuments)
-    .post(uploadDueDiligence, addDueDiligenceDocument)
+    .get(protect, getAllDueDiligenceDocuments)
+    .post(protect, uploadDueDiligence, addDueDiligenceDocument)
 
 router.route('/:documentId')
-    .post(downloadDueDiligenceDocument)
-    .patch(uploadDueDiligence, updateDiligence)
-    .delete(deleteDiligence)
+    .post(protect, downloadDueDiligenceDocument)
+    .patch(protect, uploadDueDiligence, updateDiligence)
+    .delete(protect, deleteDiligence)
 
 module.exports = router;

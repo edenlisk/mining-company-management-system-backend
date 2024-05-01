@@ -345,6 +345,7 @@ exports.deleteGradeImg = catchAsync(async (req, res, next) => {
 
 exports.generateLabReport = catchAsync(async (req, res, next) => {
     const log = trackCreateOperations("lab report", req);
+    if (['lithium', 'beryllium'].includes(req.params.model)) return next(new AppError(`No template found for ${req.params.model} entries`, 401))
     const Entry = getModel(req.params.model);
     const entry = await Entry.findById(req.body.entryId);
     if (!entry) return next(new AppError("Unable to generate lab report, please try again!", 400));
