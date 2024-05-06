@@ -18,9 +18,6 @@ const contractSchema = new mongoose.Schema(
             type: Date,
             required: true
         },
-        // grade: {
-        //     type: String
-        // },
         buyerName: {
             type: String,
             required: [true, "Please provide contract buyer's name"]

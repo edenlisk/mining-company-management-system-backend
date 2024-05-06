@@ -1,7 +1,6 @@
 const { getModel, getModelAcronym, completeYearStock } = require('../utils/helperFunctions');
 const mongoose = require('mongoose');
 const catchAsync = require('../utils/catchAsync');
-const Supplier = require('../models/supplierModel');
 const {v4: uuidv4} = require('uuid');
 const AppError = require('../utils/appError');
 const ExcelJS = require('exceljs');
@@ -192,9 +191,6 @@ exports.topSuppliers = catchAsync(async (req, res, next) => {
                         representativePhoneNumber: {$first: "$representativePhoneNumber"}
                     }
                 },
-                // {
-                //     $limit: 2
-                // }
             ]
         )
         result.push({mineralType: model, entries});
@@ -223,7 +219,6 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                 {
                     $match: {
                         supplierId: { $in: [new mongoose.Types.ObjectId(req.params.supplierId)] },
-                        // visible: true
                     },
                 },
                 {
@@ -236,7 +231,7 @@ exports.unsettledLots = catchAsync(async (req, res, next) => {
                 },
                 {
                     $project: {
-                        _id: 1, // Exclude the default _id field
+                        _id: 1,
                         companyName: 1,
                         beneficiary: 1,
                         lotNumber: '$output.lotNumber',

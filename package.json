@@ -41,6 +41,8 @@
     "pizzip": "^3.1.4",
     "qrcode": "^1.5.3",
     "socket.io": "^4.7.2",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0",
     "uuid": "^9.0.0",
     "validator": "^13.9.0",
     "winston": "^3.10.0",

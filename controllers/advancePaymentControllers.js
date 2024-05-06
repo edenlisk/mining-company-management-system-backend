@@ -1,4 +1,3 @@
-const path = require('path');
 const multer = require("multer");
 const fs = require('fs');
 const AdvancePayment = require('../models/advancePaymentModel');
@@ -61,8 +60,6 @@ exports.addAdvancePayment = catchAsync(async (req, res, next) => {
             USDRate: req.body.USDRate,
             paymentMode: req.body.paymentMode,
             sfdt: JSON.stringify(sfdt),
-            // contractName: req.file.filename,
-            // message: req.body.message,
         }
     )
     if (!payment) {

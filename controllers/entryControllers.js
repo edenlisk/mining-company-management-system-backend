@@ -1,4 +1,3 @@
-const Supplier = require('../models/supplierModel');
 const {getModel, createNewEntry, updateNegociantTags, updateMineTags} = require('../utils/helperFunctions');
 const catchAsync = require('../utils/catchAsync');
 const AppError = require('../utils/appError');
@@ -101,13 +100,6 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
                             const imageDate = tags['CreateDate'];
                             const lot = entry.output.find(item => parseInt(item.lotNumber) === parseInt(file.fieldname));
                             lot.gradeImg.filename = response.name;
-                            // if (logs && logs.modifications) {
-                            //     logs.modifications.push({
-                            //         fieldName: "gradeImg",
-                            //         initialValue: `${lot.gradeImg.filePath}--${lot.gradeImg?.createdAt}`,
-                            //         newValue: `${response.url}--${imageDate ? imageDate.description : null}`,
-                            //     });
-                            // }
                             lot.gradeImg.filePath = response.url;
                             lot.gradeImg.fileId = response.fileId;
                             if (imageDate) {

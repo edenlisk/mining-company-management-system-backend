@@ -2,7 +2,6 @@ const mongoose = require('mongoose');
 const request = require('supertest');
 require('dotenv').config();
 const app = require('../app');
-const UserModel = require('../models/usersModel');
 
 
 

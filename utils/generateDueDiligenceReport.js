@@ -1,7 +1,5 @@
 const officegen = require('officegen');
 const fs = require('fs');
-const catchAsync = require('./catchAsync');
-const AppError = require('./appError');
 
 
 const docx = officegen({
@@ -9,15 +7,6 @@ const docx = officegen({
     orientation: 'portrait',
     pageMargins: {top: 1000, bottom: 1000, left: 1000, right: 1000}
 })
-// const title = docx.createP();
-// title.addText('ITSCI mine site visit and risk assessment report – TEMPLATE FOR COMPANIES', {
-//     bold: true,
-//     font_size: 14,
-//     align: 'center'
-// });
-// const paragraph = docx.createP();
-// docx.putPageBreak();
-// paragraph.addText('General information, summary and conclusion of the visit', {italic: true, font_size: 10, bold: true});
 
 const subTable = [
     {

@@ -1,6 +1,4 @@
-// gross, net, company name, license number, company representative, representative ID number,
-//     representative phone number, date, type of minerals (cassiterite, coltan, wolframite, berylium,
-//     lithium, mixed minerals), number of mine tags
+
 
 const mongoose = require('mongoose');
 
@@ -124,36 +122,10 @@ const lotSchema = new mongoose.Schema(
                 }
             }
         },
-        // netPrice: {
-        //     type: Number,
-        //     default: null
-        // },
         sampleIdentification: {
             type: String,
             default: null
         },
-        // exportedAmount: {
-        //     type: Number,
-        //     validate: {
-        //         validator: function (val) {
-        //             if (val && this.weightOut) {
-        //                 return val <= this.weightOut;
-        //             }
-        //         },
-        //         message: "Exported amount must be less than or equal to weight out."
-        //     }
-        // },
-        // cumulativeAmount: {
-        //     type: Number,
-        //     validate: {
-        //         validator: function (val) {
-        //             if (val && this.weightOut) {
-        //                 return val <= this.weightOut;
-        //             }
-        //         },
-        //         message: "Balance amount must be less than or equal to weight out."
-        //     }
-        // },
         rmaFeeRWF: {
             type: Number,
             default: null
@@ -162,22 +134,10 @@ const lotSchema = new mongoose.Schema(
             type: Number,
             default: null
         },
-        // rmaFeeUSD: {
-        //     type: Number,
-        //     default: null
-        // },
         rmaFeeDecision: {
             type: String,
             default: "pending"
         },
-        // paid: Number,
-        // unpaid: {
-        //     type: Number,
-        // },
-        // settled: {
-        //     type: Boolean,
-        //     default: false
-        // },
         pricePerUnit: {
             type: Number,
             default: null
@@ -231,10 +191,6 @@ const lotSchema = new mongoose.Schema(
             ],
             default: []
         },
-        // status: {
-        //     type: String,
-        //     default: "in stock"
-        // },
         paymentHistory: {
             type: [
                 {
@@ -341,10 +297,7 @@ lotSchema.virtual('settled').get(function () {
 })
 
 
-// TODO 25: HOW TO CALCULATE RMA FEE RWF
-// lotSchema.virtual('rmaFeeRWF').get(function () {
-//     if (!this.weightOut) return null;
-// })
+
 
 exports.lotSchema = lotSchema;
 exports.entrySchema = entrySchema;

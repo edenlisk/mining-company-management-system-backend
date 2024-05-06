@@ -24,14 +24,12 @@ const paymentSchema = new mongoose.Schema(
         },
         nationalId: {
             type: String,
-            // required: [true, "Please provide representative's national Id"]
         },
         licenseNumber: {
             type: String
         },
         phoneNumber: {
             type: String,
-            // required: [true, "Please provide representative phone number"]
         },
         TINNumber: {
             type: String
@@ -67,32 +65,6 @@ const paymentSchema = new mongoose.Schema(
     {timestamps: true}
 )
 
-// paymentSchema.pre('save', async function (next) {
-//     const { getModel } = require('../utils/helperFunctions');
-//     const Entry = getModel(this.model);
-//     const entry = await Entry.findById(this.entryId);
-//     if (this.paymentInAdvanceId) {
-//         const payment = await AdvancePayment.findById(this.paymentInAdvanceId);
-//         if (payment) {
-//             this.supplierId = payment.supplierId;
-//             this.companyName = payment.companyName;
-//             this.licenseNumber = payment.licenseNumber;
-//             this.TINNumber = payment.TINNumber;
-//             this.nationalId = payment.nationalId;
-//             this.email = payment.email;
-//         }
-//     } else {
-//         this.supplierId = entry.supplierId;
-//         this.companyName = entry.companyName;
-//         this.licenseNumber = entry.licenseNumber;
-//         this.TINNumber = entry.TINNumber;
-//         // TODO 20: CHECK AGAIN NATIONALID
-//         this.nationalId = entry.representativeId;
-//         this.email = entry.email;
-//     }
-//     next();
-// })
-
 
 paymentSchema.pre('save', async function (next) {
     const { getModel } = require('../utils/helperFunctions');
@@ -107,7 +79,6 @@ paymentSchema.pre('save', async function (next) {
                 if (payment.remainingAmount >= lot.mineralPrice) {
                     lot.rmaFeeDecision = "pending";
                     payment.remainingAmount -= lot.mineralPrice;
-                    // TODO 12: FIND APPROPRIATE COMMENT.
                     payment.consumptionDetails.push(
                         {
                             date: (new Date()).toDateString(),
@@ -120,7 +91,6 @@ paymentSchema.pre('save', async function (next) {
                             comment: `Deducted ${lot.netPrice} for paying mineral price of ${this.lotNumber} of minerals supplied on ${entry.supplyDate}.`
                         }
                     )
-                    // TODO 14: A. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
                     const {beneficiary, phoneNumber, location, currency} = payment;
                     lot.paymentHistory.push(
                         {
@@ -137,7 +107,6 @@ paymentSchema.pre('save', async function (next) {
                 } else {
                     if (payment.remainingAmount >= lot.rmaFeeUSD) {
                         lot.rmaFeeDecision = "pending";
-                        // TODO 14: B. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
                         payment.remainingAmount -= (payment.remainingAmount - lot.rmaFeeUSD);
                         const {beneficiary, phoneNumber, location, currency} = payment;
                         lot.paymentHistory.push(
@@ -153,24 +122,6 @@ paymentSchema.pre('save', async function (next) {
                             }
                         );
                     }
-                    // else {
-                        // lot.rmaFeeDecision = "pending";
-                        // // TODO 14: C. NORMALIZE ADVANCE PAYMENT TO MATCH. -> DONE
-                        // payment.remainingAmount = 0;
-                        // const {beneficiary, phoneNumber, location, currency} = payment;
-                        // lot.paymentHistory.push(
-                        //     {
-                        //         paymentId: this._id,
-                        //         beneficiary,
-                        //         phoneNumber,
-                        //         location: location?.district,
-                        //         paymentAmount: payment.remainingAmount,
-                        //         paymentDate: new Date(),
-                        //         currency,
-                        //         paymentMode: payment.paymentMode
-                        //     }
-                        // );
-                    // }
                 }
             }
             await payment.save({validateModifiedOnly: true});
@@ -189,8 +140,6 @@ paymentSchema.pre('save', async function (next) {
             }
             if (parseInt(lot.paid) >= parseInt(lot.netPrice)) return next(new AppError("This lot is already paid", 400));
             if (parseInt(lot.paid) + parseInt(this.paymentAmount) > parseInt(lot.netPrice)) return next(new AppError("Payment amount exceeds the net price of this lot", 400));
-            // lot.paid += this.paymentAmount;
-            // lot.unpaid -= this.paymentAmount;
             lot.paymentHistory.push(singlePayment);
         }
         await entry.save({validateModifiedOnly: true});

@@ -292,9 +292,6 @@ exports.deleteCassiteriteEntry = catchAsync(async (req, res, next) => {
         await log?.save({validateBeforeSave: false});
     }
 
-    // logs.push(`${req.user.username} deleted this cassiterite entry supplied by: ${entry.companyName} on ${entry.supplyDate}`);
-    // const preparedLogs = prepareLog(logs, `/complete/cassiterite/${entry?._id}`,{userId: req.user._id, username: req.user.username});
-    // await recordLogs(preparedLogs);
     res
         .status(204)
         .json(

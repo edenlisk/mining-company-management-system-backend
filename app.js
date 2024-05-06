@@ -17,8 +17,6 @@ const { requestLogger, logger: appLogger } = require('./utils/loggers');
 const { deleteOverDueLogs } = require('./utils/cron');
 
 
-// const entriesRouter = require('./routes/entriesRouter');
-// const riskAssessmentRouter = require('./routes/riskAssessmentRouter');
 const indexRouter = require('./routes/index');
 const usersRouter = require('./routes/usersRouter');
 const entryRouter = require('./routes/entryRouter');
@@ -28,12 +26,6 @@ const shipmentsRouter = require('./routes/shipmentsRouter');
 const dueDiligenceRouter = require('./routes/dueDiligenceRouter');
 const paymentsRouter = require('./routes/paymentsRouter');
 const suppliersRouter = require('./routes/suppliersRouter');
-// const cassiteriteRouter = require('./routes/cassiteriteRouter');
-// const coltanRouter = require('./routes/coltanRouter');
-// const wolframiteRouter = require('./routes/wolframiteRouter');
-// const lithiumRouter = require('./routes/lithiumRouter');
-// const berylliumRouter = require('./routes/berylliumRouter');
-// const mixedRouter = require('./routes/mixedRouter');
 const advancePaymentRouter = require('./routes/advancePaymentsRouter');
 const statisticsRouter = require('./routes/statisticsRouter');
 const settingsRouter = require('./routes/settingsRouter');
@@ -45,7 +37,25 @@ const chatRouter = require('./routes/chatRouter');
 const activityLogsRouter = require('./routes/activityLogsRouter');
 const tagsRouter = require('./routes/tagsRouter');
 
+const swaggerJSDoc = require('swagger-jsdoc');
+const swaggerUI = require('swagger-ui-express');
+
+const swaggerOptions = {
+    swaggerDefinition: {
+        openapi: '3.0.0',
+        info: {
+            version: '1.0.0',
+            title: "swagger setup",
+            description: "A simple swagger documentation",
+            servers: [`http://localhost:${process.env.PORT || 3000}`]
+        },
+        schemes: ['http', 'https']
+    },
+    apis: ['./routes/*.js']
+}
 const app = express();
+const swaggerDocs = swaggerJSDoc({swaggerDefinition: swaggerOptions.swaggerDefinition, apis: swaggerOptions.apis});
+app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(swaggerDocs));
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -57,11 +67,6 @@ app.use(mongoSanitize());
 app.use(xss());
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.set('trust proxy', 1);
-// app.use(session({
-//     secret: process.env.SESSION_KEY,
-//     resave: false,
-//     saveUninitialized: true,
-// }))
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 const corsOptions ={
@@ -90,7 +95,6 @@ app.use(expressWinston.logger({
 }))
 
 app.use('/api/v1/', indexRouter);
-// app.use('/api/v1/entries', entriesRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/buyers', buyersRouter);
 app.use('/api/v1/entry', entryRouter);
@@ -99,12 +103,6 @@ app.use('/api/v1/shipments', shipmentsRouter);
 app.use('/api/v1/payments', paymentsRouter)
 app.use('/api/v1/suppliers', suppliersRouter);
 app.use('/api/v1/duediligence', dueDiligenceRouter);
-// app.use('/api/v1/coltan', coltanRouter);
-// app.use('/api/v1/cassiterite', cassiteriteRouter);
-// app.use('/api/v1/wolframite', wolframiteRouter);
-// app.use('/api/v1/lithium', lithiumRouter);
-// app.use('/api/v1/beryllium', berylliumRouter);
-// app.use('/api/v1/mixed', mixedRouter);
 app.use('/api/v1/stock', statisticsRouter);
 app.use('/api/v1/advance-payment', advancePaymentRouter);
 app.use('/api/v1/settings', settingsRouter);

@@ -7,7 +7,6 @@ const { getAllDueDiligenceDocuments,
     downloadDueDiligenceDocument,
     updateDiligence } = require('../controllers/dueDiligenceControllers');
 const {protect} = require("../controllers/authControllers");
-// const { protect, restrictTo } = require('../controllers/authControllers');
 
 router.route('/')
     .get(protect, getAllDueDiligenceDocuments)

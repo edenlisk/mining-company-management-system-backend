@@ -59,7 +59,6 @@ coltanSchema.pre('save', async function (next) {
         if (this.output) handlePaidSpecific(this.output);
     }
     next();
-    // formula = tantal * grade
 })
 
 coltanSchema.statics.findCurrentStock = async function () {

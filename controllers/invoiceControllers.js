@@ -39,8 +39,6 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
             beneficiary: req.body.beneficiary,
             supplierCompanyName: req.body.supplierCompanyName,
             supplierAddress: req.body.supplierAddress,
-            // processorEmail: req.body.processorEmail,
-            // supplierEmail: req.body.supplierEmail,
             processorCompanyName: settings.nameOfCompany,
             mineralsSupplied: req.body.mineralsSupplied,
             extraNotes: req.body.extraNotes,
@@ -110,42 +108,6 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
                 textTransform: 'uppercase',
             },
         ],
-        // [
-        //     {
-        //         text: 'Item 2',
-        //         border: [false, false, false, true],
-        //         margin: [0, 5, 0, 5],
-        //         alignment: 'left',
-        //     },
-        //     {
-        //         border: [false, false, false, true],
-        //         text: '2767.4',
-        //         fillColor: '#f5f5f5',
-        //         alignment: 'right',
-        //         margin: [0, 5, 0, 5],
-        //     },
-        //     {
-        //         border: [false, false, false, true],
-        //         text: 23.4,
-        //         fillColor: '#f5f5f5',
-        //         alignment: 'right',
-        //         margin: [0, 5, 0, 5],
-        //     },
-        //     {
-        //         border: [false, false, false, true],
-        //         text: 25.6,
-        //         fillColor: '#f5f5f5',
-        //         alignment: 'right',
-        //         margin: [0, 5, 0, 5],
-        //     },
-        //     {
-        //         border: [false, false, false, true],
-        //         text: 1743.8,
-        //         fillColor: '#f5f5f5',
-        //         alignment: 'right',
-        //         margin: [0, 5, 0, 5],
-        //     },
-        // ],
     ]
 
     const bigPaymentHistory = [];
@@ -349,14 +311,6 @@ exports.generateInvoice = catchAsync(async (req, res, next) => {
     } else {
         return next(new AppError("Unable to generate invoice!", 400));
     }
-    // res
-    //     .status(200)
-    //     .json(
-    //         {
-    //             status: "Success",
-    //         }
-    //     )
-    // ;
 })
 
 exports.getSuppliersInvoice = catchAsync(async (req, res, next) => {

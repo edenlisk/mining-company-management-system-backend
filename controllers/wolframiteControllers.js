@@ -78,7 +78,6 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
                     netPrice: null,
                     ASIR: null,
                     sampleIdentification: null,
-                    // TODO 10: REQUIREMENTS TO CALCULATE WOLFRAMITE PRICES --> DONE
                     status: "in stock"
                 }
             )
@@ -91,7 +90,6 @@ exports.createWolframiteEntry = catchAsync(async (req, res, next) => {
         log.status = "failed";
     }
     await log?.save({validateBeforeSave: false});
-    // io.emit('operation-update', {message: "New Coltan Entry was record"});
     res
         .status(204)
         .json(
@@ -121,7 +119,6 @@ exports.getOneWolframiteEntry = catchAsync(async (req, res, next) => {
 
 exports.updateWolframiteEntry = catchAsync(async (req, res, next) => {
     const entry = await Wolframite.findById(req.params.entryId);
-    // if (!entry.visible) return next(new AppError("Please restore this entry to update it!", 400));
     if (!entry) return next(new AppError("This Entry no longer exists!", 400));
     const logs = trackUpdateModifications(req.body, entry, req);
     if (req.files) {
@@ -316,8 +313,6 @@ const multerStorage = multer.diskStorage(
             cb(null, `${__dirname}/../public/data/wolframite`);
         },
         filename: function (req, file, cb) {
-            // const fileExtension = path.extname(file.originalname);
-            // const filePath = `${__dirname}/../public/data/shipment/${req.params.shipmentId}/${file.originalname}`;
             cb(null, file.originalname);
         }
     }

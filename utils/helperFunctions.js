@@ -3,7 +3,6 @@ const fs = require('fs');
 const multer = require('multer');
 const axios = require("axios");
 const FormData = require('form-data');
-const imagekit = require('./imagekit');
 const Supplier = require('../models/supplierModel');
 const Coltan = require('../models/coltanEntryModel');
 const Cassiterite = require('../models/cassiteriteEntryModel');
@@ -202,8 +201,6 @@ exports.isOTPValid = (secret, userEnteredCode, timeWindow = 30) => {
     // Check if the OTP is valid within the specified time window
     return authenticator
 }
-// 1                // 2        ....n
-// ((quantity * grade) + (quantity * grade))/ total quantity
 
 const storekeeper = {
     entry: {

@@ -85,35 +85,6 @@ exports.createContract = catchAsync(async (req, res, next) => {
             })
         }
     }
-    // if (req.file) {
-    //     fs.readFile(req.file.path, (err, data) => {
-    //         if (err) {
-    //             console.log(err.message);
-    //             logger.warn(err);
-    //         } else {
-    //             imagekit.upload(
-    //                 {
-    //                     file: data,
-    //                     fileName: req.body.name,
-    //                     folder: "/contracts"
-    //                 }
-    //             ).then(response => {
-    //                 if (response) {
-    //                     contract.filePath = response.url;
-    //                     fs.unlink(req.file.path, (err) => {
-    //                         if (err) {
-    //                             console.log(err.message);
-    //                             logger.warn(err);
-    //                         } else {
-    //                             console.log("File deleted successfully");
-    //                         }
-    //                     })
-    //                 }
-    //             })
-    //         }
-    //     })
-    // }
-    // await contract.save({validateModifiedOnly: true});
 
 
     res

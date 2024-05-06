@@ -1,5 +1,4 @@
 const mongoose = require('mongoose');
-const AppError = require('../utils/appError');
 
 const tagsSchema = new mongoose.Schema(
     {

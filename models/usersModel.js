@@ -1,7 +1,6 @@
 const mongoose = require('mongoose');
 const isEmail = require('validator/lib/isEmail');
 const bcrypt = require('bcryptjs');
-const {permissions} = require('../utils/helperFunctions')
 
 const notificationsSchema = new mongoose.Schema(
     {
@@ -122,20 +121,6 @@ userSchema.pre('save', async function (next) {
     next();
 })
 
-// userSchema.methods.generateOTP = function () {
-//     totp.options = {
-//         step: 600,
-//         algorithm: 'sha512',
-//         digits: 6
-//     }
-//     this.secretCode = totp.generate(process.env.TOTP_SECRET);
-//     this.secretCodeExpiresAt = Date.now() + 10 * 60 * 1000;
-//     return this.secretCode;
-// }
-
-// userSchema.methods.verifyOTP = function (candidateOTP) {
-//     return totp.check(candidateOTP, process.env.TOTP_SECRET);
-// }
 
 userSchema.methods.verifyPassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);

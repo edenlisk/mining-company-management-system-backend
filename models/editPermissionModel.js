@@ -1,8 +1,6 @@
 const mongoose = require('mongoose');
 const Settings = require('./settingsModel');
 const User = require('./usersModel');
-const { getModel, toCamelCase } = require('../utils/helperFunctions');
-const AppError = require('../utils/appError');
 
 
 const editPermissionSchema = new mongoose.Schema(
@@ -52,7 +50,6 @@ editPermissionSchema.pre('save', async function (next) {
     const user = await User.findOne({ username: this.username }).select('+notifications');
     if (this.isNew) {
         this.editRequestedAt = new Date();
-        // const user = await User.findOne({ username: this.username }).select('+notifications');
         if (user) {
             user.notifications.push(
                 {
@@ -77,7 +74,6 @@ editPermissionSchema.pre('save', async function (next) {
                     }
                 )
             }
-            // console.log(`/entry/edit/${this.model}/${this.recordId}`);
         } else if (this.decision === false) {
             this.editExpiresAt = null;
             this.requestStatus = "rejected";
@@ -93,16 +89,6 @@ editPermissionSchema.pre('save', async function (next) {
     await user.save({validateModifiedOnly: true});
     next();
 })
-
-
-// const Collection = getModel(this.model);
-// const record = await Collection.findById(this.recordId);
-// if (!record) return next(new AppError("Record was not found!", 400));
-// for (const field of this.editableFields) {
-//     console.log(field.newValue);
-//     // use field to update modified fields
-//     record[toCamelCase(field.fieldname)] = field.newValue;
-// }
 
 
 module.exports = mongoose.model("EditPermission", editPermissionSchema);

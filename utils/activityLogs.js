@@ -23,9 +23,3 @@ const prepareLog = (logs, link, {userId, username}) => {
 }
 
 
-
-
-
-// module.exports = {
-//     trackUpdateModifications
-// };

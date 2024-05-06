@@ -84,7 +84,6 @@ exports.deleteUser = catchAsync(async (req, res, next) => {
 })
 
 exports.getNotifications = catchAsync(async (req, res, next) => {
-    // const notifications = await User.findById(req.params.userId).select({notifications: 1, _id: 1});
     const notifications = await User.aggregate([
         { $match: { _id: new mongoose.Types.ObjectId(req.params.userId) } },
         {

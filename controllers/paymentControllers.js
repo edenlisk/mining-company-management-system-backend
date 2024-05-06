@@ -68,8 +68,6 @@ exports.addPayment = catchAsync(async (req, res, next) => {
         payment.companyName = entry.companyName;
         payment.licenseNumber = entry.licenseNumber;
         payment.TINNumber = entry.TINNumber;
-        // TODO 20: CHECK AGAIN NATIONALID
-        // payment.nationalId = entry.representativeId;
         payment.email = entry.email;
     }
     await payment.save({validateModifiedOnly: true});

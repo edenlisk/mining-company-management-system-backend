@@ -73,13 +73,11 @@ const getProduction = async (model, supplierId, startMonth, endMonth = new Date(
         currentDate.setMonth(currentDate.getMonth() + 1);
     }
 
-    // Populate the object with matching results
     supplierOverallProduction.forEach(result => {
         const { year, month } = result._id;
         monthMap[`${year}-${month}`] = result.totalWeightIn;
     });
 
-    // Convert the object back to an array
     return Object.keys(monthMap).map(key => ({
         _id: {year: parseInt(key.split('-')[0]), month: parseInt(key.split('-')[1])},
         totalWeightIn: monthMap[key],
@@ -126,12 +124,10 @@ const getMixedProduction = async (supplierId, startMonth, endMonth = new Date().
         currentDate.setMonth(currentDate.getMonth() + 1);
     }
 
-    // Populate the object with matching results
     supplierOverallProduction.forEach(result => {
         const { year, month } = result._id;
         monthMap[`${year}-${month}`] = result.totalWeightIn;
     });
-    // Convert the object back to an array
     return Object.keys(monthMap).map(key => ({
         _id: {year: parseInt(key.split('-')[0]), month: parseInt(key.split('-')[1])},
         totalWeightIn: monthMap[key],
@@ -228,7 +224,6 @@ exports.generate = catchAsync(async (req, res, next) => {
         ...req.body,
         sites_district: supplier?.address?.district,
         sites_sector: supplier?.address?.sector,
-        // TODO 15: USE SECTOR INSTEAD OF SECTOR
         sites_cell: supplier?.address?.sector,
         ...sampleObject,
         company_license_number: supplier?.licenseNumber,
@@ -276,9 +271,6 @@ exports.generateLabReport = async (entry, lot, user) => {
         paragraphLoop: true,
         linebreaks: true,
     });
-    // tantalum
-    // niobium
-    // iron
 
     const settings = await Settings.findOne();
     const reportInfo = {
@@ -294,7 +286,6 @@ exports.generateLabReport = async (entry, lot, user) => {
         ironContent: entry?.mineralType !== "coltan" ? "0.0" : lot?.iron,
         mainMaterial: entry?.mineralType?.toUpperCase(),
         mainMaterialContent: lot?.mineralGrade,
-        // TODO 25: REPLACE USER.USERNAME WITH ACTUAL DATA
         generatedBy: user?.username,
         nameOfCompany: settings?.nameOfCompany,
     }

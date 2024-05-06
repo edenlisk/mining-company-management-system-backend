@@ -6,7 +6,6 @@ const Coltan = require('../models/coltanEntryModel');
 const Tag = require('../models/tagsModel');
 const AppError = require('../utils/appError');
 const catchAsync = require('../utils/catchAsync');
-const Supplier = require('../models/supplierModel');
 const APIFeatures = require('../utils/apiFeatures');
 const Settings = require('../models/settingsModel');
 const { handleConvertToUSD, getSFDT, filterResponse } = require('../utils/helperFunctions');
@@ -17,7 +16,6 @@ const { trackUpdateModifications,
     trackDeleteOperations,
     trackCreateOperations } = require('./activityLogsControllers');
 
-// const io = require('../bin/www').io;
 
 
 exports.getAllColtanEntries = catchAsync(async (req, res, next) => {
@@ -350,7 +348,6 @@ exports.generateLabReport = catchAsync(async (req, res, next) => {
     const entry = await Entry.findById(req.body.entryId);
     if (!entry) return next(new AppError("Unable to generate lab report, please try again!", 400));
     const lot = entry.output?.find(item => item.lotNumber === parseInt(req.body.lotNumber));
-    // TODO 27: USE CORRECT USER OBJECT
     const buffer = await generateLabReport(entry, lot, req?.user);
     if (log) log.logSummary = `${req.user?.username} generated lab report for ${entry.beneficiary} - ${lot?.lotNumber}`;
     if (buffer) {

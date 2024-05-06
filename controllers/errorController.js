@@ -7,9 +7,6 @@ const handleCastErrorDB = err => {
 
 const handleDuplicateFieldsDB = (err) => {
     const value = err.errmsg.match(/(["'])(\\?.)*?/)[0];
-    // if ('bookNameAcademicLevel' in err.keyValue) {
-    //     return new AppError(`book named: ${err.keyValue.bookNameAcademicLevel} already exists`, 401);
-    // }
     const message = `Duplicate field value: ${value}. please use another value`;
     return new AppError(message, 401);
 }

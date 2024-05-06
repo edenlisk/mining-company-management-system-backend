@@ -70,14 +70,6 @@ const invoiceSchema = new mongoose.Schema(
             district: String,
             sector: String,
         },
-        // processorEmail: {
-        //     type: String,
-        //     default: null
-        // },
-        // supplierEmail: {
-        //     type: String,
-        //     default: null
-        // },
         processorCompanyName: {
             type: String,
             default: null
