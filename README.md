@@ -63,7 +63,7 @@
 ## 🚀 Live Demo <a name="live-demo"></a>
 Click [here](https://mining-database.vercel.app/) to view a live demo of the project.
 Click [here](https://github.com/ijosue16/mining-database) to get to the frontend repository.
-demo email: demouser@gmail.com
+demo email: demouser@gmail.com    
 demo password: moonlover35
 
 
@@ -118,7 +118,6 @@ IMAGEKIT_ID =
 IMAGEKIT_PRIVATE_KEY = 
 IMAGEKIT_PUBLIC_KEY = 
 TOTP_SECRET = 
-SESSION_KEY = 
 ```
 To run the project in development mode, execute the following command:
 
