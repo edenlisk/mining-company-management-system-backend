@@ -94,7 +94,7 @@ app.use(expressWinston.logger({
     statusLevels: true,
 }))
 
-app.use('/api/v1/', indexRouter);
+app.use('/api/v1/keep-awake', indexRouter);
 app.use('/api/v1/users', usersRouter);
 app.use('/api/v1/buyers', buyersRouter);
 app.use('/api/v1/entry', entryRouter);
