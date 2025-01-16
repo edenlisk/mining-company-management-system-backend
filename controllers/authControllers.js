@@ -79,7 +79,7 @@ exports.signup = catchAsync(async (req, res, next) => {
 
 exports.setup2FA = catchAsync(async (req, res, next) => {
     const secret = authenticator.generateSecret();
-    const otpauthUrl = authenticator.keyuri(`${req.body.email}`, 'KANZAMIN SOFTWARE', secret);
+    const otpauthUrl = authenticator.keyuri(`${req.body.email}`, 'SOEMC SOFTWARE', secret);
     qrcode.toDataURL(otpauthUrl, (err, imageUrl) => {
         if (err) {
             return next(new AppError("Error generating QR code", 500));

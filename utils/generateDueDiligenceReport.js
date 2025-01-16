@@ -18,7 +18,7 @@ const subTable = [
 const firstColumn = [
     {
         type: "text",
-        val: "Name of the processor/exporter carrying out the visit: Kanzamin ltd",
+        val: "Name of the processor/exporter carrying out the visit: SOEMC LTD",
         opts: {
             cellColWidth: 4261,
             sz: 22,

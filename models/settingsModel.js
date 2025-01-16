@@ -55,12 +55,12 @@ const settingsSchema = new mongoose.Schema(
         nameOfCompany: {
             type: String,
             default: () => {
-                return "Kanzamin limited"
+                return "SOEMC LTD"
             }
         },
         representative: {
             type: String,
-            default: "Nzaramba Dan"
+            default: "Etienne Barasikina"
         },
         address: {
             province: {

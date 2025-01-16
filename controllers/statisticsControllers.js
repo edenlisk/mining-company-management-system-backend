@@ -328,7 +328,7 @@ exports.generateReconciliationExcelTable = catchAsync(async (req, res, next) => 
         }
     }
     worksheet.getRow(1).font = {bold: true};
-    await workbook.xlsx.writeFile(`All KANZAMIN RECONCILIATION FOR ${getModelAcronym(model)}.xlsx`);
+    await workbook.xlsx.writeFile(`All SOEMC RECONCILIATION FOR ${getModelAcronym(model)}.xlsx`);
     res
         .status(200)
         .json(
