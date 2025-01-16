@@ -350,6 +350,7 @@ exports.generateLabReport = catchAsync(async (req, res, next) => {
     const lot = entry.output?.find(item => item.lotNumber === parseInt(req.body.lotNumber));
     const buffer = await generateLabReport(entry, lot, req?.user);
     if (log) log.logSummary = `${req.user?.username} generated lab report for ${entry.beneficiary} - ${lot?.lotNumber}`;
+    console.log('before buffer');
     if (buffer) {
         await log?.save({validateBeforeSave: false});
         await getSFDT(Buffer.from(buffer), res, next);

@@ -1358,6 +1358,7 @@ exports.getSFDT = async (buffer, res, next, options={}) => {
         filename: 'file.docx', // Specify the desired file name
         contentType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' // Set the content type for DOCX
     });
+    console.log('sfdt here')
     axios.post('https://services.syncfusion.com/react/production/api/documenteditor/Import', formData, {
         headers: formData.getHeaders() // Set the appropriate headers for FormData
     })

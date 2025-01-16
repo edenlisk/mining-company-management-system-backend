@@ -7,6 +7,7 @@ const { getAllEntries,
     deleteEntry, deleteGradeImg } = require('../controllers/entryControllers');
 const { uploadGradeImg } = require('../utils/helperFunctions');
 const { protect, restrictTo } = require('../controllers/authControllers');
+const {generateLabReport} = require("../controllers/coltanControllers");
 const router = Router();
 
 router.route('/:model')
@@ -20,6 +21,9 @@ router.route('/:model/:entryId')
 
 router.route('/delete-grade-image/:model/:entryId')
     .delete(protect, deleteGradeImg)
+
+router.route('/lab-report/:model')
+    .post(protect, generateLabReport)
 
 router.route('/trash')
     .get(protect, getAllEntries)
