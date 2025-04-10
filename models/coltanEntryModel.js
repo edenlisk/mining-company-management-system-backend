@@ -26,6 +26,8 @@ coltanSchema.add({
     },
 })
 
+
+
 coltanSchema.set('toObject', { virtuals: true });
 coltanSchema.set('toJSON', { virtuals: true });
 
@@ -50,7 +52,6 @@ coltanLotSchema.pre('save', async function(next) {
     }
     next();
 })
-
 
 coltanSchema.pre('save', async function (next) {
     const { handleChangeSupplier, handlePaidSpecific } = require('../utils/helperFunctions');
@@ -77,7 +78,6 @@ coltanSchema.statics.findCurrentStock = async function () {
         entries: result,
         balance: result.reduce((acc, curr) => acc + curr.output.reduce((acc, curr) => acc + curr.cumulativeAmount, 0), 0)
     };}
-
 
 coltanSchema.methods.requestEditPermission = function (editExpiresIn = 30) {
     this.editRequestedAt = Date.now();

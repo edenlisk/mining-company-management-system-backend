@@ -24,20 +24,20 @@ exports.createMixedEntry = catchAsync(async (req, res, next) => {
                         representativePhoneNumber: supplier.representativePhoneNumber,
                     }
                 )
-            } else if (supplier.companyName.toLowerCase() === "kanzamin") {
+            } else if (supplier.companyName.toLowerCase() === "soemc ltd") {
                 entry = await Cassiterite.create(
                     {
                         supplierId: supplier._id,
                         companyName: supplier.companyName,
-                        licenseNumber: "kanzamin license",
+                        licenseNumber: "soemc ltd license",
                         beneficiary: req.body.beneficiary,
-                        TINNumber: "Kanzamin TIN",
-                        email: "kanzamin@gmail.com",
-                        representativeId: "Kanzamin representative",
+                        TINNumber: "soemc ltd TIN",
+                        email: "Soemc@gmail.com",
+                        representativeId: "Soemc representative",
                         representativePhoneNumber: "+250780000000",
                     }
                 )
-            } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
+            } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "soemc ltd") {
                 entry = await Cassiterite.create(
                     {
                         supplierId: supplier._id,
@@ -97,20 +97,20 @@ exports.createMixedEntry = catchAsync(async (req, res, next) => {
                         representativePhoneNumber: supplier.representativePhoneNumber,
                     }
                 )
-            } else if (supplier.companyName.toLowerCase() === "kanzamin") {
+            } else if (supplier.companyName.toLowerCase() === "soemc ltd") {
                 entry = await Coltan.create(
                     {
                         supplierId: supplier._id,
                         companyName: supplier.companyName,
-                        licenseNumber: "kanzamin license",
+                        licenseNumber: "soemc ltd license",
                         beneficiary: req.body.beneficiary,
-                        TINNumber: "Kanzamin TIN",
-                        email: "kanzamin@gmail.com",
-                        representativeId: "Kanzamin representative",
+                        TINNumber: "soemc ltd TIN",
+                        email: "soemc ltd@gmail.com",
+                        representativeId: "soemc ltd representative",
                         representativePhoneNumber: "+250780000000",
                     }
                 )
-            } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "kanzamin") {
+            } else if (req.body.isSupplierBeneficiary === false && supplier.companyName.toLowerCase() !== "soemc ltd") {
                 entry = await Coltan.create(
                     {
                         supplierId: supplier._id,

@@ -1,7 +1,4 @@
-
-
 const mongoose = require('mongoose');
-
 
 const entrySchema = new mongoose.Schema(
     {
@@ -61,10 +58,6 @@ const entrySchema = new mongoose.Schema(
             type: Number,
             default: null
         },
-        // representativeId: {
-        //     type: String,
-        //     immutable: true,
-        // },
         representativePhoneNumber: {
             type: String
         },
@@ -82,10 +75,11 @@ const entrySchema = new mongoose.Schema(
             type: Boolean,
             default: true
         }
-    },{
+    },
+    {
         timestamps: true,
         toJSON: {virtuals: true},
-        toObject: {virtuals: true}
+        toObject: {virtuals: true},
     }
 )
 
@@ -296,7 +290,11 @@ lotSchema.virtual('settled').get(function () {
 
 })
 
-
+entrySchema.pre(/^find/, async function (next) {
+    this.populate({path: 'mineTags', model: 'Tag', strictPopulate: false})
+        .populate({path: 'negociantTags', model: 'Tag', strictPopulate: false});
+    next();
+})
 
 
 exports.lotSchema = lotSchema;

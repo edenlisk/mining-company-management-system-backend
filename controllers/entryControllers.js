@@ -89,7 +89,6 @@ exports.updateEntry = catchAsync(async (req, res, next) => {
                 fileName: `${entry.companyName}-${entry.beneficiary}-${entry.supplyDate}-${file.fieldname}`,
                 folder: `/${req.params.model}`
             });
-
             if (response) {
                 return new Promise((resolve, reject) => {
                     fs.readFile(file.path, (err, data) => {

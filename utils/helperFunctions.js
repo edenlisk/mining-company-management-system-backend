@@ -1262,6 +1262,7 @@ exports.toInitialCase = str => {
 }
 
 exports.updateMineTags = async (mineTags, entry) => {
+    console.log(mineTags);
     for (const tag of mineTags) {
         if (tag.tagNumber === "") continue;
         const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine"});
