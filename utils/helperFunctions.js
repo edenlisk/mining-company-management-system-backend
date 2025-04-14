@@ -4,33 +4,12 @@ const multer = require('multer');
 const axios = require("axios");
 const FormData = require('form-data');
 const Supplier = require('../models/supplierModel');
-const Coltan = require('../models/coltanEntryModel');
-const Cassiterite = require('../models/cassiteriteEntryModel');
-const Wolframite = require('../models/wolframiteEntryModel');
-const Beryllium = require('../models/berylliumEntryModel');
-const Lithium = require('../models/lithiumEntryModel');
 const Settings = require('../models/settingsModel');
 const Tag = require('../models/tagsModel');
 const AppError = require('./appError');
 const mongoose = require('mongoose');
-const catchAsync = require('./catchAsync');
 const { authenticator } = require('otplib');
 
-
-exports.getModel = (model) => {
-    switch (model) {
-        case "coltan":
-            return Coltan;
-        case "cassiterite":
-            return Cassiterite;
-        case "wolframite":
-            return Wolframite;
-        case "beryllium":
-            return Beryllium;
-        case "lithium":
-            return Lithium
-    }
-}
 
 
 const getHeader = (fileName) => {
@@ -172,7 +151,7 @@ exports.handleConvertToUSD = (amount, USDRate) => {
 }
 
 exports.decidePricingGrade = (pricingGrade) => {
-    if (pricingGrade === "KZM") return "mineralGrade";
+    if (pricingGrade === "SMC") return "mineralGrade";
     if (pricingGrade === "ASIR") return "ASIR";
 }
 
@@ -1262,7 +1241,6 @@ exports.toInitialCase = str => {
 }
 
 exports.updateMineTags = async (mineTags, entry) => {
-    console.log(mineTags);
     for (const tag of mineTags) {
         if (tag.tagNumber === "") continue;
         const existingTag = await Tag.findOne({tagNumber: tag.tagNumber, tagType: "mine"});
@@ -1446,20 +1424,15 @@ exports.createNewEntry = async (req, Entry, model) => {
     return await Entry.create(
         {
             supplierId: req.body.supplierId,
-            companyName: req.body.companyName,
-            licenseNumber: req.body.licenseNumber,
-            beneficiary: req.body.beneficiary,
-            TINNumber: req.body.TINNumber,
             mineralType: req.body.mineralType,
             // representativeId: supplier.representativeId,
-            email: req.body.email,
-            output: req.body[decideOutput(model, req.body.mineralType)],
-            representativePhoneNumber: req.body.representativePhoneNumber,
+            // output: req.body[decideOutput(model, req.body.mineralType)],
             numberOfTags: req.body.numberOfTags,
             weightIn: req.body.weightIn,
             weightOut: req.body.weightOut,
             supplyDate: req.body.supplyDate,
             time: req.body.time,
+            model,
         }
     );
 }

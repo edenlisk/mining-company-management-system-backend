@@ -1,22 +1,22 @@
 const fs = require('fs');
 const mongoose = require('mongoose');
-const { getModel } = require('../utils/helperFunctions');
 const Buyer = require('./buyerModel');
 const AppError = require('../utils/appError');
 const {decidePricingGrade} = require("../utils/helperFunctions");
+const Entry = require('../models/entryModel')
 
 const shipmentSchema = new mongoose.Schema(
     {
-        entries: {
-            type: [
-                {
-                    entryId: mongoose.Schema.Types.ObjectId,
-                    quantity: Number,
-                    lotNumber: Number
-                }
-            ],
-            required: [true, "Please provide entries"],
-        },
+        // entries: {
+        //     type: [
+        //         {
+        //             entryId: mongoose.Schema.Types.ObjectId,
+        //             quantity: Number,
+        //             lotNumber: Number
+        //         }
+        //     ],
+        //     required: [true, "Please provide entries"],
+        // },
         shipmentGrade: {
             type: Number,
             validate: {
@@ -144,6 +144,17 @@ const shipmentSchema = new mongoose.Schema(
     }
 )
 
+shipmentSchema.virtual('entries', {
+    ref: 'LotShipment',
+    foreignField: 'shipment',
+    localField: '_id',
+    justOne: false
+})
+
+shipmentSchema.pre(/^find/, async function (next) {
+    this.populate({path: 'entries', model: 'LotShipment'});
+    next();
+})
 
 shipmentSchema.virtual('netWeight').get(function () {
     if (!this.entries?.length) return null;
@@ -155,7 +166,6 @@ shipmentSchema.virtual('netWeight').get(function () {
 shipmentSchema.virtual('averageNiobium').get(async function () {
     if (!this.entries.length) return null;
     if (this.entries) {
-        const Entry = getModel(this.model);
         if (!this.netWeight) return null;
         const entries = await Entry.find({_id: {$in: this.entries.map(item => item.entryId)}});
         const weightNiobium = entries.reduce((acc, curr) => {
@@ -171,7 +181,6 @@ shipmentSchema.virtual('averageNiobium').get(async function () {
 shipmentSchema.virtual('averageGrade').get(async function () {
     if (!this.entries?.length) return null;
     if (this.entries) {
-        const Entry = getModel(this.model);
         const entries = await Entry.find({_id: {$in: this.entries.map(item => item.entryId)}});
         if (!this.netWeight) return null;
         const totalGrade = entries.reduce((acc, curr) => {
@@ -186,7 +195,6 @@ shipmentSchema.virtual('averageGrade').get(async function () {
 
 shipmentSchema.virtual('averagePrice').get(async function () {
     if (!this.entries?.length) return null;
-    const Entry = getModel(this.model);
     const entries = await Entry.find({_id: {$in: this.entries.map(item => item.entryId)}});
     if (!this.netWeight) return null;
     const totalPrice = entries.reduce((acc, curr) => {
@@ -208,7 +216,6 @@ shipmentSchema.pre('save', async function (next) {
 })
 
 shipmentSchema.pre('save', async function (next) {
-    const Entry = getModel(this.model);
     const imagekit = require('../utils/imagekit');
     if (this.isNew) {
         imagekit.createFolder(
@@ -222,16 +229,16 @@ shipmentSchema.pre('save', async function (next) {
             }
         )
         this.shipmentMinerals = this.model.charAt(0).toUpperCase() + this.model.slice(1);
-        if (this.entries?.length > 0) {
-            for (const item of this.entries) {
-                const entry = await Entry.findById(item.entryId);
-                if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
-                const lot = entry.output?.find(value => parseInt(value.lotNumber) === (parseInt(item.lotNumber)));
-                if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
-                lot.shipmentHistory.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
-                await entry.save({validateModifiedOnly: true});
-            }
-        }
+        // if (this.entries?.length > 0) {
+        //     for (const item of this.entries) {
+        //         const entry = await Entry.findById(item.entryId);
+        //         if (!entry) return next(new AppError("Something went wrong, entry is missing", 400));
+        //         const lot = entry.output?.find(value => parseInt(value.lotNumber) === (parseInt(item.lotNumber)));
+        //         if (!lot) return next(new AppError("Something went wrong, lot is missing", 400));
+        //         lot.shipmentHistory.push({shipmentNumber: this.shipmentNumber, weight: item.quantity, date: new Date()});
+        //         await entry.save({validateModifiedOnly: true});
+        //     }
+        // }
     }
     next();
 })

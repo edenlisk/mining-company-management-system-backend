@@ -47,7 +47,7 @@ exports.getAllshipments = catchAsync(async (req, res, next) => {
 exports.createShipment = catchAsync(async (req, res, next) => {
     await Shipment.create(
         {
-            entries: req.body.entries,
+            // entries: req.body.entries,
             shipmentPrice: req.body.shipmentPrice,
             shipmentGrade: req.body.shipmentGrade,
             shipmentNumber: replaceSpecialCharacters(req.body.shipmentNumber),
@@ -156,32 +156,32 @@ exports.updateShipment = catchAsync(async (req, res, next) => {
             })
         }
     }
-    if (req.body.entries) {
-        const Entry = getModel(shipment.model);
-        for (const item of req.body.entries) {
-            const entry = await Entry.findById(item.entryId);
-            if (!entry) continue;
-            const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
-            if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
-            const lotShipment = lot.shipmentHistory?.find(value => value.shipmentNumber === shipment.shipmentNumber);
-            if (lotShipment) {
-                if (parseInt(item[shipment.shipmentNumber]) === 0) {
-                    lot.shipmentHistory = lot.shipmentHistory.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
-                    shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (parseInt(value.lotNumber) !== parseInt(item.lotNumber)));
-                } else {
-                    const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber)));
-                    if (!shipmentEntry) continue;
-                    shipmentEntry.quantity = item[shipment.shipmentNumber];
-                    lotShipment.weight = item[shipment.shipmentNumber];
-                }
-            } else {
-                if (parseInt(item[shipment.shipmentNumber]) === 0) continue;
-                lot.shipmentHistory.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
-                shipment.entries.push({entryId: item.entryId, lotNumber: parseInt(item.lotNumber), quantity: item[shipment.shipmentNumber]});
-            }
-            await entry.save({validateModifiedOnly: true});
-        }
-    }
+    // if (req.body.entries) {
+    //     const Entry = getModel(shipment.model);
+    //     for (const item of req.body.entries) {
+    //         const entry = await Entry.findById(item.entryId);
+    //         if (!entry) continue;
+    //         const lot = entry.output?.find(value => parseInt(value.lotNumber) === parseInt(item.lotNumber));
+    //         if (!lot || !entry) return next(new AppError("Something went wrong, lot is missing", 400));
+    //         const lotShipment = lot.shipmentHistory?.find(value => value.shipmentNumber === shipment.shipmentNumber);
+    //         if (lotShipment) {
+    //             if (parseInt(item[shipment.shipmentNumber]) === 0) {
+    //                 lot.shipmentHistory = lot.shipmentHistory.filter(value => value.shipmentNumber !== shipment.shipmentNumber);
+    //                 shipment.entries = shipment.entries.filter(value => (value.entryId !== new mongoose.Types.ObjectId(item.entryId)) && (parseInt(value.lotNumber) !== parseInt(item.lotNumber)));
+    //             } else {
+    //                 const shipmentEntry = shipment.entries.find(value => (value.entryId.equals(item.entryId)) && (parseInt(value.lotNumber) === parseInt(item.lotNumber)));
+    //                 if (!shipmentEntry) continue;
+    //                 shipmentEntry.quantity = item[shipment.shipmentNumber];
+    //                 lotShipment.weight = item[shipment.shipmentNumber];
+    //             }
+    //         } else {
+    //             if (parseInt(item[shipment.shipmentNumber]) === 0) continue;
+    //             lot.shipmentHistory.push({shipmentNumber: shipment.shipmentNumber, weight: item[shipment.shipmentNumber], date: new Date()});
+    //             shipment.entries.push({entryId: item.entryId, lotNumber: parseInt(item.lotNumber), quantity: item[shipment.shipmentNumber]});
+    //         }
+    //         await entry.save({validateModifiedOnly: true});
+    //     }
+    // }
     if (req.body.buyerId) shipment.buyerId = req.body.buyerId;
     if (req.body.shipmentGrade) shipment.shipmentGrade = req.body.shipmentGrade;
     if (req.body.shipmentPrice) shipment.shipmentPrice = req.body.shipmentPrice;

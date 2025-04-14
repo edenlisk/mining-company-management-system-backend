@@ -44,11 +44,11 @@ exports.signup = catchAsync(async (req, res, next) => {
     if (existingUser) return next(new AppError(`User with this ${req.body.email} email already exists`, 409));
     const user = await User.create(
         {
-            name: req.body.name.trim(),
-            username: req.body.username.trim(),
-            phoneNumber: req.body.phoneNumber.trim(),
-            email: req.body.email.trim(),
-            role: req.body.role.trim(),
+            name: req.body.name?.trim(),
+            username: req.body.username?.trim(),
+            phoneNumber: req.body.phoneNumber?.trim(),
+            email: req.body.email?.trim(),
+            role: req.body.role?.trim(),
             permissions: defaultPermissions,
             password: req.body.password,
             passwordConfirm: req.body.passwordConfirm

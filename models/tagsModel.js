@@ -4,6 +4,7 @@ const tagsSchema = new mongoose.Schema(
     {
         tagNumber: {
             type: String,
+            immutable: true,
             unique: true,
             maxLength: 7,
             minLength: 7,
@@ -23,7 +24,7 @@ const tagsSchema = new mongoose.Schema(
         },
         entryId: {
             type: mongoose.Schema.Types.ObjectId,
-            ref: "Coltan" || "Wolframite" || "Cassiterite",
+            ref: "Entry",
             default: null
         },
         status: {
@@ -40,7 +41,12 @@ const tagsSchema = new mongoose.Schema(
         },
         exportDate: {
             type: Date,
+        },
+        shipment: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Shipment'
         }
+
     },
     {
         timestamps: true,
@@ -48,5 +54,9 @@ const tagsSchema = new mongoose.Schema(
     }
 )
 
+tagsSchema.pre('save', async function (next) {
+    if (this.isModified('status') && this.status === "out of store") this.exportDate = new Date();
+    next();
+})
 
 module.exports = mongoose.model('Tag', tagsSchema);
