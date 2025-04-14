@@ -8,6 +8,7 @@ const {getModelAcronym} = require("../utils/helperFunctions");
 const { getModel } = require('../utils/helperFunctions');
 
 
+
 exports.getAllInvoices = catchAsync(async (req, res, next) => {
     const result = new APIFeatures(Invoice.find({}), req.query)
         .filter()

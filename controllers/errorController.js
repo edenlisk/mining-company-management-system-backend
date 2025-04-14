@@ -18,6 +18,7 @@ const handleValidationErrorDB = (err) => {
 }
 
 const sendErrorDev = (err, res) => {
+    console.log(err);
     res
         .status(err.statusCode)
         .json(
@@ -33,6 +34,7 @@ const sendErrorDev = (err, res) => {
 }
 
 const sendErrorProd = (err, res) => {
+    console.log(err);
     if (err.isOperational) {
         res
             .status(err.statusCode)

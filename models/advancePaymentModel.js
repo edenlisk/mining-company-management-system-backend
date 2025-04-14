@@ -9,9 +9,6 @@ const advancePaymentSchema = new mongoose.Schema(
             type: mongoose.Schema.Types.ObjectId,
             default: null
         },
-        companyName: {
-            type: String,
-        },
         beneficiary: {
             type: String,
             required: [true, "Please provide beneficiary's name"]
@@ -62,15 +59,24 @@ const advancePaymentSchema = new mongoose.Schema(
             type: Boolean,
             default: false
         },
-        consumptionDetails: {
-            type: [
-                {
-                    date: Date,
-                    action: String
-                }
-            ],
-            default: []
-        },
+        usage: [{
+            _id: {
+                type:  mongoose.Schema.Types.ObjectId,
+                default: new mongoose.Types.ObjectId()
+            },
+            description: { type: String },
+            entryId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: "Entry",
+            },
+            lotId: {
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'Lot'
+            },
+            productValue: { type: Number, required: true },
+            deductedAmount: { type: Number, required: true },
+            date: { type: Date, default: Date.now }
+        }],
         message: String,
         comment: String,
         paymentMode: {

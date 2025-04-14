@@ -174,5 +174,6 @@ function onListening() {
   const bind = typeof addr === 'string'
     ? 'pipe ' + addr
     : 'port ' + addr.port;
+  console.log(`The server is listening http://localhost:${port}`);
   debug('Listening on ' + bind);
 }

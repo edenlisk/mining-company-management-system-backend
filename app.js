@@ -36,6 +36,8 @@ const messageRouter = require('./routes/messageRouter');
 const chatRouter = require('./routes/chatRouter');
 const activityLogsRouter = require('./routes/activityLogsRouter');
 const tagsRouter = require('./routes/tagsRouter');
+const lotShipmentRouter = require('./routes/lotShipmentRouter');
+const lotRouter = require('./routes/lotRouter');
 
 const swaggerJSDoc = require('swagger-jsdoc');
 const swaggerUI = require('swagger-ui-express');
@@ -113,6 +115,8 @@ app.use('/api/v1/chat', chatRouter);
 app.use('/api/v1/message', messageRouter);
 app.use('/api/v1/logs', activityLogsRouter);
 app.use('/api/v1/tags', tagsRouter);
+app.use('/api/v1/lot-shipments', lotShipmentRouter);
+app.use('/api/v1/lots', lotRouter);
 // app.use('/api/v1/risk-assessment', riskAssessmentRouter);
 app.use(expressWinston.logger({
     winstonInstance: appLogger,
