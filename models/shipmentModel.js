@@ -7,16 +7,6 @@ const Entry = require('../models/entryModel')
 
 const shipmentSchema = new mongoose.Schema(
     {
-        // entries: {
-        //     type: [
-        //         {
-        //             entryId: mongoose.Schema.Types.ObjectId,
-        //             quantity: Number,
-        //             lotNumber: Number
-        //         }
-        //     ],
-        //     required: [true, "Please provide entries"],
-        // },
         shipmentGrade: {
             type: Number,
             validate: {

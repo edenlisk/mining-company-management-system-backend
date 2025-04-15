@@ -155,6 +155,10 @@ exports.decidePricingGrade = (pricingGrade) => {
     if (pricingGrade === "ASIR") return "ASIR";
 }
 
+
+exports.capitalizeFirstLetter = (string) => {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+}
 exports.multerFilter = (req, file, cb) => {
     const fileExtension = path.extname(file.originalname);
     const allowExtension = ['.doc', '.docx', '.pdf'];

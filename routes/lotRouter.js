@@ -12,5 +12,7 @@ router.route('/:lotId')
     .patch(protect, uploadGradeImg.any(), lotController.updateLot)
     .delete(protect, lotController.deleteLot)
 
+router.route('/available/:model')
+    .get(lotController.getAvailableLots)
 
 module.exports = router;

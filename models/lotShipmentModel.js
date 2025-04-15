@@ -25,10 +25,10 @@ const lotShipmentSchema = new mongoose.Schema(
         }
     }
 )
-
-lotShipmentSchema.pre(/^find/, async function(next) {
-    this.populate({path: 'shipment', model: "Shipment"});
-    next();
-})
+//
+// lotShipmentSchema.pre(/^find/, async function(next) {
+//     this.populate({path: 'shipment', model: "Shipment"});
+//     next();
+// })
 
 module.exports = mongoose.model("LotShipment", lotShipmentSchema)

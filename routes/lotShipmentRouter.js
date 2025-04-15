@@ -57,7 +57,7 @@ router.route('/:id').get(
 );
 
 router.route('/create-update')
-    .post(protect, lotShipmentController.createAndUpdateLotShipment)
+    .post(lotShipmentController.createAndUpdateLotShipment)
 
 // Update a lot shipment
 router.route('/:id').patch(
