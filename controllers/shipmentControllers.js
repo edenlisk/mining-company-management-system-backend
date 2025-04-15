@@ -53,6 +53,7 @@ exports.createShipment = catchAsync(async (req, res, next) => {
             shipmentNumber: replaceSpecialCharacters(req.body.shipmentNumber),
             netWeight: req.body.netWeight,
             buyerId: req.body.buyerId,
+            iTSCiShipmentNumber: req.body.iTSCiShipmentNumber,
             shipmentSamplingDate: req.body.shipmentSamplingDate,
             shipmentContainerLoadingDate: req.body.shipmentContainerLoadingDate,
             averageGrade: req.body.averageGrade,
